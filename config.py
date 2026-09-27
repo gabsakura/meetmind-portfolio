@@ -1,6 +1,15 @@
 import os
 
 
+def normalize_database_url(value: str) -> str:
+    """Select the installed psycopg 3 driver for Render-style PostgreSQL URLs."""
+    if value.startswith("postgres://"):
+        return "postgresql+psycopg://" + value.removeprefix("postgres://")
+    if value.startswith("postgresql://"):
+        return "postgresql+psycopg://" + value.removeprefix("postgresql://")
+    return value
+
+
 class Config:
     APP_ENV = os.environ.get("APP_ENV", "development")
     SERVICE_ROLE = os.environ.get("SERVICE_ROLE", "web").lower()
@@ -22,8 +31,8 @@ class Config:
         os.environ.get("ANTIVIRUS_FAIL_CLOSED", "true").lower() == "true"
     )
     SECRET_KEY = os.environ.get("SECRET_KEY", "development-only-change-this-secret-key")
-    SQLALCHEMY_DATABASE_URI = os.environ.get(
-        "DATABASE_URL", "sqlite:///meetmind-development.sqlite3"
+    SQLALCHEMY_DATABASE_URI = normalize_database_url(
+        os.environ.get("DATABASE_URL", "sqlite:///meetmind-development.sqlite3")
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")

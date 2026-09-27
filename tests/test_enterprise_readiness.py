@@ -5,6 +5,19 @@ import pytest
 from app import create_app
 from app.extensions import db
 from app.models import AIExecution, Analysis, Organization, OutboxEvent, Role, User
+from config import normalize_database_url
+
+
+def test_render_postgres_url_uses_installed_psycopg_driver():
+    assert (
+        normalize_database_url("postgresql://user:secret@db.internal/app")
+        == "postgresql+psycopg://user:secret@db.internal/app"
+    )
+    assert (
+        normalize_database_url("postgres://user:secret@db.internal/app")
+        == "postgresql+psycopg://user:secret@db.internal/app"
+    )
+    assert normalize_database_url("sqlite:///local.sqlite3") == "sqlite:///local.sqlite3"
 
 
 def _login(client, email: str):

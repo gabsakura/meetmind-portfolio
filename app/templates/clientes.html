@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block titulo %}MeetMind · Clientes{% endblock %}
+{% block titulo_topo %}Minha carteira{% endblock %}
+{% block conteudo %}
+{% set health_labels = {'healthy': 'Saudável', 'attention': 'Atenção', 'at_risk': 'Em risco', 'insufficient_evidence': 'Sem evidência'} %}
+<section class="pagina client-list-page">
+  <div class="client-list">
+    {% for row in rows %}
+    <a class="client-list-card" href="{{ url_for('painel.cliente_timeline', client_id=row.client.id) }}">
+      <div><span class="eyebrow">{{ row.client.external_id }}</span><h2>{{ row.client.name }}</h2></div>
+      <span class="client-health client-health-{{ row.health }}">{{ health_labels.get(row.health, 'Sem evidência') }}</span>
+      <dl>
+        <div><dt>Última reunião</dt><dd>{{ row.last_meeting.occurred_at.strftime('%d/%m/%Y') if row.last_meeting and row.last_meeting.occurred_at else 'Não registrada' }}</dd></div>
+        <div><dt>Ações abertas</dt><dd>{{ row.open_actions }}</dd></div>
+        <div><dt>Vencidas</dt><dd>{{ row.overdue }}</dd></div>
+      </dl>
+    </a>
+    {% else %}<div class="estado-vazio"><strong>Nenhum cliente atribuído à sua carteira.</strong></div>{% endfor %}
+  </div>
+</section>
+{% endblock %}

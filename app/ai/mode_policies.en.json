@@ -1,0 +1,65 @@
+{
+  "version": "meetmind-modes-v1",
+  "router": {
+    "objective": "Classify the meeting purpose and choose the smallest useful set of specialist modes.",
+    "rules": [
+      "Choose exactly one primary mode and at most one secondary mode.",
+      "Prefer meeting_outcome when purpose, resolution or follow-up is central.",
+      "Choose voc_complaint only when contextual evidence may establish a customer complaint, need or friction.",
+      "Choose product_operations for explicit product, infrastructure, licensing or industrial-process discussion.",
+      "Choose relationship_risk only when the transcript contains contextual positive or negative relationship signals.",
+      "Explain the routing in Brazilian Portuguese and cite literal evidence."
+    ]
+  },
+  "voc_complaint": {
+    "objective": "Identify genuine customer complaints, needs and friction attributable to a clear target.",
+    "valid_complaint_requires": [
+      "A statement by the customer or a statement explicitly attributed to the customer.",
+      "A contextual problem, dissatisfaction, limitation or request.",
+      "An identifiable target related to a TOTVS product, service, contract, support or process.",
+      "Evidence of impact or a desired outcome when available."
+    ],
+    "exclusions": [
+      "Random conversation, third-party stories and keyword-only matches are not complaints.",
+      "A technical term without negative stance or impact is not a complaint.",
+      "If the target is not identifiable, record uncertainty instead of assigning blame."
+    ]
+  },
+  "meeting_outcome": {
+    "objective": "Classify the meeting purpose, objective status, follow-up and explicit commitments.",
+    "rules": [
+      "Treat 'te vejo amanhã' as positive only when context establishes a real meeting or follow-up.",
+      "For questions_clarifications or contract_negotiation, an explicit follow-up is a strong positive outcome signal.",
+      "No follow-up is only a weak context-dependent signal and never proves churn.",
+      "Return owners and dates only when explicitly stated."
+    ]
+  },
+  "product_operations": {
+    "objective": "Relate explicit statements to controlled TOTVS Manufacturing product and operations context.",
+    "rules": [
+      "Use only the supplied trusted manufacturing entries and explicit transcript mentions.",
+      "Preserve ambiguity for servidor, replication, Progress User and licença until context disambiguates them.",
+      "Describe technical causes only as hypotheses with missing validation.",
+      "Start every hypotheses[].statement with 'Hipótese:' or another explicit PT-BR uncertainty qualifier, and state what remains to be checked in missing_validation.",
+      "Never convert a hypothesis into a root-cause conclusion."
+    ]
+  },
+  "relationship_risk": {
+    "objective": "Assess qualitative relationship signals without presenting a churn probability.",
+    "rules": [
+      "Licensing, instability, contract and customization discussions are not automatically negative.",
+      "Identify who spoke, the target, consequence and response before assigning risk.",
+      "Explicit constructive follow-up may offset a negative operational signal.",
+      "No scheduled meeting alone is at most a weak negative signal.",
+      "Use qualitative risk and churn-signal strength only."
+    ]
+  },
+  "synthesis": {
+    "objective": "Combine validated specialist results without adding facts or evidence.",
+    "rules": [
+      "Use only facts, interpretations and SEGMENT_ID values already present in specialist results.",
+      "Resolve apparent conflicts by stating uncertainty, not by inventing a tie-breaker.",
+      "Return one concise what_happened, why_it_matters and next_step in Brazilian Portuguese."
+    ]
+  }
+}

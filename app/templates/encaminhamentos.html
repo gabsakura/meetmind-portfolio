@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block titulo %}MeetMind · Encaminhamentos{% endblock %}
+{% block titulo_topo %}Encaminhamentos{% endblock %}
+{% block conteudo %}
+{% set status_labels = {'queued': 'Aguardando responsável', 'in_progress': 'Em andamento', 'answered': 'Respondido', 'closed': 'Encerrado', 'cancelled': 'Cancelado', 'delivered': 'Respondido', 'failed': 'Falhou'} %}
+<section class="pagina routing-page" data-routing-page data-can-manage="{{ 'true' if can_manage else 'false' }}">
+  <div class="routing-summary">
+    {% for status in ['queued', 'in_progress', 'answered', 'closed'] %}<article><span>{{ status_labels[status] }}</span><strong>{{ items|selectattr('status', 'equalto', status)|list|length }}</strong></article>{% endfor %}
+  </div>
+  <p class="diagnostic-feedback" data-routing-feedback role="status" aria-live="polite"></p>
+  {% if can_manage %}
+  <details class="routing-create">
+    <summary>Registrar pedido recebido fora de reunião</summary>
+    <form data-new-routing-form>
+      <label>Cliente<select name="client_id" required><option value="">Selecione</option>{% for client in clients %}<option value="{{ client.id }}">{{ client.name }}</option>{% endfor %}</select></label>
+      <label>Necessidade<select name="request_type" required><option value="">Selecione</option>{% for key, route in routing_options.items() %}<option value="{{ key }}">{{ route.label }} · {{ route.department }}</option>{% endfor %}</select></label>
+      <label>Canal<select name="source_channel" required><option value="">Selecione</option><option value="email">E-mail</option><option value="teams">Teams</option><option value="phone">Telefone</option><option value="other">Outro</option></select></label>
+      <label class="routing-create-note">Pedido do cliente<textarea name="note" maxlength="2000" rows="3" required></textarea></label>
+      <button class="botao-primario" type="submit">Enviar para o setor</button>
+    </form>
+  </details>
+  {% endif %}
+  <div class="routing-list">
+    {% for item in items %}
+    <article id="request-{{ item.id }}" class="routing-card routing-card-{{ item.status }}" data-routing-card data-id="{{ item.id }}" data-version="{{ item.version }}">
+      <header><div><span>{{ item.department }}</span><h2>{{ item.request_label }}</h2><a href="{{ url_for('painel.cliente_timeline', client_id=item.client_id) if item.client_id else '#' }}">{{ item.client }}</a></div><span class="status">{{ status_labels.get(item.status, item.status) }}</span></header>
+      <p>{{ item.note or item.source_action }}</p>
+      {% if item.message %}<details class="routing-message"><summary>Mensagem padronizada</summary><pre>{{ item.message }}</pre><button class="botao-terciario" type="button" data-copy-routing-message>Copiar mensagem</button></details>{% endif %}
+      <dl><div><dt>Origem</dt><dd>{% if item.source_kind == 'external' %}{{ {'email': 'E-mail', 'teams': 'Teams', 'phone': 'Telefone', 'other': 'Outro'}.get(item.source_channel, 'Fora de reunião') }}{% else %}<a href="{{ url_for('painel.inteligencia_artificial', meeting=item.meeting_id, analysis=item.analysis_id, _anchor='ai-workflow') }}">{{ item.source_action }}</a>{% endif %}</dd></div><div><dt>Responsável</dt><dd>{{ item.assigned_to or 'Não atribuído' }}</dd></div><div><dt>Prazo</dt><dd>{{ item.due_at[:10]|replace('-', '/') if item.due_at else 'Não definido' }}</dd></div></dl>
+      {% if item.response %}<blockquote><span>Resposta</span>{{ item.response }}</blockquote>{% endif %}
+      {% if item.customer_return_pending %}<p class="routing-return-pending"><strong>Retorno ao cliente pendente</strong></p>{% endif %}
+      {% if can_manage and item.status == 'answered' and item.customer_return_pending %}
+      <details class="communication-workspace" data-communication data-client-id="{{ item.client_id }}" data-meeting-id="{{ item.meeting_id or '' }}" data-action-id="{{ item.source_action_id or '' }}" data-request-id="{{ item.id }}">
+        <summary>Preparar retorno ao cliente</summary>
+        <form data-draft-form>
+          <div class="communication-grid">
+            <label>Formato<select name="draft_type"><option value="customer_message">Mensagem ao cliente</option><option value="follow_up">Resposta de follow-up</option><option value="calendar_invite">Convite de calendário</option></select></label>
+            <label>Canal<select name="channel"><option value="email">E-mail</option><option value="teams">Teams</option><option value="calendar">Calendário</option></select></label>
+          </div>
+          <label>Destinatários<select name="recipient_contact_ids" multiple required>{% for contact in contacts_by_client.get(item.client_id, []) %}<option value="{{ contact.id }}">{{ contact.name }} · {{ contact.email }}{% if contact.is_primary %} · principal{% endif %}</option>{% endfor %}</select></label>
+          <label class="communication-ai"><input type="checkbox" name="generate_with_ai"> Gerar texto com IA a partir das evidências validadas</label>
+          <label>Assunto<input name="subject" maxlength="500"></label>
+          <label>Mensagem<textarea name="body" rows="5" maxlength="6000"></textarea></label>
+          <button class="botao-primario" type="submit">Criar rascunho</button>
+        </form>
+        <div data-draft-editor hidden></div>
+        <p data-communication-feedback role="status" aria-live="polite"></p>
+        <details class="routing-no-return"><summary>Retorno não necessário</summary><form data-no-return-form><label>Justificativa<textarea name="reason" rows="2" minlength="3" maxlength="1000" required></textarea></label><button class="botao-terciario" type="submit">Registrar justificativa</button></form></details>
+      </details>
+      {% elif item.customer_returned_at %}<p class="routing-return-done">Retorno ao cliente registrado</p>
+      {% elif item.customer_return_not_required_reason %}<p class="routing-return-done">Retorno dispensado: {{ item.customer_return_not_required_reason }}</p>{% endif %}
+      {% if can_manage and item.status not in ['closed', 'cancelled'] %}
+      <form data-routing-form>
+        <label>Responsável<select name="assigned_to_id"><option value="">Selecione</option>{% for user in users %}<option value="{{ user.id }}" {{ 'selected' if item.assigned_to_id == user.id }}>{{ user.name }}</option>{% endfor %}</select></label>
+        <label>Prazo<input type="date" name="due_at" value="{{ item.due_at[:10] if item.due_at else '' }}"></label>
+        <label>Estado<select name="status">{% for status in ['queued', 'in_progress', 'answered', 'closed', 'cancelled'] %}<option value="{{ status }}" {{ 'selected' if item.status == status }}>{{ status_labels[status] }}</option>{% endfor %}</select></label>
+        <label class="routing-response">Resposta<textarea name="response" maxlength="4000" rows="3">{{ item.response or '' }}</textarea></label>
+        <button class="botao-primario" type="submit">Salvar</button>
+      </form>
+      {% endif %}
+    </article>
+    {% else %}<div class="estado-vazio"><strong>Nenhum encaminhamento registrado.</strong></div>{% endfor %}
+  </div>
+</section>
+<template id="draft-editor-template">
+  <div class="draft-editor">
+    <div class="draft-state"><strong data-draft-status></strong><span data-draft-revision></span></div>
+    <label>Assunto<input data-draft-subject maxlength="500"></label>
+    <label>Mensagem<textarea data-draft-body rows="7" maxlength="6000"></textarea></label>
+    <div class="draft-actions"><button type="button" class="botao-terciario" data-save-draft>Salvar revisão</button><button type="button" class="botao-primario" data-approve-draft>Aprovar</button><button type="button" class="botao-terciario" data-copy-draft>Copiar texto</button><button type="button" class="botao-primario" data-confirm-draft>Confirmar envio</button></div>
+    <form data-calendar-form hidden><label>Provedor<select name="provider" required>{% for provider in calendar_providers %}<option value="{{ provider.id }}">{{ provider.label }}</option>{% endfor %}</select></label><label>Data e hora<input type="datetime-local" name="starts_at" required></label><label>Duração<select name="duration_minutes"><option value="30">30 min</option><option value="45">45 min</option><option value="60">60 min</option></select></label><button class="botao-primario" type="submit">Criar evento e enviar convite</button></form>
+  </div>
+</template>
+{% endblock %}
+{% block scripts %}<script type="module" src="{{ url_for('static', filename='js/encaminhamentos.js') }}"></script>{% endblock %}

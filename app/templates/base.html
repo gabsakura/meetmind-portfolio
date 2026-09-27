@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>{% block titulo %}MeetMind{% endblock %}</title>
+  <link rel="icon" href="{{ url_for('static', filename='img/meetmind-icon.svg') }}" type="image/svg+xml">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/tema.css') }}">
+</head>
+<body>
+<a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+<div class="layout">
+  <aside class="sidebar" aria-label="Navegação principal">
+    <a class="logo meetmind-brand" href="{{ url_for('painel.dashboard') }}" aria-label="MeetMind — início">
+      <span class="meetmind-brand-mark" aria-hidden="true">M</span>
+      <span class="meetmind-brand-word">MeetMind</span>
+    </a>
+    <div class="sidebar-user">
+      <details class="profile-menu">
+        <summary class="sidebar-avatar" aria-label="Abrir menu do perfil">
+          {% if current_user.has_avatar %}
+          <img src="{{ url_for('painel.perfil_foto', user_id=current_user.id, v=current_user.avatar_version) }}" alt="">
+          {% else %}
+          <span aria-hidden="true">{{ current_user.initials }}</span>
+          {% endif %}
+        </summary>
+        <div class="profile-popover">
+          <a href="{{ url_for('painel.perfil') }}">Meu perfil</a>
+          {% if not is_demo_environment %}
+          <a href="{{ url_for('painel.perfil', _anchor='calendario') }}">Integrar calendário</a>
+          {% endif %}
+        </div>
+      </details>
+      <span class="nav-label sidebar-user-nome">{{ current_user.name }}</span>
+      <small class="nav-label">{{ current_user.role.value }}</small>
+      <form action="{{ url_for('auth.logout') }}" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit">Sair</button>
+      </form>
+    </div>
+    <nav class="nav">
+      <a href="{{ url_for('painel.dashboard') }}" class="nav-item {{ 'ativo' if aba == 'dashboard' }}">
+        <svg class="nav-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M9.5 20v-6h5v6"/></svg><span class="nav-label">Visão geral</span>
+      </a>
+      <a href="{{ url_for('painel.clientes') }}" class="nav-item {{ 'ativo' if aba == 'clientes' }}">
+        <svg class="nav-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 20v-2a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span class="nav-label">Clientes</span>
+      </a>
+      <a href="{{ url_for('painel.inteligencia_artificial') }}" class="nav-item {{ 'ativo' if aba == 'inteligencia_artificial' }}">
+        <svg class="nav-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/><path d="m6.3 6.3 2.1 2.1M15.6 15.6l2.1 2.1M17.7 6.3l-2.1 2.1M8.4 15.6l-2.1 2.1"/></svg><span class="nav-label">Análise IA</span>
+      </a>
+      {% if current_user.role.value in ['admin', 'manager', 'analyst'] %}
+      <a href="{{ url_for('painel.auditabilidade_ia') }}" class="nav-item {{ 'ativo' if aba == 'auditabilidade_ia' }}">
+        <svg class="nav-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 5.5h16v11H8l-4 3v-14Z"/><path d="M8 9h8M8 12.5h5"/></svg><span class="nav-label">Auditabilidade IA</span>
+      </a>
+      {% endif %}
+      <a href="{{ url_for('painel.acoes') }}" class="nav-item {{ 'ativo' if aba == 'acoes' }}">
+        <svg class="nav-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/><path d="M4 4h16v16H4z"/></svg><span class="nav-label">Ações</span>
+      </a>
+      <a href="{{ url_for('painel.encaminhamentos') }}" class="nav-item {{ 'ativo' if aba == 'encaminhamentos' }}">
+        <svg class="nav-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h11M12 4l3 3-3 3M20 17H9M12 14l-3 3 3 3"/></svg><span class="nav-label">Encaminhamentos</span>
+      </a>
+      <a href="{{ url_for('painel.historico') }}" class="nav-item {{ 'ativo' if aba == 'historico' }}">
+        <svg class="nav-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M5 6h14M5 12h14M5 18h14"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg><span class="nav-label">Reuniões analisadas</span>
+      </a>
+      {% if current_user.role.value != 'viewer' and not is_demo_environment %}
+      <a href="{{ url_for('painel.verificacao') }}" class="nav-item {{ 'ativo' if aba == 'verificacao' }}">
+        <svg class="nav-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 16V4M7.5 8.5 12 4l4.5 4.5"/><path d="M5 14v6h14v-6"/></svg><span class="nav-label">Reuniões</span>
+
+      </a>
+      {% endif %}
+
+      {% if current_user.role.value == 'admin' %}
+      <a href="{{ url_for('painel.equipe') }}" class="nav-item {{ 'ativo' if aba == 'equipe' }}">
+        <svg class="nav-icon" aria-hidden="true" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M15 14a5 5 0 0 1 6 4v2"/></svg><span class="nav-label">Equipe</span>
+      </a>
+      <a href="{{ url_for('painel.seguranca') }}" class="nav-item {{ 'ativo' if aba == 'seguranca' }}">
+        <svg class="nav-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.5 2.7 8.1 7 10 4.3-1.9 7-5.5 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-4"/></svg><span class="nav-label">Segurança</span>
+      </a>
+      {% endif %}
+    </nav>
+  </aside>
+  <div class="principal">
+    <header class="topo">
+      <div>
+        <p class="eyebrow">MeetMind</p>
+        <h1>{% block titulo_topo %}{% endblock %}</h1>
+      </div>
+      <span class="ambiente"><span aria-hidden="true">●</span> {{ 'Ambiente de demonstração' if is_demo_environment else 'Piloto acadêmico' }}</span>
+    </header>
+    <main class="conteudo" id="conteudo" tabindex="-1">
+      <div id="aviso-global" class="aviso" role="status" aria-live="polite" hidden></div>
+      {% block conteudo %}{% endblock %}
+    </main>
+    <footer class="legal-footer">
+      <span>Projeto acadêmico independente para portfólio.</span>
+      <a href="{{ url_for('auth.privacidade') }}">Privacidade</a>
+      <a href="{{ url_for('auth.termos') }}">Termos</a>
+    </footer>
+  </div>
+</div>
+<section class="meetmind-chat" data-meetmind-chat aria-label="Assistente MeetMind">
+  <section class="meetmind-chat-panel" id="meetmind-chat-panel" role="dialog" aria-modal="false" aria-labelledby="meetmind-chat-title" hidden>
+    <header class="meetmind-chat-header">
+      <span class="meetmind-chat-mark" aria-hidden="true">✦</span>
+      <div><h2 id="meetmind-chat-title">Assistente MeetMind</h2><p>Ajuda para esta página</p></div>
+      <button class="meetmind-chat-close" type="button" data-chat-close aria-label="Fechar assistente">×</button>
+    </header>
+    <div class="meetmind-chat-messages" data-chat-messages role="log" aria-live="polite" aria-relevant="additions text">
+      <article class="meetmind-chat-message assistant">Olá! Posso explicar esta página, indicar onde encontrar algo ou ajudar a entender uma análise.</article>
+    </div>
+    <form class="meetmind-chat-form" data-chat-form>
+      <label class="sr-only" for="meetmind-chat-question">Sua pergunta</label>
+      <textarea id="meetmind-chat-question" name="question" rows="1" maxlength="1200" placeholder="Pergunte sobre esta página…" required></textarea>
+      <button type="submit" aria-label="Enviar pergunta"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m4 12 16-8-5 16-3-7-8-1Z"/><path d="m12 13 4-5"/></svg></button>
+    </form>
+    <p class="meetmind-chat-footnote">A conversa não fica salva. Relatórios expiram após 30 minutos.</p>
+  </section>
+  <button class="meetmind-chat-launcher" type="button" aria-label="Abrir assistente MeetMind" aria-expanded="false" aria-controls="meetmind-chat-panel" data-chat-open>
+    <svg aria-hidden="true" viewBox="0 0 40 40"><path d="M20 3c1.8 9 5 12.2 14 14-9 1.8-12.2 5-14 14-1.8-9-5-12.2-14-14 9-1.8 12.2-5 14-14Z"/><path d="M31 25c.8 4 2.3 5.5 6 6.3-3.7.8-5.2 2.3-6 6-.8-3.7-2.3-5.2-6-6 3.7-.8 5.2-2.3 6-6Z"/></svg>
+  </button>
+</section>
+<script type="module" src="{{ url_for('static', filename='js/app.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/meetmind-chat.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

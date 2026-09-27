@@ -1,0 +1,61 @@
+{
+  "id": "servicos", "label": "Serviços", "version": "sector-playbooks-v1", "reviewed_at": "2026-08-03",
+  "aliases": ["SERVICOS", "PRESTADORES DE SERVICOS", "SERVICE"], "unit_aliases": ["TOTVS SERVICOS", "TOTVS PRESTADORES"],
+  "cnae_prefixes": [], "detection_terms": ["ordem de servico", "sla", "contrato", "posto", "escala", "field service", "apontamento de horas"],
+  "sources": [
+    {"id": "totvs-field-service", "title": "TOTVS Prestadores de Serviços Field Service", "url": "https://www.totvs.com/prestadores-de-servicos/field-service/", "publisher": "TOTVS", "accessed_at": "2026-08-03"},
+    {"id": "totvs-terceirizacao", "title": "TOTVS Prestadores de Serviços Terceirização", "url": "https://www.totvs.com/prestadores-de-servicos/terceirizacao/", "publisher": "TOTVS", "accessed_at": "2026-08-03"}
+  ],
+  "subsectors": [
+    {"id": "field-service", "label": "Serviços em campo", "aliases": ["field service", "visita tecnica", "ordem de servico"], "cnae_prefixes": []},
+    {"id": "terceirizacao", "label": "Terceirização", "aliases": ["terceirizacao", "posto", "escala", "outsourcing"], "cnae_prefixes": []},
+    {"id": "projetos-profissionais", "label": "Projetos e serviços profissionais", "aliases": ["projeto", "consultoria", "hora faturavel"], "cnae_prefixes": []}
+  ],
+  "critical_processes": [
+    {"id": "contratos-sla", "label": "Contratos e SLA", "aliases": ["contrato", "sla", "escopo"], "usage": "Distinguir obrigação contratual de expectativa informal.", "source_ids": ["totvs-terceirizacao"]},
+    {"id": "ordens-servico", "label": "Ordens e execução de serviços", "aliases": ["ordem de servico", "os", "atendimento"], "usage": "Relacionar agenda, execução e laudo apenas quando citados.", "source_ids": ["totvs-field-service"]},
+    {"id": "equipes-escalas", "label": "Equipes, postos e escalas", "aliases": ["escala", "posto", "alocacao"], "usage": "Não inferir falta de pessoal a partir de porte.", "source_ids": ["totvs-terceirizacao"]},
+    {"id": "faturamento-rentabilidade", "label": "Faturamento e rentabilidade", "aliases": ["medicao", "hora faturavel", "margem"], "usage": "Exigir contrato, período ou valor para quantificar.", "source_ids": ["totvs-terceirizacao"]}
+  ],
+  "technologies": [
+    {"id": "field-service", "label": "Field Service", "aliases": ["field service", "mobile", "visita"], "usage": "Usar em serviços externos confirmados.", "source_ids": ["totvs-field-service"]},
+    {"id": "gestao-os", "label": "Gestão de ordens de serviço", "aliases": ["os", "ordem de servico"], "usage": "Não sugerir troca de sistema sem diagnóstico.", "source_ids": ["totvs-field-service"]},
+    {"id": "mesa-operacional", "label": "Mesa operacional e escalas", "aliases": ["mesa operacional", "escala", "cobertura"], "usage": "Usar para postos e equipes citados.", "source_ids": ["totvs-terceirizacao"]},
+    {"id": "integracao-backoffice", "label": "Integração com backoffice", "aliases": ["faturamento", "estoque", "folha"], "usage": "Tratar integração como hipótese de solução.", "source_ids": ["totvs-field-service", "totvs-terceirizacao"]}
+  ],
+  "common_indicators": [
+    {"id": "cumprimento-sla", "label": "Cumprimento de SLA", "aliases": ["sla", "prazo de atendimento"], "usage": "Exigir SLA e período.", "source_ids": ["totvs-field-service"]},
+    {"id": "first-time-fix", "label": "Resolução no primeiro atendimento", "aliases": ["retorno tecnico", "reincidencia"], "usage": "Não calcular sem base de atendimentos.", "source_ids": ["totvs-field-service"]},
+    {"id": "margem-contrato", "label": "Margem por contrato ou projeto", "aliases": ["margem", "rentabilidade"], "usage": "Não estimar valores.", "source_ids": ["totvs-terceirizacao"]}
+  ],
+  "possible_problems": [
+    {"signal": "Execução não convertida corretamente em faturamento", "meaning": "Pode causar perda de receita ou contestação.", "usage": "Exigir exemplo de medição ou cobrança.", "source_ids": ["totvs-terceirizacao"]},
+    {"signal": "Agenda, equipe e materiais desconectados", "meaning": "Pode aumentar deslocamentos e retornos.", "usage": "Não presumir origem sistêmica.", "source_ids": ["totvs-field-service"]}
+  ],
+  "positive_signals": [
+    {"signal": "SLA acompanhado com plano de ação", "meaning": "Indica governança do serviço.", "usage": "Exigir indicador e compromisso.", "source_ids": ["totvs-field-service"]},
+    {"signal": "Contrato, equipe e faturamento integrados", "meaning": "Indica adoção transversal.", "usage": "Citar áreas confirmadas.", "source_ids": ["totvs-terceirizacao"]}
+  ],
+  "attention_signals": [
+    {"signal": "Reincidência sem causa ou responsável", "meaning": "Pode deteriorar confiança do cliente.", "usage": "Exigir repetição explícita.", "source_ids": ["totvs-field-service"]},
+    {"signal": "Divergência de escopo ou medição", "meaning": "Pode pressionar contrato e faturamento.", "usage": "Separar posição de cada parte.", "source_ids": ["totvs-terceirizacao"]}
+  ],
+  "diagnostic_questions": [
+    {"id": "q-sla", "label": "Qual SLA, etapa e volume de atendimentos estão afetados?", "aliases": [], "usage": "Usar em atraso ou reincidência.", "source_ids": ["totvs-field-service"]},
+    {"id": "q-fluxo-os", "label": "Como a OS passa de agenda para execução, laudo e faturamento?", "aliases": [], "usage": "Usar em retrabalho.", "source_ids": ["totvs-field-service"]},
+    {"id": "q-contrato", "label": "O ponto discutido está previsto no escopo e na medição do contrato?", "aliases": [], "usage": "Usar em divergência contratual.", "source_ids": ["totvs-terceirizacao"]}
+  ],
+  "conditional_recommendations": [
+    {"id": "r-mapear-os", "label": "Mapear a OS de ponta a ponta", "aliases": [], "usage": "Quando agenda, execução e cobrança divergirem.", "source_ids": ["totvs-field-service"]},
+    {"id": "r-validar-sla", "label": "Definir SLA, medição e responsável", "aliases": [], "usage": "Quando prazo estiver subjetivo.", "source_ids": ["totvs-field-service"]},
+    {"id": "r-revisar-medicao", "label": "Conferir regra contratual de medição", "aliases": [], "usage": "Quando houver contestação de escopo ou faturamento.", "source_ids": ["totvs-terceirizacao"]}
+  ],
+  "prohibited_inferences": ["Não presumir descumprimento contratual.", "Não atribuir reincidência à equipe ou sistema sem prova.", "Não estimar margem ou perda financeira.", "Não sugerir expansão sem necessidade explícita."],
+  "meeting_type_rules": {
+    "support_incident": {"prioritize": ["OS", "SLA", "reincidência", "impacto"], "avoid": ["culpa automática"]},
+    "implementation": {"prioritize": ["cadastros", "agenda", "mobile", "integrações"], "avoid": ["assumir processo padronizado"]},
+    "relationship_success": {"prioritize": ["SLA", "adoção", "qualidade", "pendências"], "avoid": ["confundir atendimento cordial com sucesso"]},
+    "commercial_expansion": {"prioritize": ["gargalo", "volume", "escopo", "valor"], "avoid": ["upsell automático"]},
+    "renewal_contract": {"prioritize": ["entregas", "divergências", "valor percebido"], "avoid": ["probabilidade de churn"]}
+  }
+}

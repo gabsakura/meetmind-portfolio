@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MeetMind · Termos de uso</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/tema.css') }}">
+</head>
+<body class="legal-body">
+  <main class="legal-document">
+    <a class="legal-back" href="{{ url_for('auth.login') }}">← Voltar</a>
+    <p class="eyebrow">MeetMind · Portfólio</p>
+    <h1>Termos de uso da demonstração</h1>
+    <p class="legal-version">Versão 1.0 · 26 de setembro de 2026</p>
+
+    <section>
+      <h2>Natureza do projeto</h2>
+      <p>Esta aplicação é uma demonstração acadêmica independente criada para apresentar competências de desenvolvimento de software. Ela não é um produto oficial, serviço contratado ou canal operacional da TOTVS e não implica parceria, patrocínio ou endosso.</p>
+    </section>
+    <section>
+      <h2>Uso permitido</h2>
+      <p>O acesso serve apenas para avaliação de portfólio. Não envie dados pessoais, informações confidenciais, arquivos, transcrições ou conteúdo de clientes. Não tente contornar controles de acesso, prejudicar a disponibilidade ou extrair dados do ambiente.</p>
+    </section>
+    <section>
+      <h2>Conteúdo sintético</h2>
+      <p>Clientes, participantes, reuniões, riscos, oportunidades e conclusões exibidos são fictícios. Resultados da demonstração não devem orientar decisões comerciais, jurídicas, financeiras ou relacionadas a pessoas.</p>
+    </section>
+    <section>
+      <h2>Disponibilidade</h2>
+      <p>A demonstração pode ser alterada, reiniciada ou retirada do ar sem aviso. Não há garantia de disponibilidade, preservação de alterações ou adequação a uma finalidade específica.</p>
+    </section>
+    <section>
+      <h2>Propriedade e marcas</h2>
+      <p>O código e os materiais próprios permanecem sujeitos aos direitos de seus autores. Marcas de terceiros pertencem aos respectivos titulares e aparecem apenas como referência ao contexto acadêmico.</p>
+    </section>
+    <section>
+      <h2>Contato</h2>
+      {% if contact_email %}
+      <p>Dúvidas sobre estes termos podem ser enviadas para <a href="mailto:{{ contact_email }}">{{ contact_email }}</a>.</p>
+      {% else %}
+      <p><strong>Canal não configurado neste ambiente local.</strong></p>
+      {% endif %}
+    </section>
+  </main>
+</body>
+</html>

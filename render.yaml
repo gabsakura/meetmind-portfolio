@@ -1,0 +1,61 @@
+services:
+  - type: web
+    name: meetmind-portfolio
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/v1/health/ready
+    preDeployCommand: flask --app run.py db upgrade && flask --app run.py seed-demo
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: SERVICE_ROLE
+        value: web
+      - key: AUTH_MODE
+        value: local
+      - key: PORTFOLIO_DEMO_ENABLED
+        value: "true"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEMO_PORTFOLIO_PASSWORD
+        sync: false
+      - key: PRIVACY_CONTACT_EMAIL
+        sync: false
+      - key: PUBLIC_BASE_URL
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: meetmind-portfolio-db
+          property: connectionString
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: TRUSTED_PROXY_COUNT
+        value: "1"
+      - key: JSON_LOGS
+        value: "true"
+      - key: LOG_LEVEL
+        value: INFO
+      - key: QUEUE_ENABLED
+        value: "false"
+      - key: SECURITY_REDIS_ENABLED
+        value: "false"
+      - key: RATELIMIT_STORAGE_URI
+        value: memory://
+      - key: ANTIVIRUS_ENABLED
+        value: "false"
+      - key: SUBMISSION_REQUIRE_ANTIVIRUS
+        value: "false"
+      - key: SUBMISSION_STORAGE_BACKEND
+        value: filesystem
+      - key: AUTOPSY_ASSISTANT_MODE
+        value: "off"
+      - key: TEAMS_GRAPH_ENABLED
+        value: "false"
+
+databases:
+  - name: meetmind-portfolio-db
+    plan: free
+    databaseName: meetmind_portfolio
+    user: meetmind_portfolio
+    ipAllowList: []

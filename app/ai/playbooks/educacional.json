@@ -1,0 +1,61 @@
+{
+  "id": "educacional", "label": "Educacional", "version": "sector-playbooks-v1", "reviewed_at": "2026-08-03",
+  "aliases": ["EDUCACIONAL", "EDUCACAO", "ENSINO"], "unit_aliases": ["TOTVS EDUCACIONAL"], "cnae_prefixes": ["85"],
+  "detection_terms": ["aluno", "matricula", "rematricula", "curso", "turma", "mensalidade", "processo seletivo", "ava"],
+  "sources": [
+    {"id": "totvs-educacional", "title": "TOTVS Educacional", "url": "https://www.totvs.com/educacional/", "publisher": "TOTVS", "accessed_at": "2026-08-03"},
+    {"id": "totvs-gestao-educacional", "title": "Sistema de gestão educacional TOTVS", "url": "https://www.totvs.com/educacional/totvs-educacional/", "publisher": "TOTVS", "accessed_at": "2026-08-03"}
+  ],
+  "subsectors": [
+    {"id": "educacao-basica", "label": "Educação básica", "aliases": ["escola", "responsavel", "secretaria escolar"], "cnae_prefixes": ["851", "852", "853"]},
+    {"id": "ensino-superior", "label": "Ensino superior", "aliases": ["faculdade", "universidade", "graduacao"], "cnae_prefixes": ["853"]},
+    {"id": "educacao-profissional", "label": "Educação profissional", "aliases": ["curso tecnico", "capacitacao"], "cnae_prefixes": ["854"]}
+  ],
+  "critical_processes": [
+    {"id": "captacao-matricula", "label": "Captação, seleção e matrícula", "aliases": ["processo seletivo", "matricula", "rematricula"], "usage": "Distinguir etapa, período letivo e público afetado.", "source_ids": ["totvs-educacional"]},
+    {"id": "gestao-academica", "label": "Gestão acadêmica", "aliases": ["curriculo", "turma", "nota", "frequencia"], "usage": "Não inferir impacto pedagógico sem evidência.", "source_ids": ["totvs-gestao-educacional"]},
+    {"id": "recebiveis", "label": "Contratos e recebíveis", "aliases": ["mensalidade", "boleto", "inadimplencia"], "usage": "Não quantificar retenção ou receita sem dados.", "source_ids": ["totvs-gestao-educacional"]},
+    {"id": "permanencia-comunicacao", "label": "Permanência e comunicação", "aliases": ["evasao", "permanencia", "portal do aluno", "responsavel"], "usage": "Separar risco observado de previsão de evasão.", "source_ids": ["totvs-educacional"]}
+  ],
+  "technologies": [
+    {"id": "sis-academico", "label": "Sistema de gestão acadêmica", "aliases": ["sga", "secretaria", "academico"], "usage": "Usar apenas em processos acadêmicos citados.", "source_ids": ["totvs-gestao-educacional"]},
+    {"id": "portal-app", "label": "Portal e aplicativo educacional", "aliases": ["portal do aluno", "app", "responsavel"], "usage": "Não sugerir canal sem problema de comunicação.", "source_ids": ["totvs-educacional"]},
+    {"id": "ava", "label": "Ambiente virtual de aprendizagem", "aliases": ["ava", "ead", "ambiente virtual"], "usage": "Distinguir integração de uso pedagógico.", "source_ids": ["totvs-gestao-educacional"]},
+    {"id": "financeiro-educacional", "label": "Financeiro educacional", "aliases": ["contrato academico", "mensalidade", "cobranca"], "usage": "Usar quando o fluxo financeiro for explícito.", "source_ids": ["totvs-gestao-educacional"]}
+  ],
+  "common_indicators": [
+    {"id": "conversao-matricula", "label": "Conversão de matrícula e rematrícula", "aliases": ["conversao", "rematricula"], "usage": "Exigir coorte e período.", "source_ids": ["totvs-educacional"]},
+    {"id": "permanencia", "label": "Permanência de alunos", "aliases": ["evasao", "retencao de alunos"], "usage": "Não tratar como churn de cliente TOTVS.", "source_ids": ["totvs-educacional"]},
+    {"id": "inadimplencia", "label": "Inadimplência e recebíveis", "aliases": ["inadimplencia", "atraso mensalidade"], "usage": "Não estimar impacto financeiro.", "source_ids": ["totvs-gestao-educacional"]}
+  ],
+  "possible_problems": [
+    {"signal": "Matrícula com etapas manuais ou desconectadas", "meaning": "Pode aumentar retrabalho e abandono do processo.", "usage": "Exigir etapa e exemplo.", "source_ids": ["totvs-educacional"]},
+    {"signal": "Divergência entre acadêmico e financeiro", "meaning": "Pode afetar contratos, cobrança ou atendimento.", "usage": "Não presumir origem no ERP.", "source_ids": ["totvs-gestao-educacional"]}
+  ],
+  "positive_signals": [
+    {"signal": "Fluxo integrado da matrícula ao recebimento", "meaning": "Indica adoção transversal.", "usage": "Exigir etapas confirmadas.", "source_ids": ["totvs-educacional"]},
+    {"signal": "Indicadores de permanência acompanhados", "meaning": "Indica governança da jornada do aluno.", "usage": "Não converter em satisfação com a TOTVS.", "source_ids": ["totvs-educacional"]}
+  ],
+  "attention_signals": [
+    {"signal": "Problema recorrente em período de matrícula", "meaning": "Pode elevar impacto por sazonalidade.", "usage": "Exigir período, recorrência e volume.", "source_ids": ["totvs-educacional"]},
+    {"signal": "Contorno manual entre acadêmico e financeiro", "meaning": "Pode reduzir confiança e adoção.", "usage": "Exigir fluxo citado.", "source_ids": ["totvs-gestao-educacional"]}
+  ],
+  "diagnostic_questions": [
+    {"id": "q-periodo-letivo", "label": "Qual período letivo, unidade e quantidade de alunos estão envolvidos?", "aliases": [], "usage": "Usar antes de priorizar impacto.", "source_ids": ["totvs-educacional"]},
+    {"id": "q-etapa-matricula", "label": "Em qual etapa da matrícula ou rematrícula ocorre a quebra?", "aliases": [], "usage": "Usar em abandono ou retrabalho.", "source_ids": ["totvs-educacional"]},
+    {"id": "q-integracao-financeira", "label": "Como contrato acadêmico, cobrança e baixa se integram?", "aliases": [], "usage": "Usar em divergência financeira.", "source_ids": ["totvs-gestao-educacional"]}
+  ],
+  "conditional_recommendations": [
+    {"id": "r-mapear-jornada", "label": "Mapear a jornada da inscrição à matrícula", "aliases": [], "usage": "Quando houver abandono ou etapas manuais.", "source_ids": ["totvs-educacional"]},
+    {"id": "r-validar-integracao", "label": "Validar eventos entre acadêmico e financeiro", "aliases": [], "usage": "Quando houver divergência de status ou cobrança.", "source_ids": ["totvs-gestao-educacional"]},
+    {"id": "r-baseline-sazonal", "label": "Definir baseline para o próximo ciclo acadêmico", "aliases": [], "usage": "Quando a correção depender de período de pico.", "source_ids": ["totvs-educacional"]}
+  ],
+  "prohibited_inferences": ["Não prever evasão sem modelo calibrado.", "Não inferir impacto pedagógico.", "Não confundir retenção de alunos com retenção do cliente TOTVS.", "Não estimar receita sem dados."],
+  "meeting_type_rules": {
+    "support_incident": {"prioritize": ["período letivo", "etapa", "volume", "contorno"], "avoid": ["generalizar para todos os alunos"]},
+    "implementation": {"prioritize": ["cadastros", "migração", "integrações", "calendário"], "avoid": ["assumir processo igual entre instituições"]},
+    "relationship_success": {"prioritize": ["adoção", "ciclos concluídos", "pendências"], "avoid": ["usar evasão como satisfação TOTVS"]},
+    "commercial_expansion": {"prioritize": ["jornada explícita", "capacidade atual", "resultado esperado"], "avoid": ["oferta automática"]},
+    "renewal_contract": {"prioritize": ["estabilidade em ciclos críticos", "valor percebido"], "avoid": ["probabilidade de churn"]}
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "id": "varejo", "label": "Varejo", "version": "sector-playbooks-v1", "reviewed_at": "2026-08-03",
+  "aliases": ["VAREJO", "RETAIL", "LOJAS"], "unit_aliases": ["TOTVS VAREJO"], "cnae_prefixes": ["47"],
+  "detection_terms": ["pdv", "loja", "checkout", "omnichannel", "promocao", "fidelidade", "ecommerce", "estoque de loja"],
+  "sources": [
+    {"id": "totvs-varejo", "title": "Portfólio TOTVS Varejo", "url": "https://www.totvs.com/varejo/", "publisher": "TOTVS", "accessed_at": "2026-08-03"},
+    {"id": "totvs-lojas", "title": "TOTVS Varejo Lojas", "url": "https://www.totvs.com/varejo/lojas/", "publisher": "TOTVS", "accessed_at": "2026-08-03"},
+    {"id": "totvs-pdv-omni", "title": "TOTVS Varejo PDV Omni", "url": "https://www.totvs.com/varejo/pdv-omni/", "publisher": "TOTVS", "accessed_at": "2026-08-03"}
+  ],
+  "subsectors": [
+    {"id": "lojas", "label": "Lojas e redes", "aliases": ["loja", "rede", "franquia"], "cnae_prefixes": ["47"]},
+    {"id": "moda", "label": "Moda", "aliases": ["moda", "colecao", "grade"], "cnae_prefixes": ["47814"]},
+    {"id": "food-service", "label": "Food service", "aliases": ["restaurante", "food service", "delivery"], "cnae_prefixes": ["561"]}
+  ],
+  "critical_processes": [
+    {"id": "venda-pdv", "label": "Venda e frente de caixa", "aliases": ["pdv", "checkout", "caixa"], "usage": "Distinguir indisponibilidade, lentidão e regra comercial.", "source_ids": ["totvs-pdv-omni"]},
+    {"id": "estoque-abastecimento", "label": "Estoque e abastecimento", "aliases": ["estoque", "reposicao", "ruptura"], "usage": "Não inferir ruptura sem produto, loja ou período.", "source_ids": ["totvs-lojas"]},
+    {"id": "preco-promocao", "label": "Preço e promoção", "aliases": ["preco", "promocao", "desconto"], "usage": "Separar cadastro, sincronização e execução no PDV.", "source_ids": ["totvs-varejo"]},
+    {"id": "jornada-omnichannel", "label": "Jornada omnichannel", "aliases": ["omnichannel", "ecommerce", "retira loja"], "usage": "Não presumir estratégia omnichannel.", "source_ids": ["totvs-pdv-omni"]}
+  ],
+  "technologies": [
+    {"id": "pdv", "label": "PDV e checkout móvel", "aliases": ["pdv", "checkout", "self checkout"], "usage": "Usar quando a frente de loja for citada.", "source_ids": ["totvs-pdv-omni"]},
+    {"id": "oms-omnichannel", "label": "OMS e omnichannel", "aliases": ["oms", "omnichannel", "pedido integrado"], "usage": "Sugerir somente com canais múltiplos explícitos.", "source_ids": ["totvs-varejo"]},
+    {"id": "fidelizacao", "label": "Fidelização", "aliases": ["fidelidade", "pontos", "crm"], "usage": "Não confundir consumidor final com cliente TOTVS.", "source_ids": ["totvs-lojas"]},
+    {"id": "digital-commerce", "label": "Comércio digital", "aliases": ["ecommerce", "marketplace", "loja virtual"], "usage": "Relacionar apenas a canais citados.", "source_ids": ["totvs-varejo"]}
+  ],
+  "common_indicators": [
+    {"id": "disponibilidade-pdv", "label": "Disponibilidade e tempo de venda no PDV", "aliases": ["pdv fora", "fila", "lentidao"], "usage": "Exigir loja e duração.", "source_ids": ["totvs-pdv-omni"]},
+    {"id": "ruptura-giro", "label": "Ruptura e giro de estoque", "aliases": ["ruptura", "giro"], "usage": "Não calcular sem base.", "source_ids": ["totvs-varejo"]},
+    {"id": "conversao-ticket", "label": "Conversão e ticket", "aliases": ["conversao", "ticket medio"], "usage": "Não atribuir variação ao sistema.", "source_ids": ["totvs-lojas"]}
+  ],
+  "possible_problems": [
+    {"signal": "Preço ou promoção divergente entre canais", "meaning": "Pode afetar venda e confiança operacional.", "usage": "Exigir canal, item e regra.", "source_ids": ["totvs-varejo"]},
+    {"signal": "Estoque sem sincronização com venda", "meaning": "Pode gerar ruptura aparente ou pedido sem disponibilidade.", "usage": "Não afirmar perda de venda sem dado.", "source_ids": ["totvs-lojas"]}
+  ],
+  "positive_signals": [
+    {"signal": "Operação integrada entre retaguarda e PDV", "meaning": "Indica adoção transversal.", "usage": "Exigir processos confirmados.", "source_ids": ["totvs-lojas"]},
+    {"signal": "Melhoria medida na jornada de venda", "meaning": "Indica valor percebido verificável.", "usage": "Exigir indicador e período.", "source_ids": ["totvs-pdv-omni"]}
+  ],
+  "attention_signals": [
+    {"signal": "Instabilidade em horário de pico", "meaning": "Pode elevar impacto operacional e relacional.", "usage": "Exigir horário, duração e lojas.", "source_ids": ["totvs-pdv-omni"]},
+    {"signal": "Contorno manual de preço ou estoque", "meaning": "Pode indicar baixa confiança ou integração incompleta.", "usage": "Exigir ocorrência explícita.", "source_ids": ["totvs-varejo"]}
+  ],
+  "diagnostic_questions": [
+    {"id": "q-lojas-canais", "label": "Quais lojas, canais, itens e horários foram afetados?", "aliases": [], "usage": "Usar antes de priorizar impacto.", "source_ids": ["totvs-varejo"]},
+    {"id": "q-fluxo-preco", "label": "Como preço e promoção chegam ao PDV e aos canais digitais?", "aliases": [], "usage": "Usar em divergência comercial.", "source_ids": ["totvs-pdv-omni"]},
+    {"id": "q-estoque", "label": "Em qual evento o estoque deixa de refletir a operação?", "aliases": [], "usage": "Usar em ruptura ou saldo divergente.", "source_ids": ["totvs-lojas"]}
+  ],
+  "conditional_recommendations": [
+    {"id": "r-reproduzir-canal", "label": "Reproduzir o fluxo no canal e horário afetados", "aliases": [], "usage": "Quando houver falha de PDV ou omnichannel.", "source_ids": ["totvs-pdv-omni"]},
+    {"id": "r-rastrear-preco", "label": "Rastrear versão e propagação da regra de preço", "aliases": [], "usage": "Quando preço ou promoção divergirem.", "source_ids": ["totvs-varejo"]},
+    {"id": "r-baseline-loja", "label": "Medir impacto por loja e canal", "aliases": [], "usage": "Quando o impacto estiver generalizado sem dados.", "source_ids": ["totvs-lojas"]}
+  ],
+  "prohibited_inferences": ["Não afirmar perda de venda sem dado.", "Não presumir estratégia omnichannel.", "Não confundir fidelização do consumidor com retenção do cliente TOTVS.", "Não atribuir ruptura ao ERP automaticamente."],
+  "meeting_type_rules": {
+    "support_incident": {"prioritize": ["loja", "canal", "horário", "item", "contorno"], "avoid": ["generalização nacional"]},
+    "implementation": {"prioritize": ["cadastros", "lojas piloto", "integrações", "pico"], "avoid": ["go-live sem critério"]},
+    "relationship_success": {"prioritize": ["adoção por loja", "estabilidade", "resultados"], "avoid": ["confundir venda com satisfação TOTVS"]},
+    "commercial_expansion": {"prioritize": ["canal desejado", "gargalo", "métrica"], "avoid": ["oferta omnichannel automática"]},
+    "renewal_contract": {"prioritize": ["estabilidade", "valor percebido", "pendências críticas"], "avoid": ["probabilidade de churn"]}
+  }
+}

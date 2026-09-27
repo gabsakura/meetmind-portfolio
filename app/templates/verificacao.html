@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% block titulo %}MeetMind · Central de reuniões{% endblock %}
+{% block titulo_topo %}Central de reuniões{% endblock %}
+{% block conteudo %}
+{% set status_labels = {
+  'uploaded': 'Recebida', 'screening': 'Validando',
+  'pending_review': 'Registro antigo', 'rejected': 'Não importada',
+  'approved': 'Registro antigo', 'verifying': 'Padronizando',
+  'needs_review': 'Registro antigo', 'analysis_queued': 'Analisando com IA',
+  'completed': 'Concluída', 'blocked': 'Bloqueada',
+  'failed': 'Interrompida', 'expired': 'Expirada'
+} %}
+{% set status_classes = {
+  'pending_review': 'status-atencao', 'needs_review': 'status-atencao',
+  'completed': 'status-sucesso', 'approved': 'status-neutro',
+  'analysis_queued': 'status-atencao', 'rejected': 'status-risco',
+  'blocked': 'status-risco', 'failed': 'status-risco', 'expired': 'status-neutro'
+} %}
+
+<div class="pagina submission-page" data-submission-page>
+  <header class="submission-workspace-header">
+    <div>
+      <h2>Envie a transcrição e acompanhe a leitura da IA</h2>
+    </div>
+    <span class="submission-auto-badge"><span aria-hidden="true">●</span> Fluxo automático</span>
+  </header>
+
+  <section class="widget daily-briefing-shell" aria-labelledby="meeting-calendar-title">
+    <header class="secao-cabecalho">
+      <div><span>Agenda conectada</span><h3 id="meeting-calendar-title">Próximas reuniões</h3></div>
+      <a href="{{ url_for('painel.perfil', _anchor='calendario') }}">Configurar calendário</a>
+    </header>
+    <div data-meeting-calendar aria-live="polite" aria-busy="true">
+      <div class="daily-briefing-skeleton" aria-hidden="true"><span class="command-skeleton-line"></span></div>
+    </div>
+  </section>
+
+  <div class="submission-layout">
+    <section class="widget submission-upload" aria-labelledby="new-submission-title">
+      <div class="secao-cabecalho submission-upload-heading">
+        <div>
+          <h2 id="new-submission-title">Selecione o arquivo</h2>
+        </div>
+        <span class="etiqueta">Até 25 MB</span>
+      </div>
+
+      <form id="submission-form" class="submission-form" enctype="multipart/form-data" novalidate>
+        <label class="submission-drop" for="submission-file">
+          <span class="submission-drop-icon" aria-hidden="true">
+            <svg class="nav-icon" viewBox="0 0 24 24"><path d="M12 16V4M7.5 8.5 12 4l4.5 4.5"/><path d="M5 14v6h14v-6"/></svg>
+          </span>
+          <strong>Arraste o arquivo aqui ou clique para escolher</strong>
+          <small>Transcrição em VTT, SRT, TXT, CSV, JSON, XLSX ou SQL</small>
+          <input id="submission-file" name="file" type="file"
+                 accept=".vtt,.srt,.txt,.csv,.json,.xlsx,.sql" required>
+          <span class="submission-file-selection" data-file-name>Nenhum arquivo selecionado</span>
+        </label>
+
+        <div class="submission-fields">
+          <label>Título da reunião
+            <input name="title" maxlength="200" required autocomplete="off"
+                   placeholder="Ex.: Alinhamento mensal com o cliente">
+          </label>
+          <label>Cliente existente
+            <select name="client_id">
+              <option value="">Cadastrar novo cliente</option>
+              {% for client in clients %}<option value="{{ client.id }}">{{ client.name }}</option>{% endfor %}
+            </select>
+          </label>
+          <label>Novo cliente
+            <input name="client_name" maxlength="200" autocomplete="organization"
+                   placeholder="Preencha somente se não estiver na lista">
+          </label>
+          <label>Data da reunião
+            <input name="occurred_at" type="date">
+          </label>
+          <label>Setor da reunião
+            <select name="sector" required>
+              <option value="" selected disabled>Selecione o setor</option>
+              {% for sector in sectors %}
+              <option value="{{ sector.id }}">{{ sector.label }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label>Idioma
+            <select name="language">
+              <option value="pt-BR">Português (Brasil)</option>
+              <option value="en-US">Inglês</option>
+              <option value="es-ES">Espanhol</option>
+            </select>
+          </label>
+          <label>Responsável pela conta
+            <select name="owner_id" required>
+              {% for user in available_users %}
+              <option value="{{ user.id }}" {{ 'selected' if user.id == current_user.id }}>{{ user.name }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label class="submission-field-wide">Participantes internos
+            <select name="participant_ids" multiple size="{{ [available_users|length, 4]|min }}">
+              {% for user in available_users %}
+              <option value="{{ user.id }}" {{ 'selected' if user.id == current_user.id }}>{{ user.name }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label class="submission-field-wide">Identificador opcional
+            <input name="external_id" maxlength="100" autocomplete="off"
+                   placeholder="Ex.: reuniao-2026-001">
+          </label>
+        </div>
+
+        <label class="submission-consent">
+          <input name="consent" type="checkbox" value="true" required>
+          <span>Confirmo que tenho autorização para processar esta reunião com os recursos de IA configurados.</span>
+        </label>
+
+        <div class="submission-actions">
+          <button class="botao-primario submission-submit" type="submit">
+            <span>Enviar e analisar</span><span aria-hidden="true">→</span>
+          </button>
+          <p data-upload-status role="status" aria-live="polite"></p>
+        </div>
+      </form>
+
+      <section class="submission-live" data-live-progress hidden aria-live="polite">
+        <div class="submission-live-copy">
+          <span class="spinner" data-live-spinner aria-hidden="true"></span>
+          <div>
+            <h3 data-live-heading>Reunião recebida</h3>
+          </div>
+          <span class="status status-atencao" data-live-status>Validando</span>
+        </div>
+        <ol class="submission-live-steps" aria-label="Progresso do processamento">
+          <li data-live-step="1"><span>1</span><strong>Envio</strong></li>
+          <li data-live-step="2"><span>2</span><strong>Segurança</strong></li>
+          <li data-live-step="3"><span>3</span><strong>Formato IA</strong></li>
+          <li data-live-step="4"><span>4</span><strong>Leitura IA</strong></li>
+          <li data-live-step="5"><span>5</span><strong>Resultado</strong></li>
+        </ol>
+        <div class="submission-live-actions">
+          <a class="botao-primario" data-live-result href="/inteligencia-artificial" hidden>Ver retorno da IA</a>
+          <button class="botao-tabela" type="button" data-live-detail>Ver detalhes</button>
+        </div>
+      </section>
+    </section>
+  </div>
+
+  <section class="widget submission-list-section">
+    <div class="secao-cabecalho">
+      <div>
+        <h2>Processamento e histórico</h2>
+      </div>
+    </div>
+    <div class="submission-list" data-mine-list>
+      {% for item in mine %}
+      <button class="submission-row" type="button" data-submission-id="{{ item.id }}" data-status="{{ item.status }}">
+        <span class="submission-file-type">{{ item.file_format|upper }}</span>
+        <span><strong>{{ item.proposed_metadata.get('title') or item.original_filename }}</strong>
+          <small>{{ item.original_filename }} · {{ (item.byte_size / 1024)|round(1) }} KB</small></span>
+        <span class="status {{ status_classes.get(item.status, 'status-neutro') }}" data-row-status>
+          {{ status_labels.get(item.status, item.status) }}</span>
+        <time datetime="{{ item.created_at.isoformat() }}">{{ item.created_at.strftime('%d/%m/%Y %H:%M') }}</time>
+        <span aria-hidden="true">›</span>
+      </button>
+      {% else %}
+      <div class="estado-vazio" data-mine-empty>
+        <strong>Nenhuma reunião enviada</strong>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="widget submission-detail submission-request-detail"
+           data-submission-detail hidden aria-live="polite">
+    <div class="secao-cabecalho">
+      <div><h2 data-detail-title>Reunião</h2></div>
+      <button class="botao-tabela" type="button" data-detail-close>Fechar</button>
+    </div>
+    <div class="submission-detail-meta" data-detail-meta></div>
+    <div class="submission-timeline" data-detail-timeline></div>
+    <article class="submission-request-message" data-request-message>
+      <span aria-hidden="true">◎</span>
+      <div><h3 data-request-heading></h3><p data-request-summary></p></div>
+    </article>
+    <dl class="submission-request-facts" data-request-facts></dl>
+    <div class="submission-request-actions">
+      <button class="botao-secundario" type="button" data-retry-submission hidden>Tentar novamente</button>
+      <a class="botao-tabela" data-canonical-link href="#" hidden>Baixar formato da IA</a>
+      <a class="botao-primario" data-result-link href="/inteligencia-artificial" hidden>Ver retorno da IA</a>
+    </div>
+  </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('static', filename='js/verificacao.js') }}"></script>
+{% endblock %}

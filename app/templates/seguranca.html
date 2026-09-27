@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block titulo %}MeetMind · Segurança{% endblock %}
+{% block titulo_topo %}Eventos de segurança{% endblock %}
+{% block conteudo %}
+<div class="pagina">
+<section class="widget">
+  <div class="secao-cabecalho">
+    <div><h2>Investigações</h2></div>
+  </div>
+  {% if events %}
+  <div class="tabela-wrap">
+    <table>
+      <thead><tr><th>Severidade</th><th>Evento</th><th>Ocorrências</th><th>Última rota</th><th>IP mascarado</th><th>Último horário</th><th>Revisão</th></tr></thead>
+      <tbody>
+      {% for event in events %}
+      <tr>
+        <td><span class="status {{ 'status-risco' if event.severity == 'high' else 'status-atencao' }}">{{ event.severity }}</span></td>
+        <td>{{ event.event_type }}</td><td><strong>{{ event.count }}</strong></td><td>{{ event.route }}</td><td>{{ event.masked_ip }}</td>
+        <td>{{ event.occurred_at.strftime('%d/%m/%Y %H:%M') }}</td>
+        <td>
+          {% if event.acknowledged_at %}<span class="status status-sucesso">Revisado</span>
+          {% else %}<button class="botao-tabela" data-acknowledge="{{ event.id }}" type="button">Reconhecer</button>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="estado-vazio"><strong>Nenhum evento</strong></div>
+  {% endif %}
+</section>
+</div>
+{% endblock %}

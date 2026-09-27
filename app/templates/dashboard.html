@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block titulo %}MeetMind · Seu dia{% endblock %}
+{% block titulo_topo %}Seu dia{% endblock %}
+{% block conteudo %}
+<div class="command-dashboard" data-command-dashboard data-user-name="{{ first_name }}" data-can-route="{{ 'true' if can_route else 'false' }}">
+  <header class="command-day-header">
+    <div>
+      <span data-greeting>Olá</span>
+      <h2>{{ first_name }}, por onde você quer começar?</h2>
+    </div>
+    <a class="command-day-link" href="{{ url_for('painel.acoes') }}">Abrir todas as ações</a>
+  </header>
+
+  <div class="command-flow-shell">
+    <nav class="command-flow" aria-label="Áreas da visão geral" role="tablist">
+      <button class="command-flow-step is-active" type="button" role="tab" id="tab-priorizar" aria-selected="true" aria-controls="stage-priorizar" data-jump-target="priorizar">
+        <span><strong>Priorizar</strong><small>O que pede atenção</small></span>
+        <b data-stage-count="priorizar" aria-label="Itens neste momento"></b>
+      </button>
+      <button class="command-flow-step" type="button" role="tab" id="tab-entender" aria-selected="false" aria-controls="stage-entender" tabindex="-1" data-jump-target="entender">
+        <span><strong>Contexto</strong><small>O que mudou</small></span>
+        <b data-stage-count="entender" aria-label="Itens neste momento"></b>
+      </button>
+      <button class="command-flow-step" type="button" role="tab" id="tab-agir" aria-selected="false" aria-controls="stage-agir" tabindex="-1" data-jump-target="agir">
+        <span><strong>Foco do dia</strong><small>Ações para executar</small></span>
+        <b data-stage-count="agir" aria-label="Itens neste momento"></b>
+      </button>
+      <button class="command-flow-step" type="button" role="tab" id="tab-acompanhar" aria-selected="false" aria-controls="stage-acompanhar" tabindex="-1" data-jump-target="acompanhar">
+        <span><strong>Encaminhar</strong><small>Acionar outras áreas</small></span>
+      </button>
+    </nav>
+
+    <main class="command-stage-deck">
+      <section class="command-stage command-stage-priorities" id="stage-priorizar" role="tabpanel" aria-labelledby="tab-priorizar" tabindex="-1" data-command-stage="priorizar">
+        <header class="command-stage-heading">
+          <h2>Prioridades e agenda</h2>
+        </header>
+        <div data-dashboard-region="briefing" aria-live="polite" aria-busy="true">
+          <div class="command-metrics" aria-hidden="true">
+            {% for _ in range(3) %}<span class="command-skeleton command-skeleton-pill"></span>{% endfor %}
+          </div>
+        </div>
+        <section class="daily-briefing-shell" aria-labelledby="daily-briefing-title">
+          <header>
+            <div><span>Agenda pessoal</span><h3 id="daily-briefing-title">Resumo do dia</h3></div>
+          </header>
+          <div data-dashboard-region="daily-briefing" aria-live="polite" aria-busy="true">
+            <div class="daily-briefing-skeleton" aria-hidden="true">
+              {% for _ in range(3) %}<span class="command-skeleton command-skeleton-line"></span>{% endfor %}
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section class="command-stage" id="stage-entender" role="tabpanel" aria-labelledby="tab-entender" tabindex="-1" data-command-stage="entender" hidden>
+        <header class="command-stage-heading">
+          <h2>Contexto recente</h2>
+        </header>
+        <div data-dashboard-region="timeline" aria-live="polite" aria-busy="true">
+          <div class="command-skeleton-stack" aria-hidden="true">
+            {% for _ in range(4) %}<span class="command-skeleton command-skeleton-line"></span>{% endfor %}
+          </div>
+        </div>
+      </section>
+
+      <section class="command-stage" id="stage-agir" role="tabpanel" aria-labelledby="tab-agir" tabindex="-1" data-command-stage="agir" hidden>
+        <header class="command-stage-heading">
+          <h2>Foco do dia</h2>
+          <a href="{{ url_for('painel.acoes') }}">Todas as ações</a>
+        </header>
+        <div data-dashboard-region="focus" aria-live="polite" aria-busy="true">
+          <div class="command-skeleton-stack" aria-hidden="true">
+            {% for _ in range(3) %}<span class="command-skeleton command-skeleton-task"></span>{% endfor %}
+          </div>
+        </div>
+      </section>
+
+      <section class="command-stage command-stage-routing" id="stage-acompanhar" role="tabpanel" aria-labelledby="tab-acompanhar" tabindex="-1" data-command-stage="acompanhar" hidden>
+        <header class="command-stage-heading">
+          <h2>Encaminhar e acompanhar</h2>
+        </header>
+        <div class="command-follow-grid">
+          <section class="command-router" aria-labelledby="router-title">
+            <h3 id="router-title">Novo encaminhamento</h3>
+            {% if can_route %}
+            <form data-kanban-form>
+              <input type="hidden" name="source_action_id">
+              <div class="router-source" data-router-source><span>Ação de origem</span><strong>Escolha “Encaminhar” em uma ação</strong></div>
+              <label for="kanban-request-type">Necessidade</label>
+              <select id="kanban-request-type" name="request_type" disabled required>
+                <option value="">Selecione</option>
+                <option value="performance_analysis">Solicitar análise de lentidão</option>
+                <option value="product_bug">Investigar erro no produto</option>
+                <option value="commercial_opportunity">Avaliar oportunidade comercial</option>
+                <option value="enablement_request">Planejar treinamento</option>
+              </select>
+              <div class="router-destination" data-router-destination aria-live="polite"><span>Destino</span><strong>Aguardando necessidade</strong></div>
+              <label for="kanban-note">Observação <small>opcional</small></label>
+              <textarea id="kanban-note" name="note" maxlength="2000" rows="4" disabled placeholder="Inclua apenas o contexto necessário."></textarea>
+              <button class="botao-primario" type="submit" disabled>Enviar encaminhamento</button>
+              <p class="router-feedback" data-router-feedback role="status" aria-live="polite"></p>
+            </form>
+            {% else %}
+            <div class="command-empty compact"><strong>Somente leitura</strong><p>Analistas e administradores podem criar encaminhamentos.</p></div>
+            {% endif %}
+          </section>
+          <aside class="command-follow-links" aria-label="Acompanhamento">
+            <a href="{{ url_for('painel.acoes') }}"><span>Ações de Customer Success</span><strong>Continuar o trabalho</strong></a>
+            <a href="{{ url_for('painel.encaminhamentos') }}"><span>Encaminhamentos</span><strong>Ver responsáveis e respostas</strong></a>
+          </aside>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script type="module" src="{{ url_for('static', filename='js/dashboard/index.js') }}"></script>{% endblock %}

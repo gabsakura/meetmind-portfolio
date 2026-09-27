@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block titulo %}MeetMind · Perfil{% endblock %}
+{% block titulo_topo %}Perfil{% endblock %}
+{% block conteudo %}
+<div class="pagina">
+{% with mensagens = get_flashed_messages(with_categories=true) %}
+  {% for categoria, mensagem in mensagens %}
+  <div class="aviso {{ 'aviso-erro' if categoria == 'error' else 'aviso-success' }}" role="alert">{{ mensagem }}</div>
+  {% endfor %}
+{% endwith %}
+<section class="widget">
+  <div class="secao-cabecalho">
+    <div>
+      <h2>Foto de perfil</h2>
+    </div>
+  </div>
+  <div class="perfil-foto">
+    <span class="perfil-preview">
+      {% if current_user.has_avatar %}
+      <img src="{{ url_for('painel.perfil_foto', user_id=current_user.id, v=current_user.avatar_version) }}"
+           alt="Foto de perfil de {{ current_user.name }}">
+      {% else %}
+      <span aria-hidden="true">{{ current_user.initials }}</span>
+      {% endif %}
+    </span>
+    <div class="perfil-form">
+      {% if is_demo_environment %}
+      <p class="texto-secundario">Alterações de perfil ficam desativadas na demonstração pública.</p>
+      {% else %}
+      <form action="{{ url_for('painel.perfil_foto_upload') }}" method="post" enctype="multipart/form-data" class="form-stack">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label for="foto">Escolher imagem</label>
+        <input type="file" id="foto" name="foto" accept="image/png,image/jpeg,image/webp" required>
+        <p class="texto-secundario">PNG, JPEG ou WebP, até {{ limite_kb }} KB. A imagem é cortada em círculo pelo centro, então um enquadramento quadrado funciona melhor.</p>
+        <div class="perfil-acoes">
+          <button class="botao-primario" type="submit">Salvar foto</button>
+        </div>
+      </form>
+      {% if current_user.has_avatar %}
+      <form action="{{ url_for('painel.perfil_foto_remover') }}" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="botao-perigo" type="submit">Remover foto</button>
+      </form>
+      {% endif %}
+      {% endif %}
+    </div>
+  </div>
+</section>
+<section class="widget" id="calendario">
+  <div class="secao-cabecalho">
+    <h2>Agenda e trabalho</h2>
+    <span class="status status-neutro">Microsoft 365 e Google</span>
+  </div>
+  {% if is_demo_environment %}
+  <div class="aviso" role="status">Integrações pessoais não ficam disponíveis na demonstração pública.</div>
+  {% else %}
+  <div class="calendar-provider-list">
+    {% for provider in calendar_providers %}
+    {% set connection = provider.connection %}
+    <article class="calendar-provider">
+      <div class="calendar-provider-copy">
+        <div class="calendar-provider-title">
+          <h3>{{ provider.label }}</h3>
+          {% if connection %}
+          <span class="status {{ 'status-sucesso' if connection.status == 'connected' else 'status-atencao' }}">
+            {{ 'Conectado' if connection.status == 'connected' else 'Atenção' }}
+          </span>
+          {% elif provider.configured %}
+          <span class="status status-neutro">Não conectado</span>
+          {% else %}
+          <span class="status status-neutro">Indisponível</span>
+          {% endif %}
+        </div>
+        {% if connection %}
+        <p>{{ connection.account_email }}{% if connection.last_synced_at %} · Última atualização {{ connection.last_synced_at.strftime('%d/%m/%Y %H:%M') }}{% endif %}{% if provider.reconnect_required %} · Reconecte para incluir tarefas{% elif not provider.write_enabled %} · Reconecte para permitir agendamentos autorizados{% endif %}</p>
+        {% elif provider.configured %}
+        <p>Use seus compromissos no Resumo do Dia e agende acompanhamentos somente quando você autorizar.</p>
+        {% else %}
+        <p>O administrador precisa cadastrar as credenciais deste provedor.</p>
+        {% endif %}
+        <div class="calendar-provider-features" aria-label="Recursos disponíveis">
+          {% for feature in provider.features %}<span>{{ feature }}</span>{% endfor %}
+        </div>
+      </div>
+      <div class="calendar-provider-actions">
+        {% if connection %}
+        {% if provider.reconnect_required or not provider.write_enabled %}<a class="botao-primario" href="{{ url_for('painel.perfil_calendario_conectar', provider=provider.id) }}">Reconectar</a>{% endif %}
+        <form action="{{ url_for('painel.perfil_calendario_sincronizar', provider=provider.id) }}" method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="botao-terciario" type="submit">Atualizar</button>
+        </form>
+        <form action="{{ url_for('painel.perfil_calendario_desconectar', provider=provider.id) }}" method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="botao-terciario" type="submit">Desconectar</button>
+        </form>
+        {% elif provider.configured %}
+        <a class="botao-primario" href="{{ url_for('painel.perfil_calendario_conectar', provider=provider.id) }}">Conectar</a>
+        {% else %}
+        <button class="botao-terciario" type="button" disabled>Configuração pendente</button>
+        {% endif %}
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  {% endif %}
+</section>
+</div>
+{% endblock %}

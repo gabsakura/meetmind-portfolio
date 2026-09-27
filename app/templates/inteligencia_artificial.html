@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block titulo %}Inteligência Artificial · MeetMind{% endblock %}
+{% block titulo_topo %}Inteligência Artificial{% endblock %}
+{% block conteudo %}
+<section class="pagina" data-ai-workspace data-selected-analysis="{{ selected_analysis_id }}" data-initial-meeting="{{ selected_meeting_id }}" data-can-request="{{ 'true' if current_user.role.value in ['admin', 'manager', 'analyst'] else 'false' }}">
+  {% if meetings %}
+  <section class="ai-picker" aria-labelledby="ai-picker-title">
+    <div class="campo-grupo">
+      <label id="ai-picker-title" for="ai-meeting-select">Reunião analisada</label>
+      <select id="ai-meeting-select">
+        {% for meeting in meetings %}
+        <option value="{{ meeting.id }}" data-client="{{ meeting.client.name if meeting.client else 'Cliente não identificado' }}" data-external-id="{{ meeting.external_id }}" data-title="{{ meeting.title }}" data-date="{{ meeting.occurred_at.strftime('%d/%m/%Y') if meeting.occurred_at else 'Sem data' }}" {{ 'selected' if selected_meeting_id == meeting.id }}>{{ meeting.external_id }} · {{ meeting.client.name if meeting.client else 'Cliente não identificado' }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="ai-picker-actions">
+      {% if current_user.role.value in ['admin', 'manager', 'analyst'] %}<button class="botao-primario" id="ai-analysis-button" type="button">Gerar nova leitura</button>{% endif %}
+    </div>
+  </section>
+
+  <section id="ai-processing" class="ai-processing" hidden aria-live="polite">
+    <span class="spinner" aria-hidden="true"></span><strong>Analisando a reunião</strong>
+  </section>
+
+  <section id="ai-empty" class="estado-vazio"><span aria-hidden="true">✦</span><h2>Selecione uma reunião</h2></section>
+
+  <article id="ai-result" class="ai-result" hidden>
+    <header class="ai-result-heading">
+      <div><p class="reuniao-id" id="ai-meeting-id"></p><h2 id="ai-client-name"></h2><p id="ai-meeting-meta"></p></div>
+      <a id="ai-audit-link" class="botao-secundario link-botao" href="{{ url_for('painel.auditabilidade_ia') }}" {% if current_user.role.value not in ['admin', 'manager', 'analyst'] %}hidden{% endif %}>Ver auditabilidade</a>
+    </header>
+
+    <details class="ai-participants" data-ai-participants>
+      <summary>Responsáveis e participantes</summary>
+      <div class="ai-participant-meta" data-participant-meta></div>
+      <div class="ai-participant-list" data-participant-list></div>
+      {% if current_user.role.value in ['admin', 'manager', 'analyst'] %}
+      <form data-participant-form>
+        <label>Adicionar participante
+          <select name="user_id" required>
+            <option value="">Selecione</option>
+            {% for user in participant_options %}<option value="{{ user.id }}">{{ user.name }}</option>{% endfor %}
+          </select>
+        </label>
+        <button class="botao-secundario" type="submit">Adicionar</button>
+      </form>
+      {% endif %}
+      <p class="diagnostic-feedback" data-participant-feedback role="status" aria-live="polite"></p>
+    </details>
+
+    <nav id="ai-workflow" class="ai-workflow-steps" aria-label="Fluxo da reunião">
+      <a href="#ai-evidence-panel"><span>1</span>Evidências</a>
+      <a href="#ai-plan-panel"><span>2</span>Plano</a>
+      <a href="#ai-actions-panel"><span>3</span>Ações</a>
+    </nav>
+
+    <section id="ai-evidence-panel" class="ai-workflow-panel" aria-labelledby="ai-evidence-title">
+      <div class="secao-cabecalho"><h3 id="ai-evidence-title">Evidências acionáveis</h3></div>
+      <div id="ai-evidence-list" class="ai-evidence-list"></div>
+    </section>
+
+    <section id="ai-plan-panel" class="ai-workflow-panel" aria-labelledby="ai-plan-title">
+      <div class="secao-cabecalho"><h3 id="ai-plan-title">Plano de acompanhamento</h3><span id="ai-plan-status" class="ai-plan-status"></span></div>
+      <div id="ai-plan-content" class="ai-plan-content"></div>
+    </section>
+
+    <section class="ai-main-answer" data-standard-analysis-section><p class="eyebrow">O que aconteceu</p><p id="ai-what-happened"></p></section>
+
+    <section class="ai-reading-overview" aria-labelledby="ai-reading-overview-title">
+      <div class="secao-cabecalho">
+        <div><h3 id="ai-reading-overview-title">Contexto comercial e participantes</h3></div>
+      </div>
+      <div id="ai-reading-card-grid" class="ai-reading-card-grid" aria-live="polite"></div>
+    </section>
+
+    <div class="ai-signal-grid" aria-label="Indicadores da reunião" data-standard-analysis-section>
+      <article id="ai-objective-card"><span>Objetivo</span><strong id="ai-objective-status"></strong><p id="ai-objective-reason"></p></article>
+      <article id="ai-follow-up-card"><span>Próximo encontro</span><strong id="ai-follow-up-status"></strong><p id="ai-follow-up-reason"></p></article>
+      <article id="ai-conflict-card"><span>Conversa</span><strong id="ai-conflict-status"></strong><p id="ai-conflict-reason"></p></article>
+    </div>
+
+    <section class="ai-concern" id="ai-concern" data-standard-analysis-section hidden><span aria-hidden="true">!</span><div><h3 id="ai-concern-title"></h3><p id="ai-concern-summary"></p></div></section>
+
+    <section class="ai-requests" data-standard-analysis-section><div class="secao-cabecalho"><div><h3>Pedidos do cliente</h3></div></div><div id="ai-request-list" class="ai-request-list"></div></section>
+
+    <details id="ai-transcript-panel" class="ai-transcript-panel" data-standard-analysis-section>
+      <summary><span>Transcrição pesquisável</span><strong id="ai-transcript-coverage"></strong></summary>
+      <div class="ai-transcript-tools">
+        <label for="ai-transcript-search">Buscar na conversa</label>
+        <input id="ai-transcript-search" type="search" placeholder="Pessoa, assunto ou palavra" autocomplete="off">
+      </div>
+      <div id="ai-transcript-list" class="ai-transcript-list" aria-live="polite"></div>
+    </details>
+    <section id="ai-actions-panel" class="ai-suggestions ai-workflow-panel" data-standard-analysis-section>
+      <div class="secao-cabecalho">
+        <div><h3>Próximos passos e ações</h3></div>
+        <div class="ai-action-header-actions"><button id="ai-confirm-all" class="botao-primario" type="button" hidden>Confirmar todas</button><a href="{{ url_for('painel.acoes') }}">Abrir acompanhamento</a></div>
+      </div>
+      <p id="ai-action-feedback" class="diagnostic-feedback" role="status" aria-live="polite"></p>
+      <div id="ai-action-list" class="ai-action-list"></div>
+    </section>
+
+    <aside id="ai-legacy-warning" class="ai-legacy-warning" hidden>Esta é uma análise anterior. A nova leitura de manufatura está sendo preparada sem apagar este resultado.</aside>
+  </article>
+  {% else %}
+  <section class="estado-vazio"><strong>Nenhuma reunião analisada</strong></section>
+  {% endif %}
+</section>
+{% endblock %}
+{% block scripts %}<script type="module" src="{{ url_for('static', filename='js/inteligencia-artificial.js') }}"></script>{% endblock %}

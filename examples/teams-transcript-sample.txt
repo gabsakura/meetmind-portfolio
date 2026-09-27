@@ -1,0 +1,3 @@
+[00:00:01] Ana Souza: Bom dia, podemos começar a reunião?
+[00:00:05] Cliente Exemplo: Sim. Precisamos revisar o prazo da implantação.
+[00:00:10] Ana Souza: Vou confirmar o cronograma e retornar até sexta-feira.

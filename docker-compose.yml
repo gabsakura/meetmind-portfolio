@@ -1,0 +1,229 @@
+name: meetmind
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: meetmind
+      POSTGRES_USER: meetmind_owner
+      POSTGRES_PASSWORD: ${POSTGRES_OWNER_PASSWORD:-meetmind-owner-dev}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres/init-roles.sql:/docker-entrypoint-initdb.d/10-init-roles.sql:ro
+      - ./docker/postgres/migrate-legacy-roles.sql:/opt/meetmind/migrate-legacy-roles.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U meetmind_owner -d meetmind"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  redis-chat:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru"]
+    ports:
+      - "127.0.0.1:6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  clamav:
+    image: clamav/clamav:1.4
+    volumes:
+      - clamav-data:/var/lib/clamav
+    healthcheck:
+      test: ["CMD-SHELL", "clamdscan --ping=1 >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 90s
+
+  migrate:
+    build: .
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      SERVICE_ROLE: migration
+      DATABASE_URL: ${MIGRATION_DATABASE_URL:-postgresql+psycopg://meetmind_owner:meetmind-owner-dev@postgres:5432/meetmind}
+      SECRET_KEY: ${SECRET_KEY:?Defina SECRET_KEY}
+      REDIS_URL: redis://redis:6379/0
+      RATELIMIT_STORAGE_URI: memory://
+      QUEUE_ENABLED: "false"
+      JSON_LOGS: ${JSON_LOGS:-true}
+    command: ["flask", "--app", "run.py", "db", "upgrade"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    build: .
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      SERVICE_ROLE: web
+      AUTH_MODE: ${AUTH_MODE:-local}
+      OIDC_DISCOVERY_URL: ${OIDC_DISCOVERY_URL:-}
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-}
+      OIDC_ALLOWED_DOMAIN: ${OIDC_ALLOWED_DOMAIN:-}
+      OIDC_JIT_PROVISIONING: ${OIDC_JIT_PROVISIONING:-false}
+      OIDC_ADMIN_GROUP_ID: ${OIDC_ADMIN_GROUP_ID:-}
+      OIDC_MANAGER_GROUP_ID: ${OIDC_MANAGER_GROUP_ID:-}
+      OIDC_ANALYST_GROUP_ID: ${OIDC_ANALYST_GROUP_ID:-}
+      DATABASE_URL: ${COMPOSE_DATABASE_URL:-postgresql+psycopg://meetmind_app:meetmind-app-dev@postgres:5432/meetmind}
+      REDIS_URL: redis://redis:6379/0
+      CHAT_REDIS_URL: redis://redis-chat:6379/0
+      RATELIMIT_STORAGE_URI: redis://redis:6379/0
+      SECURITY_REDIS_ENABLED: "true"
+      SECRET_KEY: ${SECRET_KEY:?Defina SECRET_KEY}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      TRUSTED_PROXY_COUNT: ${TRUSTED_PROXY_COUNT:-0}
+      QUEUE_ENABLED: "true"
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.5-flash-lite}
+      AI_PROVIDER: ${AI_PROVIDER:-gemini_api}
+      AUTOPSY_ASSISTANT_MODE: ${AUTOPSY_ASSISTANT_MODE:-shadow}
+      AUTOPSY_CALIBRATION_SAMPLE_SIZE: ${AUTOPSY_CALIBRATION_SAMPLE_SIZE:-40}
+      VERTEX_PROJECT: ${VERTEX_PROJECT:-}
+      VERTEX_LOCATION: ${VERTEX_LOCATION:-global}
+      JSON_LOGS: ${JSON_LOGS:-true}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      ANTIVIRUS_ENABLED: "true"
+      ANTIVIRUS_HOST: clamav
+      ANTIVIRUS_FAIL_CLOSED: "true"
+      SUBMISSION_REQUIRE_ANTIVIRUS: "true"
+      MAX_SUBMISSION_BYTES: ${MAX_SUBMISSION_BYTES:-26214400}
+      SUBMISSION_RETENTION_DAYS: ${SUBMISSION_RETENTION_DAYS:-7}
+      SUBMISSION_STORAGE_DIR: /data/submissions
+      SUBMISSION_STORAGE_BACKEND: ${SUBMISSION_STORAGE_BACKEND:-filesystem}
+      GCS_SUBMISSION_BUCKET: ${GCS_SUBMISSION_BUCKET:-}
+      GCS_SUBMISSION_PREFIX: ${GCS_SUBMISSION_PREFIX:-meetmind/submissions}
+      GCS_KMS_KEY_NAME: ${GCS_KMS_KEY_NAME:-}
+      SUBMISSION_ENCRYPTION_KEY: ${SUBMISSION_ENCRYPTION_KEY:?Defina SUBMISSION_ENCRYPTION_KEY}
+      TEAMS_GRAPH_CLIENT_STATE: ${TEAMS_GRAPH_CLIENT_STATE:-}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:8000}
+      PRIVACY_CONTACT_EMAIL: ${PRIVACY_CONTACT_EMAIL:-}
+      DEMO_PORTFOLIO_PASSWORD: ${DEMO_PORTFOLIO_PASSWORD:-}
+      PORTFOLIO_DEMO_ENABLED: ${PORTFOLIO_DEMO_ENABLED:-false}
+      CALENDAR_TOKEN_ENCRYPTION_KEY: ${CALENDAR_TOKEN_ENCRYPTION_KEY:-}
+      MICROSOFT_CALENDAR_CLIENT_ID: ${MICROSOFT_CALENDAR_CLIENT_ID:-}
+      MICROSOFT_CALENDAR_CLIENT_SECRET: ${MICROSOFT_CALENDAR_CLIENT_SECRET:-}
+      MICROSOFT_CALENDAR_TENANT: ${MICROSOFT_CALENDAR_TENANT:-organizations}
+      GOOGLE_CALENDAR_CLIENT_ID: ${GOOGLE_CALENDAR_CLIENT_ID:-}
+      GOOGLE_CALENDAR_CLIENT_SECRET: ${GOOGLE_CALENDAR_CLIENT_SECRET:-}
+      CALENDAR_SYNC_DAYS: ${CALENDAR_SYNC_DAYS:-30}
+    command: ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "2", "--threads", "4", "run:app"]
+    ports:
+      - "${WEB_BIND:-127.0.0.1}:${WEB_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      redis-chat:
+        condition: service_healthy
+      clamav:
+        condition: service_healthy
+    volumes:
+      - submission-files:/data/submissions
+
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health/live', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  worker: &worker-base
+    build: .
+    environment: &worker-environment
+      APP_ENV: ${APP_ENV:-development}
+      SERVICE_ROLE: worker
+      DATABASE_URL: ${COMPOSE_DATABASE_URL:-postgresql+psycopg://meetmind_app:meetmind-app-dev@postgres:5432/meetmind}
+      REDIS_URL: redis://redis:6379/0
+      SECRET_KEY: ${SECRET_KEY:?Defina SECRET_KEY}
+      QUEUE_ENABLED: "true"
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.5-flash-lite}
+      AI_PROVIDER: ${AI_PROVIDER:-gemini_api}
+      AUTOPSY_ASSISTANT_MODE: ${AUTOPSY_ASSISTANT_MODE:-shadow}
+      AUTOPSY_CALIBRATION_SAMPLE_SIZE: ${AUTOPSY_CALIBRATION_SAMPLE_SIZE:-40}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      VERTEX_PROJECT: ${VERTEX_PROJECT:-}
+      VERTEX_LOCATION: ${VERTEX_LOCATION:-global}
+      AI_INPUT_COST_PER_MILLION_MICROUNITS: ${AI_INPUT_COST_PER_MILLION_MICROUNITS:-0}
+      AI_OUTPUT_COST_PER_MILLION_MICROUNITS: ${AI_OUTPUT_COST_PER_MILLION_MICROUNITS:-0}
+      AI_COST_CURRENCY: ${AI_COST_CURRENCY:-USD}
+      JSON_LOGS: ${JSON_LOGS:-true}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      ANTIVIRUS_ENABLED: "true"
+      ANTIVIRUS_HOST: clamav
+      ANTIVIRUS_FAIL_CLOSED: "true"
+      SUBMISSION_REQUIRE_ANTIVIRUS: "true"
+      SUBMISSION_STORAGE_DIR: /data/submissions
+      SUBMISSION_STORAGE_BACKEND: ${SUBMISSION_STORAGE_BACKEND:-filesystem}
+      GCS_SUBMISSION_BUCKET: ${GCS_SUBMISSION_BUCKET:-}
+      GCS_SUBMISSION_PREFIX: ${GCS_SUBMISSION_PREFIX:-meetmind/submissions}
+      GCS_KMS_KEY_NAME: ${GCS_KMS_KEY_NAME:-}
+      SUBMISSION_ENCRYPTION_KEY: ${SUBMISSION_ENCRYPTION_KEY:?Defina SUBMISSION_ENCRYPTION_KEY}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:8000}
+      TEAMS_GRAPH_CLIENT_ID: ${TEAMS_GRAPH_CLIENT_ID:-}
+      TEAMS_GRAPH_CLIENT_SECRET: ${TEAMS_GRAPH_CLIENT_SECRET:-}
+      TEAMS_GRAPH_CLIENT_STATE: ${TEAMS_GRAPH_CLIENT_STATE:-}
+      TEAMS_GRAPH_NOTIFICATION_URL: ${TEAMS_GRAPH_NOTIFICATION_URL:-}
+      TEAMS_GRAPH_ENABLED: ${TEAMS_GRAPH_ENABLED:-false}
+    command: ["rq", "worker", "--url", "redis://redis:6379/0", "analyses"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      clamav:
+        condition: service_healthy
+    volumes:
+      - submission-files:/data/submissions
+
+  worker-chat:
+    <<: *worker-base
+    environment:
+      <<: *worker-environment
+      CHAT_REDIS_URL: redis://redis-chat:6379/0
+    command: ["rq", "worker", "--url", "redis://redis-chat:6379/0", "chat"]
+    volumes: []
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      redis-chat:
+        condition: service_healthy
+
+  worker-screening:
+    <<: *worker-base
+    command: ["rq", "worker", "--url", "redis://redis:6379/0", "screening"]
+
+  worker-notifications:
+    <<: *worker-base
+    command: ["rq", "worker", "--url", "redis://redis:6379/0", "notifications"]
+
+  worker-maintenance:
+    <<: *worker-base
+    command:
+      ["rq", "worker", "--with-scheduler", "--url", "redis://redis:6379/0", "maintenance"]
+
+volumes:
+  postgres-data:
+  redis-data:
+  clamav-data:
+  submission-files:

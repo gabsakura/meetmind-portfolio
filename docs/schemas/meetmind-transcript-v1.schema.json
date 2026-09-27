@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://meetmind.example/schemas/meetmind-transcript-v1.schema.json",
+  "title": "MeetMind canonical transcript",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "meeting", "segments", "normalization_report"],
+  "properties": {
+    "schema_version": { "const": "meetmind-transcript-v1" },
+    "meeting": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "external_id", "title", "language", "transcript_sha256"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 36 },
+        "external_id": { "type": "string", "pattern": "^[A-Za-z0-9._-]{1,100}$" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "client_id": { "type": ["string", "null"], "maxLength": 36 },
+        "occurred_at": { "type": ["string", "null"], "format": "date-time" },
+        "duration_seconds": { "type": ["integer", "null"], "minimum": 0, "maximum": 604800 },
+        "language": { "enum": ["pt-BR", "en-US", "es-ES"] },
+        "transcript_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "source_filename": { "type": "string", "minLength": 1, "maxLength": 255 }
+      }
+    },
+    "segments": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 5000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "position", "speaker", "text", "started_at_ms", "ended_at_ms"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1, "maxLength": 100 },
+          "position": { "type": "integer", "minimum": 1 },
+          "speaker": { "type": ["string", "null"], "maxLength": 200 },
+          "text": { "type": "string", "minLength": 1, "maxLength": 20000 },
+          "started_at_ms": { "type": ["integer", "null"], "minimum": 0, "maximum": 604800000 },
+          "ended_at_ms": { "type": ["integer", "null"], "minimum": 0, "maximum": 604800000 }
+        }
+      }
+    },
+    "normalization_report": {
+      "type": "object",
+      "required": ["protocol_version", "source_format", "source_sha256", "segment_count", "submission_id"],
+      "properties": {
+        "protocol_version": { "const": "meetmind-transcript-v1" },
+        "source_format": { "enum": ["vtt", "srt", "txt", "csv", "json", "xlsx", "sql"] },
+        "source_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "segment_count": { "type": "integer", "minimum": 1, "maximum": 5000 },
+        "generated_at": { "type": "string", "format": "date-time" },
+        "submission_id": { "type": "string", "minLength": 1, "maxLength": 36 },
+        "guard": { "type": "object" },
+        "antivirus": { "type": "object" }
+      }
+    }
+  }
+}

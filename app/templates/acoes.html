@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block titulo %}MeetMind · Ações{% endblock %}
+{% block titulo_topo %}Ações de Customer Success{% endblock %}
+{% block conteudo %}
+{% set labels = {'proposed': 'Aguardando revisão', 'accepted': 'Pendentes', 'in_progress': 'Em andamento', 'completed': 'Concluídas', 'dismissed': 'Descartadas'} %}
+<section class="pagina" data-actions-page data-current-user-id="{{ current_user.id }}" data-can-decide="{{ 'true' if current_user.role.value in ['admin', 'manager', 'analyst'] else 'false' }}">
+  <div class="action-stat-grid" aria-label="Resumo das ações">
+    {% for status, label in labels.items() if status != 'dismissed' %}
+    <article class="action-stat action-stat-{{ status }}"><span>{{ label }}</span><strong>{{ action_stats.get(status, 0) }}</strong></article>
+    {% endfor %}
+    <article class="action-stat-alert"><span>Vencidas</span><strong>{{ action_stats.overdue }}</strong></article>
+  </div>
+
+  <form class="action-filter-panel" method="get" action="{{ url_for('painel.acoes') }}">
+    <label>Buscar
+      <input name="q" value="{{ selected_filters.q }}" placeholder="Cliente, ação ou justificativa">
+    </label>
+    <label>Estado
+      <select name="status">
+        <option value="">Todos</option>
+        {% for status, label in labels.items() %}<option value="{{ status }}" {{ 'selected' if selected_filters.status == status }}>{{ label }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Responsável
+      <select name="owner">
+        <option value="">Todos</option>
+        <option value="mine" {{ 'selected' if selected_filters.owner == 'mine' }}>Minhas ações</option>
+        {% for user in users %}<option value="{{ user.id }}" {{ 'selected' if selected_filters.owner == user.id }}>{{ user.name }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Cliente
+      <select name="client">
+        <option value="">Todos</option>
+        {% for client_id, client_name in client_names.items() %}<option value="{{ client_id }}" {{ 'selected' if selected_filters.client == client_id }}>{{ client_name }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Prioridade
+      <select name="priority">
+        <option value="">Todas</option>
+        <option value="high" {{ 'selected' if selected_filters.priority == 'high' }}>Alta</option>
+        <option value="medium" {{ 'selected' if selected_filters.priority == 'medium' }}>Média</option>
+        <option value="low" {{ 'selected' if selected_filters.priority == 'low' }}>Baixa</option>
+      </select>
+    </label>
+    <label class="action-filter-check">Somente vencidas <input type="checkbox" name="overdue" value="true" {{ 'checked' if selected_filters.overdue }}></label>
+    <label>Ordenar
+      <select name="sort"><option value="due_at" {{ 'selected' if selected_filters.sort == 'due_at' }}>Prazo</option><option value="created_at" {{ 'selected' if selected_filters.sort == 'created_at' }}>Mais recentes</option><option value="updated_at" {{ 'selected' if selected_filters.sort == 'updated_at' }}>Atualizadas</option></select>
+    </label>
+    <button class="botao-primario" type="submit">Aplicar filtros</button>
+    <a href="{{ url_for('painel.acoes') }}">Limpar</a>
+  </form>
+
+  <p class="diagnostic-feedback" data-action-feedback role="status" aria-live="polite"></p>
+  <div class="action-board" aria-label="Quadro de ações">
+    {% for status in ['proposed', 'accepted', 'in_progress', 'completed'] %}
+    <section class="action-column action-column-{{ status }}" aria-labelledby="column-{{ status }}">
+      <header><h3 id="column-{{ status }}">{{ labels[status] }}</h3><span>{{ action_groups[status]|length }}</span></header>
+      <div class="action-column-list">
+        {% for action in action_groups[status] %}
+        <article class="action-card {{ 'action-card-overdue' if action.id in overdue_ids }}" data-action-card data-action-id="{{ action.id }}" data-owner-id="{{ action.owner_id or '' }}" data-status="{{ action.status }}" data-version="{{ action.version }}" data-title="{{ action.title }}" data-due-at="{{ action.due_at.date().isoformat() if action.due_at else '' }}">
+          <div class="action-card-meta">
+            <span class="status">{{ labels[action.status] }}</span>
+            <span class="action-urgency">Prioridade {{ {'high': 'alta', 'medium': 'média', 'low': 'baixa'}.get(action.priority, 'baixa') }}</span>
+          </div>
+          <h4 data-action-title>{{ action.title }}</h4>
+          <p>{{ action.rationale }}</p>
+          <dl>
+            <div><dt>Cliente</dt><dd>{{ client_names.get(action.client_id, 'Não informado') }}</dd></div>
+            <div><dt>Prazo</dt><dd data-action-due>{{ action.due_at.strftime('%d/%m/%Y') if action.due_at else 'Acompanhar' }}</dd></div>
+            <div><dt>Responsável</dt><dd data-action-owner-name>{{ user_names.get(action.owner_id, 'Não atribuído') }}</dd></div>
+          </dl>
+          <div class="action-card-controls">
+            <a class="botao-terciario link-botao" href="{{ url_for('painel.inteligencia_artificial', meeting=action.meeting_id, analysis=action.analysis_id, _anchor='ai-workflow') }}">Origem</a>
+            <button type="button" class="botao-terciario" data-action-open="details">Detalhes</button>
+            {% if current_user.role.value in ['admin', 'manager', 'analyst'] %}<button type="button" class="botao-terciario" data-action-open="edit">Editar</button>{% endif %}
+            {% if action.status == 'proposed' and current_user.role.value in ['admin', 'manager', 'analyst'] %}
+            <button type="button" class="botao-primario" data-action-open="accept">Aceitar</button>
+            <button type="button" class="botao-secundario" data-action-open="dismiss">Descartar</button>
+            {% elif action.owner_id == current_user.id or current_user.role.value in ['admin', 'manager', 'analyst'] %}
+              {% if action.status == 'accepted' %}<button type="button" class="botao-secundario" data-action-open="start">Iniciar</button>{% endif %}
+              {% if action.status in ['accepted', 'in_progress'] %}<button type="button" class="botao-primario" data-action-open="complete">Concluir</button>{% endif %}
+              <button type="button" class="botao-terciario" data-action-open="comment">Comentar</button>
+            {% endif %}
+          </div>
+        </article>
+        {% else %}<p class="action-column-empty">Nenhuma ação neste estado.</p>{% endfor %}
+      </div>
+    </section>
+    {% endfor %}
+  </div>
+
+  {% if action_groups.dismissed %}
+  <details class="dismissed-actions"><summary>Ver {{ action_groups.dismissed|length }} ação(ões) descartada(s)</summary>
+    <ul>{% for action in action_groups.dismissed %}<li><strong>{{ action.title }}</strong> — {{ action.dismissal_reason }}</li>{% endfor %}</ul>
+  </details>
+  {% endif %}
+
+  {% if not actions %}<div class="estado-vazio"><h2>Nenhuma ação encontrada</h2></div>{% endif %}
+
+  {% if pagination.pages > 1 %}<nav class="action-pagination" aria-label="Paginação das ações">
+    {% if pagination.page > 1 %}<a class="botao-terciario link-botao" href="{{ url_for('painel.acoes', q=selected_filters.q, status=selected_filters.status, owner=selected_filters.owner, client=selected_filters.client, priority=selected_filters.priority, overdue='true' if selected_filters.overdue else '', sort=selected_filters.sort, page=pagination.page - 1) }}">Anterior</a>{% endif %}
+    <span>Página {{ pagination.page }} de {{ pagination.pages }} · {{ pagination.total }} ações</span>
+    {% if pagination.page < pagination.pages %}<a class="botao-terciario link-botao" href="{{ url_for('painel.acoes', q=selected_filters.q, status=selected_filters.status, owner=selected_filters.owner, client=selected_filters.client, priority=selected_filters.priority, overdue='true' if selected_filters.overdue else '', sort=selected_filters.sort, page=pagination.page + 1) }}">Próxima</a>{% endif %}
+  </nav>{% endif %}
+
+  <dialog class="action-dialog" data-action-dialog aria-labelledby="action-dialog-title">
+    <form method="dialog" class="dialog-close-form"><button aria-label="Fechar">×</button></form>
+    <div class="action-dialog-layout">
+      <form data-action-form>
+        <h2 id="action-dialog-title" data-dialog-title>Detalhes da ação</h2>
+        <input type="hidden" name="action_id"><input type="hidden" name="expected_version"><input type="hidden" name="mode">
+        <label data-field="title">Título<input name="title" maxlength="500"></label>
+        <label data-field="owner">Responsável<select name="owner_id"><option value="">Sem responsável</option>{% for user in users %}<option value="{{ user.id }}">{{ user.name }}</option>{% endfor %}</select></label>
+        <label data-field="due">Prazo<input type="date" name="due_at"></label>
+        <label data-field="note"><span data-note-label>Comentário</span><textarea name="note" maxlength="4000"></textarea></label>
+        <label data-field="customer-notified" class="action-dialog-check"><input type="checkbox" name="customer_notified"> Cliente informado sobre o resultado</label>
+        <fieldset data-field="follow-up" class="action-follow-up-fieldset">
+          <legend>Próximo acompanhamento</legend>
+          <label class="action-dialog-check"><input type="checkbox" name="create_follow_up"> Criar nova ação de acompanhamento</label>
+          <div data-follow-up-fields hidden>
+            <label>Título<input name="follow_up_title" maxlength="500"></label>
+            <label>Responsável<select name="follow_up_owner_id"><option value="">Selecione</option>{% for user in users %}<option value="{{ user.id }}">{{ user.name }}</option>{% endfor %}</select></label>
+            <label>Data e hora<input type="datetime-local" name="follow_up_due_at"></label>
+            {% if calendar_providers %}<label class="action-dialog-check"><input type="checkbox" name="schedule_follow_up"> Adicionar ao meu calendário</label>
+            <label data-follow-up-calendar hidden>Calendário<select name="follow_up_calendar_provider" disabled>{% for provider in calendar_providers %}<option value="{{ provider.id }}">{{ provider.label }}</option>{% endfor %}</select></label>{% endif %}
+          </div>
+        </fieldset>
+        <p class="diagnostic-feedback" data-dialog-feedback role="status" aria-live="polite"></p>
+        <div class="dialog-actions"><button type="button" class="botao-secundario" data-dialog-cancel>Cancelar</button><button type="submit" class="botao-primario" data-dialog-submit>Salvar</button></div>
+      </form>
+      <aside data-action-history><h3>Histórico</h3><div data-history-list><p>Carregando…</p></div></aside>
+    </div>
+  </dialog>
+</section>
+{% endblock %}
+{% block scripts %}<script type="module" src="{{ url_for('static', filename='js/actions.js') }}"></script>{% endblock %}

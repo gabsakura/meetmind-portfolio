@@ -1,0 +1,61 @@
+{
+  "id": "agroindustria", "label": "Agroindústria", "version": "sector-playbooks-v1", "reviewed_at": "2026-08-03",
+  "aliases": ["AGROINDUSTRIA", "AGRO", "AGRONEGOCIO"], "unit_aliases": ["TOTVS AGRO"], "cnae_prefixes": ["01", "02", "03"],
+  "detection_terms": ["safra", "talhao", "colheita", "insumo agricola", "usina", "bioenergia", "materia prima", "ativo biologico"],
+  "sources": [
+    {"id": "totvs-agro", "title": "TOTVS Agro", "url": "https://www.totvs.com/agro/", "publisher": "TOTVS", "accessed_at": "2026-08-03"},
+    {"id": "ibge-cnae", "title": "Classificação Nacional de Atividades Econômicas", "url": "https://cnae.ibge.gov.br/", "publisher": "IBGE", "accessed_at": "2026-08-03"}
+  ],
+  "subsectors": [
+    {"id": "producao-agricola", "label": "Produção agrícola", "aliases": ["fazenda", "talhao", "cultivo"], "cnae_prefixes": ["01"]},
+    {"id": "bioenergia", "label": "Bioenergia", "aliases": ["usina", "etanol", "acucar", "bioenergia"], "cnae_prefixes": ["193"]},
+    {"id": "processamento", "label": "Processamento agroindustrial", "aliases": ["beneficiamento", "processamento", "frigorifico"], "cnae_prefixes": ["10", "11", "12"]}
+  ],
+  "critical_processes": [
+    {"id": "planejamento-agricola", "label": "Planejamento agrícola", "aliases": ["safra", "talhao", "insumo", "manejo"], "usage": "Relacionar cultura, área e período somente quando citados.", "source_ids": ["totvs-agro"]},
+    {"id": "colheita-recepcao", "label": "Colheita e recepção de matéria-prima", "aliases": ["colheita", "balanca", "recepcao"], "usage": "Distinguir campo, transporte e recepção.", "source_ids": ["totvs-agro"]},
+    {"id": "processo-industrial", "label": "Processamento industrial", "aliases": ["usina", "producao industrial", "rendimento"], "usage": "Não atribuir rendimento ao sistema.", "source_ids": ["totvs-agro"]},
+    {"id": "custos-ativos", "label": "Custos e ativos biológicos", "aliases": ["custo agricola", "ativo biologico", "exaustao"], "usage": "Não calcular sem base contábil.", "source_ids": ["totvs-agro"]}
+  ],
+  "technologies": [
+    {"id": "gestao-agricola", "label": "Gestão agrícola", "aliases": ["operacao agricola", "talhao", "ordem de campo"], "usage": "Usar em planejamento e execução citados.", "source_ids": ["totvs-agro"]},
+    {"id": "gestao-bioenergia", "label": "Gestão de bioenergia", "aliases": ["bioenergia", "usina", "etanol"], "usage": "Usar apenas no subsetor correspondente.", "source_ids": ["totvs-agro"]},
+    {"id": "manutencao-frotas", "label": "Manutenção automotiva e industrial", "aliases": ["frota", "manutencao", "implemento"], "usage": "Distinguir ativo agrícola e industrial.", "source_ids": ["totvs-agro"]},
+    {"id": "rastreabilidade-agro", "label": "Rastreabilidade de origem e produção", "aliases": ["rastreabilidade", "lote", "origem"], "usage": "Não afirmar conformidade sem requisito explícito.", "source_ids": ["totvs-agro"]}
+  ],
+  "common_indicators": [
+    {"id": "produtividade-area", "label": "Produtividade por área ou cultura", "aliases": ["produtividade", "hectare"], "usage": "Exigir cultura, área e safra.", "source_ids": ["totvs-agro"]},
+    {"id": "rendimento-industrial", "label": "Rendimento industrial", "aliases": ["rendimento", "conversao industrial"], "usage": "Não calcular sem entradas e saídas.", "source_ids": ["totvs-agro"]},
+    {"id": "custo-producao", "label": "Custo de produção", "aliases": ["custo por hectare", "custo por tonelada"], "usage": "Não estimar valores.", "source_ids": ["totvs-agro"]}
+  ],
+  "possible_problems": [
+    {"signal": "Planejamento desconectado da execução de campo", "meaning": "Pode reduzir visibilidade de insumos, prazo e custo.", "usage": "Exigir processo citado.", "source_ids": ["totvs-agro"]},
+    {"signal": "Recepção sem rastreabilidade da origem", "meaning": "Pode dificultar conciliação e qualidade.", "usage": "Não presumir não conformidade.", "source_ids": ["totvs-agro"]}
+  ],
+  "positive_signals": [
+    {"signal": "Integração entre campo, recepção e indústria", "meaning": "Indica adoção de ponta a ponta.", "usage": "Exigir etapas confirmadas.", "source_ids": ["totvs-agro"]},
+    {"signal": "Indicadores por safra com responsáveis", "meaning": "Indica governança operacional.", "usage": "Exigir indicador e compromisso.", "source_ids": ["totvs-agro"]}
+  ],
+  "attention_signals": [
+    {"signal": "Apontamentos tardios ou manuais recorrentes", "meaning": "Pode reduzir confiança no planejamento.", "usage": "Exigir recorrência.", "source_ids": ["totvs-agro"]},
+    {"signal": "Divergência entre quantidade recebida e processada", "meaning": "Pode afetar custo e rastreabilidade.", "usage": "Exigir período e material.", "source_ids": ["totvs-agro"]}
+  ],
+  "diagnostic_questions": [
+    {"id": "q-safra-area", "label": "Qual safra, cultura, unidade e área foram afetadas?", "aliases": [], "usage": "Usar antes de priorizar impacto.", "source_ids": ["totvs-agro"]},
+    {"id": "q-etapa-fluxo", "label": "A quebra ocorre no campo, transporte, recepção ou indústria?", "aliases": [], "usage": "Usar em divergências.", "source_ids": ["totvs-agro"]},
+    {"id": "q-conectividade", "label": "O processo precisa operar em campo sem conectividade contínua?", "aliases": [], "usage": "Usar somente se local ou operação remota forem citados.", "source_ids": ["totvs-agro"]}
+  ],
+  "conditional_recommendations": [
+    {"id": "r-rastrear-lote", "label": "Rastrear lote da origem ao processamento", "aliases": [], "usage": "Quando quantidades ou origem divergirem.", "source_ids": ["totvs-agro"]},
+    {"id": "r-validar-apontamento", "label": "Validar momento e responsável do apontamento", "aliases": [], "usage": "Quando o planejamento usar dados tardios.", "source_ids": ["totvs-agro"]},
+    {"id": "r-baseline-safra", "label": "Definir baseline por safra e unidade", "aliases": [], "usage": "Quando o impacto ainda estiver genérico.", "source_ids": ["totvs-agro"]}
+  ],
+  "prohibited_inferences": ["Não prever produtividade ou safra.", "Não atribuir rendimento ao software.", "Não afirmar não conformidade ambiental ou sanitária.", "Não deduzir conectividade pela região."],
+  "meeting_type_rules": {
+    "support_incident": {"prioritize": ["safra", "unidade", "etapa", "apontamento"], "avoid": ["causa agronômica"]},
+    "implementation": {"prioritize": ["cadastros", "áreas", "integrações", "operação offline"], "avoid": ["assumir conectividade"]},
+    "relationship_success": {"prioritize": ["adoção no campo e indústria", "indicadores"], "avoid": ["confundir boa safra com satisfação"]},
+    "commercial_expansion": {"prioritize": ["gargalo explícito", "unidades", "capacidade atual"], "avoid": ["oferta automática"]},
+    "renewal_contract": {"prioritize": ["continuidade por safra", "valor percebido"], "avoid": ["probabilidade de churn"]}
+  }
+}

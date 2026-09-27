@@ -1,0 +1,61 @@
+{
+  "id": "distribuicao", "label": "Distribuição", "version": "sector-playbooks-v1", "reviewed_at": "2026-08-03",
+  "aliases": ["DISTRIBUICAO", "ATACADO", "ATACADISTA DISTRIBUIDOR"], "unit_aliases": ["TOTVS DISTRIBUICAO", "WINTHOR"], "cnae_prefixes": ["46"],
+  "detection_terms": ["atacado", "distribuidor", "winthor", "wms", "televendas", "separacao", "expedicao", "forca de vendas"],
+  "sources": [
+    {"id": "totvs-distribuicao", "title": "TOTVS Distribuição", "url": "https://www.totvs.com/distribuicao/", "publisher": "TOTVS", "accessed_at": "2026-08-03"},
+    {"id": "totvs-winthor", "title": "TOTVS Distribuição e Varejo Linha Winthor", "url": "https://www.totvs.com/distribuicao/totvs-distribuicao-e-varejo/", "publisher": "TOTVS", "accessed_at": "2026-08-03"}
+  ],
+  "subsectors": [
+    {"id": "atacado-geral", "label": "Atacado e distribuição", "aliases": ["atacado", "distribuidor"], "cnae_prefixes": ["46"]},
+    {"id": "medicamentos", "label": "Distribuição de medicamentos", "aliases": ["medicamento", "farmaceutico"], "cnae_prefixes": ["46443"]},
+    {"id": "operador-logistico", "label": "Operador logístico", "aliases": ["operador logistico", "armazenagem para terceiro"], "cnae_prefixes": ["521"]}
+  ],
+  "critical_processes": [
+    {"id": "compras-abastecimento", "label": "Compras e abastecimento", "aliases": ["compra", "fornecedor", "estoque minimo"], "usage": "Relacionar prazo, cobertura e item somente com dados citados.", "source_ids": ["totvs-winthor"]},
+    {"id": "vendas-credito", "label": "Vendas, crédito e margem", "aliases": ["televendas", "comissao", "credito", "margem"], "usage": "Não estimar margem ou risco de crédito.", "source_ids": ["totvs-winthor"]},
+    {"id": "armazenagem", "label": "Armazenagem e WMS", "aliases": ["wms", "enderecamento", "separacao"], "usage": "Distinguir cadastro, execução e equipamento.", "source_ids": ["totvs-distribuicao"]},
+    {"id": "expedicao-entrega", "label": "Expedição e entrega", "aliases": ["expedicao", "embarque", "rota", "entrega"], "usage": "Não atribuir atraso ao sistema sem cadeia de eventos.", "source_ids": ["totvs-winthor"]}
+  ],
+  "technologies": [
+    {"id": "erp-winthor", "label": "ERP especializado em distribuição", "aliases": ["winthor", "erp distribuicao"], "usage": "Usar apenas se linha ou processo for citado.", "source_ids": ["totvs-winthor"]},
+    {"id": "wms", "label": "WMS", "aliases": ["wms", "coletor", "enderecamento"], "usage": "Não sugerir WMS sem problema de armazenagem.", "source_ids": ["totvs-distribuicao"]},
+    {"id": "forca-vendas", "label": "Automação da força de vendas", "aliases": ["forca de vendas", "pedido mobile", "rca"], "usage": "Relacionar a pedido e equipe citados.", "source_ids": ["totvs-distribuicao"]},
+    {"id": "roteirizacao", "label": "Roteirização e entregas", "aliases": ["roteirizacao", "sequencia de entrega"], "usage": "Não prometer redução de custo sem baseline.", "source_ids": ["totvs-winthor"]}
+  ],
+  "common_indicators": [
+    {"id": "nivel-servico", "label": "Nível de serviço e entrega completa", "aliases": ["otif", "fill rate", "nivel de servico"], "usage": "Exigir janela e base.", "source_ids": ["totvs-distribuicao"]},
+    {"id": "acuracidade-estoque", "label": "Acuracidade de estoque", "aliases": ["acuracidade", "saldo divergente"], "usage": "Não estimar sem inventário.", "source_ids": ["totvs-winthor"]},
+    {"id": "produtividade-separacao", "label": "Produtividade de separação e expedição", "aliases": ["produtividade", "picking"], "usage": "Exigir operação e período.", "source_ids": ["totvs-winthor"]}
+  ],
+  "possible_problems": [
+    {"signal": "Saldo ou endereço divergente no armazém", "meaning": "Pode gerar retrabalho, corte ou atraso.", "usage": "Exigir item e evento.", "source_ids": ["totvs-winthor"]},
+    {"signal": "Pedido desconectado da expedição", "meaning": "Pode reduzir nível de serviço.", "usage": "Não presumir falha de integração.", "source_ids": ["totvs-distribuicao"]}
+  ],
+  "positive_signals": [
+    {"signal": "Pedido rastreado da venda à entrega", "meaning": "Indica integração operacional.", "usage": "Exigir etapas confirmadas.", "source_ids": ["totvs-winthor"]},
+    {"signal": "Indicadores por armazém ou rota", "meaning": "Indica governança operacional.", "usage": "Exigir indicador e responsável.", "source_ids": ["totvs-distribuicao"]}
+  ],
+  "attention_signals": [
+    {"signal": "Cortes ou atrasos recorrentes", "meaning": "Pode pressionar cliente final e relação.", "usage": "Exigir recorrência e causa ainda incerta.", "source_ids": ["totvs-distribuicao"]},
+    {"signal": "Contorno manual no estoque ou expedição", "meaning": "Pode sinalizar baixa confiança operacional.", "usage": "Exigir ocorrência.", "source_ids": ["totvs-winthor"]}
+  ],
+  "diagnostic_questions": [
+    {"id": "q-pedido", "label": "Qual pedido, item, depósito e etapa foram afetados?", "aliases": [], "usage": "Usar antes de classificar impacto.", "source_ids": ["totvs-winthor"]},
+    {"id": "q-saldo", "label": "A divergência nasce no recebimento, movimentação, separação ou inventário?", "aliases": [], "usage": "Usar em saldo incorreto.", "source_ids": ["totvs-distribuicao"]},
+    {"id": "q-entrega", "label": "Qual promessa e indicador de entrega foram comprometidos?", "aliases": [], "usage": "Usar em atraso ou corte.", "source_ids": ["totvs-winthor"]}
+  ],
+  "conditional_recommendations": [
+    {"id": "r-rastrear-pedido", "label": "Rastrear o pedido e seus eventos de estoque", "aliases": [], "usage": "Quando venda e expedição divergirem.", "source_ids": ["totvs-winthor"]},
+    {"id": "r-inventario-dirigido", "label": "Validar saldo físico e lógico do endereço afetado", "aliases": [], "usage": "Quando houver divergência de estoque.", "source_ids": ["totvs-distribuicao"]},
+    {"id": "r-baseline-nivel-servico", "label": "Definir baseline de nível de serviço", "aliases": [], "usage": "Quando o impacto estiver apenas qualitativo.", "source_ids": ["totvs-distribuicao"]}
+  ],
+  "prohibited_inferences": ["Não estimar margem ou perda de venda.", "Não atribuir atraso ao ERP sem rastreamento.", "Não presumir WMS como solução universal.", "Não inferir risco pelo porte do distribuidor."],
+  "meeting_type_rules": {
+    "support_incident": {"prioritize": ["pedido", "item", "depósito", "evento"], "avoid": ["culpa automática"]},
+    "implementation": {"prioritize": ["cadastros", "endereçamento", "coletores", "integrações"], "avoid": ["go-live sem inventário confiável"]},
+    "relationship_success": {"prioritize": ["nível de serviço", "adoção", "pendências"], "avoid": ["confundir volume com valor"]},
+    "commercial_expansion": {"prioritize": ["gargalo", "volume", "capacidade atual"], "avoid": ["oferta automática de WMS"]},
+    "renewal_contract": {"prioritize": ["continuidade", "valor percebido", "riscos abertos"], "avoid": ["probabilidade de churn"]}
+  }
+}

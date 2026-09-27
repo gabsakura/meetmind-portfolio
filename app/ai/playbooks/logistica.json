@@ -1,0 +1,61 @@
+{
+  "id": "logistica", "label": "Logística", "version": "sector-playbooks-v1", "reviewed_at": "2026-08-03",
+  "aliases": ["LOGISTICA", "TRANSPORTES", "TRANSPORTADORA"], "unit_aliases": ["TOTVS LOGISTICA", "TOTVS TMS"], "cnae_prefixes": ["49", "50", "51", "52", "53"],
+  "detection_terms": ["tms", "cte", "frete", "viagem", "frota", "motorista", "carga", "coleta", "entrega", "roteirizacao"],
+  "sources": [
+    {"id": "totvs-logistica", "title": "TOTVS Logística", "url": "https://www.totvs.com/logistica/", "publisher": "TOTVS", "accessed_at": "2026-08-03"},
+    {"id": "totvs-tms", "title": "TOTVS Logística TMS", "url": "https://www.totvs.com/logistica/tms/", "publisher": "TOTVS", "accessed_at": "2026-08-03"}
+  ],
+  "subsectors": [
+    {"id": "transportadora", "label": "Transportadoras", "aliases": ["transportadora", "frete", "carga"], "cnae_prefixes": ["493"]},
+    {"id": "operador-logistico", "label": "Operadores logísticos", "aliases": ["operador logistico", "armazenagem"], "cnae_prefixes": ["521"]},
+    {"id": "portos-recintos", "label": "Portos e recintos", "aliases": ["porto", "aduaneiro", "recinto"], "cnae_prefixes": ["523"]}
+  ],
+  "critical_processes": [
+    {"id": "programacao-cargas", "label": "Programação de cargas e coletas", "aliases": ["programacao", "coleta", "formacao de carga"], "usage": "Distinguir demanda, capacidade e restrição.", "source_ids": ["totvs-tms"]},
+    {"id": "viagem-entrega", "label": "Viagem, monitoramento e entrega", "aliases": ["viagem", "rastreamento", "comprovante de entrega"], "usage": "Não inferir atraso sem janela prometida.", "source_ids": ["totvs-logistica"]},
+    {"id": "frete-custos", "label": "Frete, contrato e custos", "aliases": ["tabela de frete", "custo de viagem", "contrato"], "usage": "Não estimar rentabilidade.", "source_ids": ["totvs-tms"]},
+    {"id": "documentos-conformidade", "label": "Documentos e regras operacionais", "aliases": ["cte", "mdfe", "seguro", "documento"], "usage": "Não declarar irregularidade sem documento e regra.", "source_ids": ["totvs-tms"]}
+  ],
+  "technologies": [
+    {"id": "tms", "label": "TMS", "aliases": ["tms", "gestao de transporte"], "usage": "Usar em transporte explicitamente citado.", "source_ids": ["totvs-tms"]},
+    {"id": "roteirizacao", "label": "Roteirização", "aliases": ["rota", "roteirizacao", "malha"], "usage": "Não prometer otimização sem dados.", "source_ids": ["totvs-tms"]},
+    {"id": "gestao-frotas", "label": "Gestão de frotas", "aliases": ["frota", "manutencao", "veiculo"], "usage": "Distinguir frota própria e terceiros.", "source_ids": ["totvs-logistica"]},
+    {"id": "tracking-edi", "label": "Tracking e EDI", "aliases": ["tracking", "edi", "notfis", "conemb"], "usage": "Usar apenas com integração ou cliente citado.", "source_ids": ["totvs-tms"]}
+  ],
+  "common_indicators": [
+    {"id": "on-time", "label": "Pontualidade de coleta e entrega", "aliases": ["on time", "prazo de entrega"], "usage": "Exigir janela e amostra.", "source_ids": ["totvs-logistica"]},
+    {"id": "custo-viagem", "label": "Custo e margem por viagem", "aliases": ["custo de viagem", "margem do frete"], "usage": "Não calcular sem custos e receita.", "source_ids": ["totvs-tms"]},
+    {"id": "ocorrencias", "label": "Ocorrências, avarias, faltas e sobras", "aliases": ["avaria", "falta", "sobra", "ocorrencia"], "usage": "Separar evento e responsabilidade.", "source_ids": ["totvs-tms"]}
+  ],
+  "possible_problems": [
+    {"signal": "Status da carga sem atualização confiável", "meaning": "Pode afetar operação e comunicação com embarcador.", "usage": "Exigir viagem e evento.", "source_ids": ["totvs-tms"]},
+    {"signal": "Custo ou regra de frete divergente", "meaning": "Pode afetar faturamento ou margem.", "usage": "Não quantificar sem tabela e documento.", "source_ids": ["totvs-tms"]}
+  ],
+  "positive_signals": [
+    {"signal": "Rastreabilidade da coleta à entrega", "meaning": "Indica operação integrada.", "usage": "Exigir eventos confirmados.", "source_ids": ["totvs-logistica"]},
+    {"signal": "Ocorrências tratadas com causa e responsável", "meaning": "Indica governança e colaboração.", "usage": "Exigir ação registrada.", "source_ids": ["totvs-tms"]}
+  ],
+  "attention_signals": [
+    {"signal": "Atrasos ou ocorrências recorrentes", "meaning": "Pode pressionar SLA e confiança.", "usage": "Exigir recorrência e impacto.", "source_ids": ["totvs-logistica"]},
+    {"signal": "Contorno manual de documento ou frete", "meaning": "Pode indicar risco operacional.", "usage": "Não presumir não conformidade.", "source_ids": ["totvs-tms"]}
+  ],
+  "diagnostic_questions": [
+    {"id": "q-viagem", "label": "Qual viagem, documento, rota e evento foram afetados?", "aliases": [], "usage": "Usar antes de classificar impacto.", "source_ids": ["totvs-tms"]},
+    {"id": "q-janela", "label": "Qual janela prometida e qual horário realizado?", "aliases": [], "usage": "Usar em atraso.", "source_ids": ["totvs-logistica"]},
+    {"id": "q-custo", "label": "Qual regra contratual ou componente de custo divergiu?", "aliases": [], "usage": "Usar em frete ou faturamento.", "source_ids": ["totvs-tms"]}
+  ],
+  "conditional_recommendations": [
+    {"id": "r-rastrear-eventos", "label": "Rastrear eventos da viagem e integrações", "aliases": [], "usage": "Quando status ou entrega divergirem.", "source_ids": ["totvs-tms"]},
+    {"id": "r-validar-regra-frete", "label": "Validar tabela, contrato e documento do frete", "aliases": [], "usage": "Quando valor ou faturamento divergirem.", "source_ids": ["totvs-tms"]},
+    {"id": "r-baseline-rota", "label": "Medir prazo e ocorrência por rota", "aliases": [], "usage": "Quando impacto estiver genérico.", "source_ids": ["totvs-logistica"]}
+  ],
+  "prohibited_inferences": ["Não atribuir atraso ao TMS sem cadeia de eventos.", "Não declarar infração regulatória.", "Não estimar margem ou custo.", "Não presumir necessidade de roteirização."],
+  "meeting_type_rules": {
+    "support_incident": {"prioritize": ["viagem", "documento", "evento", "horário"], "avoid": ["responsabilidade sem prova"]},
+    "implementation": {"prioritize": ["cadastros", "tabelas", "integrações", "documentos"], "avoid": ["go-live sem viagem piloto"]},
+    "relationship_success": {"prioritize": ["pontualidade", "adoção", "ocorrências abertas"], "avoid": ["confundir volume com sucesso"]},
+    "commercial_expansion": {"prioritize": ["gargalo", "modal", "malha", "capacidade atual"], "avoid": ["oferta automática"]},
+    "renewal_contract": {"prioritize": ["continuidade", "valor percebido", "SLA"], "avoid": ["probabilidade de churn"]}
+  }
+}

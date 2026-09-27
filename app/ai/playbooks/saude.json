@@ -1,0 +1,68 @@
+{
+  "id": "saude",
+  "label": "Saúde",
+  "version": "sector-playbooks-v1",
+  "reviewed_at": "2026-08-03",
+  "aliases": ["SAUDE", "HEALTHCARE", "HOSPITAIS E CLINICAS"],
+  "unit_aliases": ["TOTVS SAUDE"],
+  "cnae_prefixes": ["86"],
+  "detection_terms": ["paciente", "prontuario", "tiss", "tuss", "glosa", "internacao", "leito", "convenio"],
+  "sources": [
+    {"id": "totvs-saude", "title": "Portfólio TOTVS Saúde", "url": "https://www.totvs.com/saude/", "publisher": "TOTVS", "accessed_at": "2026-08-03"},
+    {"id": "totvs-hospitais", "title": "TOTVS Saúde Hospitais e Clínicas", "url": "https://www.totvs.com/saude/hospitais-e-clinicas/", "publisher": "TOTVS", "accessed_at": "2026-08-03"},
+    {"id": "ans-tiss", "title": "Padrão TISS", "url": "https://www.gov.br/ans/pt-br/assuntos/prestadores/padrao-para-troca-de-informacao-de-saude-suplementar-2013-tiss", "publisher": "ANS", "accessed_at": "2026-08-03"}
+  ],
+  "subsectors": [
+    {"id": "hospitais", "label": "Hospitais", "aliases": ["hospital", "internacao", "leito"], "cnae_prefixes": ["86101"]},
+    {"id": "clinicas-consultorios", "label": "Clínicas e consultórios", "aliases": ["clinica", "consultorio", "agenda medica"], "cnae_prefixes": ["86305"]},
+    {"id": "diagnostico", "label": "Diagnóstico", "aliases": ["laboratorio", "sadt", "laudo", "exame"], "cnae_prefixes": ["86402"]},
+    {"id": "saude-suplementar", "label": "Saúde suplementar", "aliases": ["operadora", "convenio", "plano de saude"], "cnae_prefixes": ["65502"]}
+  ],
+  "critical_processes": [
+    {"id": "jornada-paciente", "label": "Jornada do paciente", "aliases": ["agendamento", "triagem", "alta"], "usage": "Relacionar etapas somente quando forem citadas.", "source_ids": ["totvs-hospitais"]},
+    {"id": "assistencia-clinica", "label": "Assistência clínica", "aliases": ["prontuario", "prescricao", "enfermagem"], "usage": "Avaliar continuidade e segurança sem emitir diagnóstico médico.", "source_ids": ["totvs-hospitais"]},
+    {"id": "ciclo-receita", "label": "Ciclo de receita", "aliases": ["faturamento", "glosa", "autorizacao", "repasse"], "usage": "Tratar impacto financeiro como hipótese até haver fala ou número.", "source_ids": ["totvs-saude"]},
+    {"id": "interoperabilidade", "label": "Interoperabilidade e conformidade", "aliases": ["integracao", "tiss", "tuss", "lgpd"], "usage": "Distinguir requisito regulatório de falha real do cliente.", "source_ids": ["ans-tiss"]}
+  ],
+  "technologies": [
+    {"id": "pep", "label": "Prontuário eletrônico", "aliases": ["pep", "prontuario eletronico"], "usage": "Mencionar apenas se o contexto indicar prontuário ou assistência.", "source_ids": ["totvs-hospitais"]},
+    {"id": "gestao-hospitalar", "label": "Gestão hospitalar", "aliases": ["his", "leitos", "centro cirurgico", "farmacia"], "usage": "Usar para organizar processos explicitamente presentes.", "source_ids": ["totvs-hospitais"]},
+    {"id": "padrao-tiss", "label": "TISS/TUSS", "aliases": ["tiss", "tuss", "guia ans"], "usage": "Não afirmar não conformidade sem evidência técnica.", "source_ids": ["ans-tiss"]},
+    {"id": "health-analytics", "label": "Analytics em saúde", "aliases": ["indicador assistencial", "health analytics"], "usage": "Sugerir medição antes de propor automação.", "source_ids": ["totvs-saude"]}
+  ],
+  "common_indicators": [
+    {"id": "tempo-atendimento", "label": "Tempo de atendimento", "aliases": ["tempo de espera", "fila"], "usage": "Usar somente com etapa e período identificados.", "source_ids": ["totvs-hospitais"]},
+    {"id": "ocupacao-leitos", "label": "Ocupação e giro de leitos", "aliases": ["ocupacao", "giro de leito"], "usage": "Não estimar taxa sem dados.", "source_ids": ["totvs-hospitais"]},
+    {"id": "glosas", "label": "Glosas e prazo de faturamento", "aliases": ["indice de glosa", "conta hospitalar"], "usage": "Separar ocorrência, causa alegada e impacto comprovado.", "source_ids": ["totvs-saude"]}
+  ],
+  "possible_problems": [
+    {"signal": "Retrabalho entre assistência e faturamento", "meaning": "Pode indicar dados incompletos ou fluxo desconectado.", "usage": "Só aplicar com exemplo concreto da reunião.", "source_ids": ["totvs-saude"]},
+    {"signal": "Falha de integração clínica", "meaning": "Pode afetar continuidade operacional e qualidade do registro.", "usage": "Não inferir risco ao paciente sem evidência explícita.", "source_ids": ["totvs-hospitais"]}
+  ],
+  "positive_signals": [
+    {"signal": "Uso integrado em etapas assistenciais", "meaning": "Indica adoção operacional mais ampla.", "usage": "Exigir etapas ou equipes citadas.", "source_ids": ["totvs-hospitais"]},
+    {"signal": "Plano de melhoria com responsáveis", "meaning": "Indica colaboração e continuidade.", "usage": "Registrar responsáveis e prazos literais.", "source_ids": ["totvs-saude"]}
+  ],
+  "attention_signals": [
+    {"signal": "Glosas ou atrasos recorrentes", "meaning": "Pode pressionar a relação se permanecer sem plano.", "usage": "Exigir recorrência ou impacto mencionados.", "source_ids": ["totvs-saude"]},
+    {"signal": "Contorno manual de processo crítico", "meaning": "Pode indicar baixa adoção ou lacuna de integração.", "usage": "Não atribuir a causa ao produto automaticamente.", "source_ids": ["totvs-hospitais"]}
+  ],
+  "diagnostic_questions": [
+    {"id": "q-etapa-afetada", "label": "Qual etapa assistencial ou administrativa é afetada?", "aliases": [], "usage": "Usar quando o problema estiver genérico.", "source_ids": ["totvs-hospitais"]},
+    {"id": "q-volume-glosa", "label": "Qual volume, recorrência e impacto das glosas?", "aliases": [], "usage": "Usar antes de priorizar ciclo de receita.", "source_ids": ["totvs-saude"]},
+    {"id": "q-integracao-tiss", "label": "Qual sistema, versão e transação TISS estão envolvidos?", "aliases": [], "usage": "Usar em falhas de intercâmbio.", "source_ids": ["ans-tiss"]}
+  ],
+  "conditional_recommendations": [
+    {"id": "r-mapear-jornada", "label": "Mapear a etapa e o ponto de quebra da jornada", "aliases": [], "usage": "Recomendar quando houver passagem manual ou retrabalho comprovado.", "source_ids": ["totvs-hospitais"]},
+    {"id": "r-validar-tiss", "label": "Validar versão, mensagem e retorno TISS", "aliases": [], "usage": "Recomendar apenas se TISS aparecer na evidência.", "source_ids": ["ans-tiss"]},
+    {"id": "r-medicao", "label": "Definir indicador antes e depois da correção", "aliases": [], "usage": "Usar quando o impacto ainda não estiver quantificado.", "source_ids": ["totvs-saude"]}
+  ],
+  "prohibited_inferences": ["Não emitir diagnóstico clínico.", "Não afirmar risco ao paciente sem fala explícita.", "Não presumir não conformidade regulatória.", "Não transformar porte ou região em risco de relacionamento."],
+  "meeting_type_rules": {
+    "support_incident": {"prioritize": ["etapa afetada", "continuidade", "integração", "evidência do erro"], "avoid": ["diagnóstico clínico", "upsell"]},
+    "implementation": {"prioritize": ["migração", "integrações", "treinamento", "critérios de aceite"], "avoid": ["assumir prontidão"]},
+    "relationship_success": {"prioritize": ["adoção", "resultados", "pendências", "governança"], "avoid": ["confundir cordialidade com satisfação"]},
+    "commercial_expansion": {"prioritize": ["necessidade explícita", "processo", "impacto", "decisor"], "avoid": ["recomendação automática"]},
+    "renewal_contract": {"prioritize": ["valor percebido", "riscos abertos", "compromissos"], "avoid": ["probabilidade de churn"]}
+  }
+}

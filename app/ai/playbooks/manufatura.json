@@ -1,0 +1,99 @@
+{
+  "id": "manufatura",
+  "label": "Manufatura",
+  "version": "manufatura-v2",
+  "reviewed_at": "2026-08-07",
+  "aliases": ["MANUFATURA", "INDUSTRIA", "INDUSTRIAL", "INDUSTRIA DE TRANSFORMACAO"],
+  "unit_aliases": ["TOTVS MANUFATURA"],
+  "cnae_prefixes": ["10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33"],
+  "detection_terms": ["pcp", "mrp", "aps", "mes", "chao de fabrica", "ordem de producao", "estrutura de produto", "oee", "lote", "refugo", "manutencao industrial"],
+  "sources": [
+    {"id": "totvs-manufatura", "title": "TOTVS Manufatura", "url": "https://www.totvs.com/manufatura/totvs-manufatura/", "publisher": "TOTVS", "accessed_at": "2026-08-07"},
+    {"id": "totvs-logix", "title": "TOTVS Manufatura Linha Logix", "url": "https://produtos.totvs.com/ficha-tecnica/tudo-sobre-o-totvs-manufatura-linha-logix/", "publisher": "TOTVS", "accessed_at": "2026-08-07"},
+    {"id": "ibge-cnae", "title": "CNAE 2.0 - Secao C Industrias de transformacao", "url": "https://cnae.ibge.gov.br/?view=secao&tipo=cnae&versaosubclasse=10&versaoclasse=7&secao=C", "publisher": "IBGE", "accessed_at": "2026-08-07"}
+  ],
+  "subsectors": [
+    {"id": "alimentos-bebidas", "label": "Alimentos e bebidas", "aliases": ["alimentos", "bebidas", "frigorifico", "laticinio", "panificacao"], "cnae_prefixes": ["10", "11"]},
+    {"id": "bens-consumo", "label": "Bens de consumo", "aliases": ["bens de consumo", "calcados", "moveis", "produtos diversos"], "cnae_prefixes": ["15", "31", "32"]},
+    {"id": "metal-mecanica", "label": "Metal-mecânica", "aliases": ["metal mecanica", "metalurgica", "usinagem", "fundicao"], "cnae_prefixes": ["24", "25"]},
+    {"id": "quimica-plasticos", "label": "Química e plásticos", "aliases": ["quimica", "farmoquimico", "plastico", "borracha"], "cnae_prefixes": ["19", "20", "21", "22"]},
+    {"id": "textil", "label": "Têxtil e vestuário", "aliases": ["textil", "fiacao", "tecelagem", "confeccao", "vestuario"], "cnae_prefixes": ["13", "14"]},
+    {"id": "papel-celulose", "label": "Papel e celulose", "aliases": ["papel", "celulose", "embalagem de papel", "impressao"], "cnae_prefixes": ["17", "18"]},
+    {"id": "equipamentos-duraveis", "label": "Equipamentos e bens duráveis", "aliases": ["maquinas", "equipamentos", "eletronicos", "automotivo", "veiculos"], "cnae_prefixes": ["26", "27", "28", "29", "30"]}
+  ],
+  "critical_processes": [
+    {"id": "planejamento-producao", "label": "Planejamento e controle da produção", "aliases": ["pcp", "plano mestre", "ordem de producao", "programacao"], "usage": "Relacionar demanda, material, capacidade e prazo somente quando a reunião trouxer o fluxo ou a restrição.", "source_ids": ["totvs-manufatura"]},
+    {"id": "planejamento-materiais", "label": "Planejamento de materiais", "aliases": ["mrp", "necessidade de material", "estrutura de produto", "lista de materiais"], "usage": "Separar falta de material, erro cadastral e mudança de demanda; não escolher uma causa sem evidência.", "source_ids": ["totvs-manufatura"]},
+    {"id": "execucao-fabril", "label": "Execução e apontamento fabril", "aliases": ["chao de fabrica", "apontamento", "operacao", "tempo de maquina", "parada"], "usage": "Distinguir o evento observado da causa técnica ou operacional ainda não confirmada.", "source_ids": ["totvs-manufatura", "totvs-logix"]},
+    {"id": "qualidade-rastreabilidade", "label": "Qualidade e rastreabilidade", "aliases": ["lote", "serie", "inspecao", "nao conformidade", "recall", "certificado"], "usage": "Não afirmar desvio de qualidade, recall ou risco regulatório sem ocorrência explícita.", "source_ids": ["totvs-manufatura", "totvs-logix"]},
+    {"id": "manutencao-ativos", "label": "Manutenção e disponibilidade de ativos", "aliases": ["manutencao preventiva", "corretiva", "preditiva", "ativo", "equipamento"], "usage": "Associar disponibilidade, ordem e plano de manutenção apenas aos ativos citados.", "source_ids": ["totvs-manufatura"]},
+    {"id": "estoques-custos", "label": "Estoques e custos industriais", "aliases": ["estoque em processo", "wip", "custo padrao", "custo real", "inventario"], "usage": "Tratar custo, margem e estoque como dimensões distintas e exigir período e unidade quando disponíveis.", "source_ids": ["totvs-manufatura", "totvs-logix"]},
+    {"id": "integracao-industrial", "label": "Integração entre operação e backoffice", "aliases": ["integracao", "coleta automatica", "iot", "erp", "balanca", "clp"], "usage": "Mapear origem, destino e atraso do dado antes de sugerir integração.", "source_ids": ["totvs-manufatura"]}
+  ],
+  "technologies": [
+    {"id": "pcp-mrp", "label": "PCP e MRP", "aliases": ["pcp", "mrp", "plano mestre"], "usage": "Usar em planejamento, materiais e ordens; não presumir que o cliente já utiliza uma solução específica.", "source_ids": ["totvs-manufatura"]},
+    {"id": "aps", "label": "APS", "aliases": ["aps", "sequenciamento", "capacidade finita"], "usage": "Tratar como hipótese somente quando houver restrição de capacidade ou sequenciamento descrita.", "source_ids": ["totvs-manufatura"]},
+    {"id": "mes", "label": "MES e coleta de chão de fábrica", "aliases": ["mes", "dados de maquina", "tempo real", "coleta automatica"], "usage": "Tratar coleta em tempo real como opção condicionada, nunca como causa ou solução universal.", "source_ids": ["totvs-manufatura"]},
+    {"id": "gestao-ativos", "label": "Gestão da manutenção", "aliases": ["ordem de manutencao", "preventiva", "preditiva", "plano de manutencao"], "usage": "Conectar apenas a ativos, ordens e sintomas citados.", "source_ids": ["totvs-manufatura"]},
+    {"id": "qualidade-digital", "label": "Gestão digital da qualidade", "aliases": ["inspecao", "plano de controle", "nao conformidade", "certificado"], "usage": "Sugerir diagnóstico do fluxo antes de qualquer automação.", "source_ids": ["totvs-logix"]},
+    {"id": "erp-industrial", "label": "ERP industrial", "aliases": ["erp", "protheus", "datasul", "logix"], "usage": "Protheus, Datasul, Logix ou qualquer produto só pode ser citado se estiver explícito na transcrição ou cadastro autorizado.", "source_ids": ["totvs-manufatura", "totvs-logix"]}
+  ],
+  "common_indicators": [
+    {"id": "aderencia-plano", "label": "Aderência ao plano de produção", "aliases": ["planejado realizado", "aderencia", "atraso de producao"], "usage": "Exigir período, volume e unidade quando disponíveis; não calcular dados ausentes.", "source_ids": ["totvs-manufatura"]},
+    {"id": "oee", "label": "Eficiência global do equipamento", "aliases": ["oee", "disponibilidade", "performance", "qualidade"], "usage": "Não calcular OEE sem disponibilidade, performance e qualidade verificáveis.", "source_ids": ["totvs-manufatura"]},
+    {"id": "refugo-retrabalho", "label": "Refugo e retrabalho", "aliases": ["refugo", "retrabalho", "sucata", "perda"], "usage": "Não atribuir causa ao sistema ou processo sem investigação citada.", "source_ids": ["totvs-logix"]},
+    {"id": "lead-time", "label": "Lead time de produção", "aliases": ["lead time", "tempo de atravessamento", "prazo de producao"], "usage": "Distinguir prazo prometido, planejado e realizado.", "source_ids": ["totvs-manufatura"]},
+    {"id": "giro-cobertura", "label": "Giro e cobertura de estoque", "aliases": ["giro", "cobertura", "excesso de estoque", "falta de material"], "usage": "Evitar concluir excesso ou ruptura sem quantidade e horizonte de análise.", "source_ids": ["totvs-logix"]},
+    {"id": "custo-industrial", "label": "Custo industrial", "aliases": ["custo padrao", "custo real", "variacao de custo"], "usage": "Não inferir margem nem impacto financeiro sem valores suportados.", "source_ids": ["totvs-logix"]}
+  ],
+  "possible_problems": [
+    {"signal": "Planejamento desconectado da execução", "meaning": "Pode estar associado a reprogramações, atrasos ou estoques inadequados.", "usage": "Exigir um exemplo do fluxo e registrar como hipótese até confirmação.", "source_ids": ["totvs-manufatura"]},
+    {"signal": "Apontamento manual, incompleto ou tardio", "meaning": "Pode reduzir a atualidade e a confiança nos dados de produção.", "usage": "Não presumir erro de usuário; localizar etapa, frequência e impacto.", "source_ids": ["totvs-manufatura"]},
+    {"signal": "Cadastros industriais inconsistentes", "meaning": "Estruturas, roteiros ou tempos divergentes podem afetar planejamento e custos.", "usage": "Somente usar quando a reunião citar o cadastro ou uma divergência verificável.", "source_ids": ["totvs-logix"]},
+    {"signal": "Integrações com atraso ou retrabalho", "meaning": "Pode criar decisões baseadas em dados desatualizados.", "usage": "Identificar sistemas, direção do dado e latência antes de recomendar.", "source_ids": ["totvs-manufatura"]}
+  ],
+  "positive_signals": [
+    {"signal": "Uso conectado de planejamento, estoque e execução", "meaning": "Pode indicar processo integrado e maior rastreabilidade decisória.", "usage": "Citar apenas as etapas confirmadas e o resultado observado.", "source_ids": ["totvs-manufatura"]},
+    {"signal": "Indicadores acompanhados com responsáveis e plano de ação", "meaning": "Indica governança operacional quando o compromisso está explícito.", "usage": "Exigir indicador, responsável e ação mencionados.", "source_ids": ["totvs-logix"]},
+    {"signal": "Critérios de aceite e sucesso definidos", "meaning": "Favorece implantação e acompanhamento verificável.", "usage": "Reproduzir critérios e prazos sem completá-los.", "source_ids": ["totvs-manufatura"]}
+  ],
+  "attention_signals": [
+    {"signal": "Paradas ou atrasos recorrentes sem diagnóstico", "meaning": "Pode pressionar a operação e a confiança no acompanhamento.", "usage": "Exigir recorrência, linha ou ativo e impacto mencionados.", "source_ids": ["totvs-manufatura"]},
+    {"signal": "Baixa confiança nos dados industriais", "meaning": "Pode limitar adoção e qualidade das decisões.", "usage": "Distinguir percepção, erro comprovado e limitação de integração.", "source_ids": ["totvs-manufatura"]},
+    {"signal": "Compromissos anteriores sem responsável ou prazo", "meaning": "Pode indicar risco de continuidade da ação, não risco comercial automático.", "usage": "Vincular ao compromisso literal e evitar inferir churn.", "source_ids": ["totvs-logix"]},
+    {"signal": "Treinamento sem evidência de aplicação", "meaning": "Pode exigir acompanhamento da adoção por tarefa.", "usage": "Não confundir presença em treinamento com domínio ou resultado.", "source_ids": ["totvs-manufatura"]}
+  ],
+  "diagnostic_questions": [
+    {"id": "q-restricao", "label": "A restrição observada está em material, capacidade, sequência, cadastro ou apontamento?", "aliases": ["restricao"], "usage": "Usar para delimitar o diagnóstico sem escolher causa antecipadamente.", "source_ids": ["totvs-manufatura"]},
+    {"id": "q-impacto-producao", "label": "Qual linha, produto, período, volume e etapa foram afetados?", "aliases": ["impacto"], "usage": "Usar antes de classificar severidade ou prioridade.", "source_ids": ["totvs-manufatura"]},
+    {"id": "q-integracao", "label": "Qual é a origem, destino, frequência e responsável pelo dado entre PCP, estoque, qualidade e fábrica?", "aliases": ["integracao"], "usage": "Usar em retrabalho, atraso ou divergência de dados.", "source_ids": ["totvs-logix"]},
+    {"id": "q-criterio-sucesso", "label": "Qual indicador e valor-base comprovarão que a mudança funcionou?", "aliases": ["criterio de sucesso", "baseline"], "usage": "Usar em implantação, adoção e expansão.", "source_ids": ["totvs-manufatura"]},
+    {"id": "q-produto-e-versao", "label": "Qual solução, versão e configuração estão efetivamente em uso?", "aliases": ["versao", "produto"], "usage": "Usar quando o produto não estiver comprovado; nunca completar a resposta pelo playbook.", "source_ids": ["totvs-logix"]}
+  ],
+  "conditional_recommendations": [
+    {"id": "r-mapear-fluxo", "label": "Mapear ordem, apontamento, consumo e atualização de estoque", "aliases": ["mapear fluxo"], "usage": "Somente quando houver divergência entre plano e execução.", "source_ids": ["totvs-manufatura"]},
+    {"id": "r-baseline", "label": "Registrar indicador-base, período e meta antes da mudança", "aliases": ["baseline"], "usage": "Quando o ganho esperado ainda não estiver mensurado.", "source_ids": ["totvs-manufatura"]},
+    {"id": "r-causa-parada", "label": "Separar causas de parada em categorias verificáveis", "aliases": ["causa de parada"], "usage": "Quando paradas forem citadas sem diagnóstico e houver dados disponíveis.", "source_ids": ["totvs-logix"]},
+    {"id": "r-validar-cadastros", "label": "Validar amostra de estrutura, roteiro, tempos e unidade de medida", "aliases": ["validar cadastro"], "usage": "Quando a reunião apontar divergência cadastral ou de cálculo.", "source_ids": ["totvs-logix"]},
+    {"id": "r-piloto-controlado", "label": "Executar piloto em linha ou família delimitada com critério de aceite", "aliases": ["piloto"], "usage": "Quando uma mudança ampla ainda não tiver evidência suficiente.", "source_ids": ["totvs-manufatura"]}
+  ],
+  "prohibited_inferences": [
+    "Não atribuir defeito de qualidade, atraso ou parada ao sistema sem evidência.",
+    "Não calcular perda, margem, OEE ou retorno sem os dados necessários.",
+    "Não presumir Indústria 4.0, APS, MES ou automação como necessidade.",
+    "Não converter porte, faturamento, país, região ou UF em complexidade, risco ou recomendação.",
+    "Não afirmar que Protheus, Datasul, Logix ou qualquer produto está em uso sem evidência.",
+    "Não transformar um padrão do subsetor em fato do cliente."
+  ],
+  "meeting_type_rules": {
+    "support_incident": {"prioritize": ["linha ou ativo afetado", "ordem", "horário", "impacto", "reprodução e contorno"], "avoid": ["causa técnica não testada", "produto não confirmado"]},
+    "implementation": {"prioritize": ["estrutura e roteiros", "cadastros", "integrações", "migração", "apontamentos", "critério de aceite"], "avoid": ["assumir dados confiáveis", "expandir escopo sem acordo"]},
+    "relationship_success": {"prioritize": ["adoção por processo", "indicador-base", "resultado observado", "pendências e responsáveis"], "avoid": ["confundir uso com resultado", "rotular saúde por metadados"]},
+    "commercial_expansion": {"prioritize": ["gargalo explícito", "impacto comprovado", "capacidade atual", "critério de valor"], "avoid": ["empurrar APS, MES ou produto", "estimar ROI sem dados"]},
+    "adoption_training": {"prioritize": ["tarefa que precisa ser executada", "perfil treinado", "barreira observada", "evidência de aplicação"], "avoid": ["tratar presença como adoção", "culpar usuário"]},
+    "renewal_contract": {"prioritize": ["continuidade operacional", "valor percebido", "compromissos abertos", "critério de renovação explícito"], "avoid": ["probabilidade de churn", "pressão comercial automática"]},
+    "discovery": {"prioritize": ["processo atual", "problema declarado", "impacto", "responsáveis", "dados ausentes"], "avoid": ["prescrever tecnologia antes do diagnóstico", "assumir produto atual"]},
+    "mixed": {"prioritize": ["separar incidentes, implantação, relacionamento e oportunidade", "ordenar compromissos por evidência"], "avoid": ["fundir causas diferentes", "produzir mais de três ações"]},
+    "unknown": {"prioritize": ["objetivo declarado", "decisões", "compromissos", "incertezas"], "avoid": ["forçar uma classificação", "aplicar padrão industrial como fato"]}
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "version": "totvs-context-v1",
+  "usage_policy": [
+    "Use este contexto somente quando o produto, licença, infraestrutura ou setor estiver explicitamente mencionado na reunião.",
+    "O contexto ajuda a interpretar uma fala, mas nunca prova que uma causa técnica ocorreu.",
+    "Não recomende upsell ou cross-sell sem necessidade e evidência explícitas na transcrição."
+  ],
+  "licensing": {
+    "Lite": "Licença restrita a um módulo específico e sem acesso ao módulo Financeiro.",
+    "Full / Protheus": "Licença com acesso amplo aos módulos do ERP, respeitando limites contratados.",
+    "Conexões adicionais": "Representam telas ou sessões extras; excesso pode estar associado a bloqueios ou quedas, mas a causa deve ser confirmada tecnicamente."
+  },
+  "infrastructure": {
+    "Cloud TOTVS": "Hospedagem oficial gerenciada pela TOTVS.",
+    "Local / On-Premise": "Servidor mantido pelo cliente; limitações locais são uma hipótese a validar, não uma conclusão automática.",
+    "Fluig": "Plataforma de processos, documentos e identidades que integra usuários e sistemas de retaguarda."
+  },
+  "sector_guidance": {
+    "MANUFATURA": "Priorize impacto em PCP, custos de matéria-prima e continuidade do chão de fábrica.",
+    "LOGISTICA": "Priorize impacto em WMS, faturamento, expedição, frota e prazos contratuais.",
+    "SERVICOS": "Priorize contratos recorrentes, ordens de serviço e faturamento de medições."
+  }
+}

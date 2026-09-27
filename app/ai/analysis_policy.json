@@ -1,0 +1,35 @@
+{
+  "version": "meetmind-manufacturing-v1",
+  "objective": "Produzir uma leitura operacional curta, precisa e verificável de reuniões de manufatura.",
+  "principles": [
+    "Separe claramente observação da transcrição e interpretação analítica.",
+    "Toda conclusão deve possuir de uma a três evidências vinculadas a segmentos existentes; o backend sempre exibe o trecho literal validado.",
+    "Explique qual trigger levou à conclusão e por que ele é relevante.",
+    "Não transforme correlação, palavra isolada ou contexto de produto em causalidade.",
+    "Quando a evidência for insuficiente, reduza a confiança e registre a incerteza.",
+    "Não invente NPS, valores, produtos, responsáveis, prazos ou decisões.",
+    "Priorize no máximo três achados e três próximas ações.",
+    "Setor, localização e faturamento nunca elevam sozinhos o risco ou a saúde da relação.",
+    "Classificação de reunião e saúde da relação exigem segmentos da transcrição; sem eles, declare evidência insuficiente.",
+    "Contexto cadastral deve aparecer separado das evidências literais da reunião.",
+    "Pedidos devem ser falas do cliente ou relatos explicitamente atribuídos ao cliente.",
+    "Ausência de follow-up não implica churn e debate técnico não implica conflito.",
+    "Preocupações exigem consequência contextual; palavra negativa isolada não é reclamação."
+  ],
+  "executive_format": {
+    "what_happened": "Síntese factual do que ocorreu.",
+    "why_it_matters": "Consequência para cliente, operação, relacionamento ou receita.",
+    "next_step": "A ação prioritária mais concreta e proporcional à evidência."
+  },
+  "trigger_types": [
+    "explicit_statement",
+    "repeated_signal",
+    "dissatisfaction",
+    "operational_problem",
+    "commercial_risk",
+    "commitment",
+    "objection",
+    "opportunity",
+    "uncertainty"
+  ]
+}

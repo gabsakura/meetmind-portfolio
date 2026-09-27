@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block titulo %}MeetMind · Resumo da IA{% endblock %}
+{% block titulo_topo %}Resumo da IA{% endblock %}
+{% block conteudo %}
+<section class="pagina" data-actions-page data-current-user-id="{{ current_user.id }}" data-can-decide="{{ 'true' if current_user.role.value in ['admin', 'manager', 'analyst'] else 'false' }}">
+  {% if result %}
+  <form class="friendly-result-picker" method="get" action="{{ url_for('painel.resultados') }}">
+    <label for="friendly-analysis-select">Reunião analisada</label>
+    <div>
+      <select id="friendly-analysis-select" name="analysis">
+        {% for card in cards %}
+        <option value="{{ card.analysis.id }}" {{ 'selected' if card.analysis.id == result.analysis_id }}>
+          {{ card.meeting.external_id }} · {{ card.client_name }}
+        </option>
+        {% endfor %}
+      </select>
+      <button class="botao-secundario" type="submit">Ver resultado</button>
+    </div>
+  </form>
+
+  <article class="friendly-result-card">
+    <header class="friendly-result-heading">
+      <div>
+        <p class="reuniao-id">REUNIÃO {{ result.meeting_external_id }}</p>
+        <h2>{{ result.client_name }}</h2>
+        <p>{{ result.meeting_title }} · {{ result.sector }} · {{ result.meeting_type_label }}</p>
+      </div>
+      <div class="friendly-health friendly-health-{{ result.health.tone }}">
+        <span>Satisfação percebida</span>
+        <strong>{{ result.health.short_label }}</strong>
+        {% if result.confidence %}<small>{{ result.confidence }}% de confiança</small>{% endif %}
+      </div>
+    </header>
+
+    <section class="friendly-answer" aria-labelledby="friendly-answer-title">
+      <div class="friendly-answer-icon" aria-hidden="true">◎</div>
+      <div>
+        <span class="eyebrow">Resultado principal</span>
+        <h3 id="friendly-answer-title">{{ result.health.label }}</h3>
+        <p>{{ result.health_rationale }}</p>
+      </div>
+    </section>
+
+    <div class="friendly-summary-grid">
+      <article><span>O que aconteceu</span><p>{{ result.what_happened }}</p></article>
+      <article><span>Por que importa</span><p>{{ result.why_it_matters }}</p></article>
+      <article class="friendly-next-step"><span>O que fazer agora</span><p>{{ result.recommended_next_step }}</p></article>
+    </div>
+
+    <section class="friendly-actions" aria-labelledby="friendly-actions-title">
+      <div class="secao-cabecalho">
+        <div><h3 id="friendly-actions-title">Próximas ações sugeridas</h3></div>
+      </div>
+      <ol>
+        {% for action in result.actions %}
+        <li>
+          <span>{{ loop.index }}</span>
+          <div><strong>{{ action.action }}</strong><p>{{ action.rationale }}</p></div>
+          <small>{{ action.urgency_label }}</small>
+        </li>
+        {% else %}
+        <li><span>1</span><div><strong>{{ result.health.guidance }}</strong></div></li>
+        {% endfor %}
+      </ol>
+    </section>
+
+    {% if result.tracked_actions %}
+    <section class="friendly-actions" aria-labelledby="tracked-actions-title">
+      <div class="secao-cabecalho"><div><h3 id="tracked-actions-title">Rascunhos gerados desta análise</h3></div><a href="{{ url_for('painel.acoes') }}">Gerenciar todas</a></div>
+      <p class="diagnostic-feedback" data-action-feedback role="status" aria-live="polite"></p>
+      <ol>{% for action in result.tracked_actions %}<li><span>{{ loop.index }}</span><div><strong>{{ action.title }}</strong><p>{{ action.rationale }}</p></div><small class="status">{{ action.status }}</small></li>{% endfor %}</ol>
+      <a class="botao-secundario link-botao" href="{{ url_for('painel.acoes') }}">Abrir central de ações</a>
+    </section>
+    {% endif %}
+
+    <section class="analysis-feedback-card" data-analysis-feedback data-analysis-id="{{ result.analysis_id }}">
+      <div><h3>Esta leitura foi útil e correta?</h3></div>
+      <form data-feedback-form>
+        <label>Utilidade<select name="usefulness_rating" required><option value="">Selecione</option>{% for value in range(1, 6) %}<option value="{{ value }}" {{ 'selected' if saved_feedback and saved_feedback.usefulness_rating == value }}>{{ value }}</option>{% endfor %}</select></label>
+        <label>Precisão<select name="factual_accuracy" required><option value="correct" {{ 'selected' if saved_feedback and saved_feedback.factual_accuracy == 'correct' }}>Correta</option><option value="minor_issues" {{ 'selected' if saved_feedback and saved_feedback.factual_accuracy == 'minor_issues' }}>Pequenos ajustes</option><option value="major_issues" {{ 'selected' if saved_feedback and saved_feedback.factual_accuracy == 'major_issues' }}>Problemas importantes</option></select></label>
+        <fieldset class="feedback-choice"><legend>Os próximos passos foram úteis?</legend><label><input type="radio" name="action_useful" value="true" required {{ 'checked' if saved_feedback and saved_feedback.action_useful }}> Sim</label><label><input type="radio" name="action_useful" value="false" required {{ 'checked' if saved_feedback and not saved_feedback.action_useful }}> Não</label></fieldset>
+        <label>Correção necessária <small>Obrigatória se houver qualquer problema.</small><textarea name="correction" maxlength="4000">{{ saved_feedback.correction if saved_feedback and saved_feedback.correction else '' }}</textarea></label>
+        <label>Comentário opcional<textarea name="comment" maxlength="4000">{{ saved_feedback.comment if saved_feedback and saved_feedback.comment else '' }}</textarea></label>
+        {% if saved_feedback %}<p class="feedback-saved-state">Salvo em {{ saved_feedback.updated_at.strftime('%d/%m/%Y %H:%M') }}</p>{% endif %}
+        <button class="botao-primario" type="submit">{{ 'Atualizar feedback' if saved_feedback else 'Salvar feedback' }}</button><p data-feedback-status role="status" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section class="friendly-reasons" aria-labelledby="friendly-reasons-title">
+      <div class="secao-cabecalho">
+        <div><h3 id="friendly-reasons-title">Por que a IA chegou a essa leitura?</h3></div>
+      </div>
+      <div class="friendly-reason-list">
+        {% for reason in result.reasons %}
+        <article>
+          <span class="status">{{ reason.kind }}</span>
+          <h4>{{ reason.title }}</h4>
+          <p>{{ reason.explanation }}</p>
+          {% if reason.evidence %}
+          <details>
+            <summary>Ver o que foi dito</summary>
+            {% for evidence in reason.evidence %}<blockquote>“{{ evidence.get('quote') }}”</blockquote>{% endfor %}
+          </details>
+          {% endif %}
+        </article>
+        {% else %}
+        <p>A análise não registrou motivos adicionais.</p>
+        {% endfor %}
+        {% if result.uncertainties %}
+        <aside class="friendly-uncertainties">
+          <strong>O que ainda precisa ser confirmado</strong>
+          <ul>{% for item in result.uncertainties %}<li>{{ item }}</li>{% endfor %}</ul>
+        </aside>
+        {% endif %}
+      </div>
+    </section>
+
+    <footer class="friendly-result-footer">
+      <a class="botao-secundario link-botao" href="{{ url_for('painel.analise', meeting=result.meeting_id) }}">Abrir rastreabilidade completa</a>
+    </footer>
+  </article>
+  {% else %}
+  <section class="estado-vazio">
+    <span aria-hidden="true">♡</span>
+    <h2>Nenhuma análise concluída</h2>
+    <a class="botao-primario link-botao" href="{{ url_for('painel.analise') }}">Solicitar primeira análise</a>
+  </section>
+  {% endif %}
+</section>
+{% endblock %}
+{% block scripts %}<script type="module" src="{{ url_for('static', filename='js/actions.js') }}"></script>{% endblock %}

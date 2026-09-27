@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MeetMind · Privacidade</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/tema.css') }}">
+</head>
+<body class="legal-body">
+  <main class="legal-document">
+    <a class="legal-back" href="{{ url_for('auth.login') }}">← Voltar</a>
+    <p class="eyebrow">MeetMind · Portfólio</p>
+    <h1>Política de Privacidade</h1>
+    <p class="legal-version">Versão 1.0 · 26 de setembro de 2026</p>
+
+    <section>
+      <h2>Escopo desta demonstração</h2>
+      <p>O MeetMind é um projeto acadêmico independente apresentado como portfólio. A demonstração pública usa somente pessoas, empresas, reuniões e análises sintéticas. Ela não deve receber transcrições, calendários ou informações reais.</p>
+    </section>
+    <section>
+      <h2>Dados tratados</h2>
+      <p>Quando alguém acessa a aplicação, podem ser tratados dados técnicos mínimos de segurança, como data e hora, rota acessada, identificadores de sessão, endereço IP mascarado e hashes destinados à prevenção de abuso. A credencial de demonstração é temporária e não identifica o visitante.</p>
+    </section>
+    <section>
+      <h2>Funcionalidades desativadas</h2>
+      <p>Na organização pública de demonstração ficam bloqueados o envio de arquivos, a conexão com Google ou Microsoft, a alteração de foto e o processamento externo de reuniões por inteligência artificial.</p>
+    </section>
+    <section>
+      <h2>Finalidade e retenção</h2>
+      <p>Os registros técnicos são usados exclusivamente para operar, proteger e diagnosticar a demonstração. A organização sintética pode ser reconstruída a qualquer momento. Nenhum dado da demonstração é usado para treinar modelos.</p>
+    </section>
+    <section>
+      <h2>Compartilhamento</h2>
+      <p>A hospedagem, o banco e a observabilidade podem ser prestados por fornecedores técnicos do ambiente publicado. Uma implantação corporativa com dados reais exigirá contrato, definição de papéis, avaliação de impacto e política própria antes de ser habilitada.</p>
+    </section>
+    <section>
+      <h2>Seus direitos e contato</h2>
+      <p>Para solicitar informações, correção ou exclusão de dados relacionados ao seu acesso, use o canal de privacidade:</p>
+      {% if contact_email %}
+      <p><a href="mailto:{{ contact_email }}">{{ contact_email }}</a></p>
+      {% else %}
+      <p><strong>Canal não configurado neste ambiente local.</strong></p>
+      {% endif %}
+    </section>
+  </main>
+</body>
+</html>

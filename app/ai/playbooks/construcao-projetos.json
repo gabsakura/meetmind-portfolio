@@ -1,0 +1,61 @@
+{
+  "id": "construcao-projetos", "label": "Construção e Projetos", "version": "sector-playbooks-v1", "reviewed_at": "2026-08-03",
+  "aliases": ["CONSTRUCAO E PROJETOS", "CONSTRUCAO", "OBRAS E PROJETOS"], "unit_aliases": ["TOTVS CONSTRUCAO"], "cnae_prefixes": ["41", "42", "43", "71"],
+  "detection_terms": ["obra", "canteiro", "orcamento de obra", "cronograma", "medicao", "subcontrato", "bim", "avanco fisico"],
+  "sources": [
+    {"id": "totvs-construcao", "title": "TOTVS Construção", "url": "https://www.totvs.com/construcao/", "publisher": "TOTVS", "accessed_at": "2026-08-03"},
+    {"id": "totvs-obras", "title": "TOTVS Construção Obras e Projetos", "url": "https://produtos.totvs.com/ficha-tecnica/tudo-sobre-o-totvs-construcao-obras-e-projetos/", "publisher": "TOTVS", "accessed_at": "2026-08-03"}
+  ],
+  "subsectors": [
+    {"id": "construcao-civil", "label": "Construção civil", "aliases": ["construtora", "empreendimento"], "cnae_prefixes": ["41", "43"]},
+    {"id": "construcao-pesada", "label": "Construção pesada", "aliases": ["infraestrutura", "construcao pesada"], "cnae_prefixes": ["42"]},
+    {"id": "engenharia-projetos", "label": "Engenharia de projetos", "aliases": ["engenharia", "projeto"], "cnae_prefixes": ["71"]}
+  ],
+  "critical_processes": [
+    {"id": "viabilidade-orcamento", "label": "Viabilidade e orçamento", "aliases": ["viabilidade", "orcamento", "composicao"], "usage": "Não estimar margem ou custo sem valores.", "source_ids": ["totvs-construcao"]},
+    {"id": "planejamento", "label": "Planejamento e cronograma", "aliases": ["cronograma", "eap", "linha de balanco"], "usage": "Distinguir baseline, revisão e realizado.", "source_ids": ["totvs-obras"]},
+    {"id": "execucao-medicao", "label": "Execução e medição", "aliases": ["avanco fisico", "medicao", "diario de obra"], "usage": "Exigir obra, período e tarefa.", "source_ids": ["totvs-obras"]},
+    {"id": "contratos-suprimentos", "label": "Contratos, subcontratação e suprimentos", "aliases": ["subcontrato", "empreiteiro", "insumo", "pedido extra"], "usage": "Não atribuir estouro de orçamento ao sistema.", "source_ids": ["totvs-obras"]}
+  ],
+  "technologies": [
+    {"id": "gestao-obras", "label": "Gestão de obras e projetos", "aliases": ["obras e projetos", "portal da obra"], "usage": "Usar quando obra ou projeto forem explícitos.", "source_ids": ["totvs-obras"]},
+    {"id": "bim", "label": "BIM", "aliases": ["bim", "ifc", "modelo 3d"], "usage": "Não recomendar sem processo de projeto compatível.", "source_ids": ["totvs-obras"]},
+    {"id": "mobile-canteiro", "label": "Apontamento móvel no canteiro", "aliases": ["app minha obra", "canteiro", "offline"], "usage": "Relacionar a apontamentos citados.", "source_ids": ["totvs-obras"]},
+    {"id": "inspecoes", "label": "Inspeções e não conformidades", "aliases": ["inspecao", "nao conformidade", "qualidade"], "usage": "Não afirmar problema de segurança.", "source_ids": ["totvs-obras"]}
+  ],
+  "common_indicators": [
+    {"id": "avanco", "label": "Avanço físico e financeiro", "aliases": ["avanco fisico", "avanco financeiro"], "usage": "Exigir data-base.", "source_ids": ["totvs-obras"]},
+    {"id": "custo-previsto-real", "label": "Custo previsto versus realizado", "aliases": ["previsto realizado", "custo apropriado"], "usage": "Não calcular sem base.", "source_ids": ["totvs-construcao"]},
+    {"id": "prazo-marcos", "label": "Prazo e marcos do projeto", "aliases": ["atraso", "marco", "caminho critico"], "usage": "Não atribuir causa sem evidência.", "source_ids": ["totvs-obras"]}
+  ],
+  "possible_problems": [
+    {"signal": "Apontamento de obra tardio ou incompleto", "meaning": "Pode reduzir visibilidade de avanço e custo.", "usage": "Exigir obra e período.", "source_ids": ["totvs-obras"]},
+    {"signal": "Contrato ou medição divergente", "meaning": "Pode afetar faturamento, pagamento ou prazo.", "usage": "Separar posições e regra contratual.", "source_ids": ["totvs-obras"]}
+  ],
+  "positive_signals": [
+    {"signal": "Planejamento integrado à medição e suprimentos", "meaning": "Indica adoção de ponta a ponta.", "usage": "Exigir etapas confirmadas.", "source_ids": ["totvs-obras"]},
+    {"signal": "Desvios acompanhados com responsável", "meaning": "Indica governança do projeto.", "usage": "Exigir compromisso.", "source_ids": ["totvs-construcao"]}
+  ],
+  "attention_signals": [
+    {"signal": "Atraso ou custo recorrente sem causa definida", "meaning": "Pode pressionar confiança e continuidade.", "usage": "Exigir recorrência e projeto.", "source_ids": ["totvs-construcao"]},
+    {"signal": "Controle paralelo fora do sistema", "meaning": "Pode sinalizar baixa adoção ou lacuna de processo.", "usage": "Não atribuir causa automaticamente.", "source_ids": ["totvs-obras"]}
+  ],
+  "diagnostic_questions": [
+    {"id": "q-obra-tarefa", "label": "Qual obra, contrato, tarefa e data-base foram afetados?", "aliases": [], "usage": "Usar antes de priorizar impacto.", "source_ids": ["totvs-obras"]},
+    {"id": "q-baseline", "label": "Qual baseline e revisão do cronograma estão sendo comparados?", "aliases": [], "usage": "Usar em atraso.", "source_ids": ["totvs-obras"]},
+    {"id": "q-medicao", "label": "Como avanço, medição, contrato e faturamento se conectam?", "aliases": [], "usage": "Usar em divergência.", "source_ids": ["totvs-construcao"]}
+  ],
+  "conditional_recommendations": [
+    {"id": "r-rastrear-medicao", "label": "Rastrear medição da tarefa ao contrato", "aliases": [], "usage": "Quando avanço e cobrança divergirem.", "source_ids": ["totvs-obras"]},
+    {"id": "r-baseline", "label": "Fixar data-base e versão do planejamento", "aliases": [], "usage": "Quando comparações estiverem inconsistentes.", "source_ids": ["totvs-obras"]},
+    {"id": "r-apontamento", "label": "Validar origem e frequência dos apontamentos", "aliases": [], "usage": "Quando o realizado estiver desatualizado.", "source_ids": ["totvs-construcao"]}
+  ],
+  "prohibited_inferences": ["Não estimar estouro de custo ou prazo.", "Não afirmar risco de segurança.", "Não atribuir atraso ao sistema.", "Não recomendar BIM sem processo compatível."],
+  "meeting_type_rules": {
+    "support_incident": {"prioritize": ["obra", "tarefa", "contrato", "data-base"], "avoid": ["causa sem rastreamento"]},
+    "implementation": {"prioritize": ["EAP", "cadastros", "integrações", "apontamentos"], "avoid": ["go-live sem projeto piloto"]},
+    "relationship_success": {"prioritize": ["adoção por obra", "indicadores", "pendências"], "avoid": ["confundir obra no prazo com satisfação"]},
+    "commercial_expansion": {"prioritize": ["gargalo", "portfólio de obras", "capacidade atual"], "avoid": ["oferta automática de BIM"]},
+    "renewal_contract": {"prioritize": ["valor percebido", "continuidade", "riscos abertos"], "avoid": ["probabilidade de churn"]}
+  }
+}

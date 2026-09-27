@@ -1,0 +1,311 @@
+{% extends "base.html" %}
+{% block titulo %}MeetMind · Histórico{% endblock %}
+{% block titulo_topo %}Reuniões analisadas{% endblock %}
+{% block conteudo %}
+{% set risk_labels = {'low': 'Baixo', 'medium': 'Médio', 'high': 'Alto', 'critical': 'Crítico'} %}
+{% set sentiment_labels = {'positive': 'Positivo', 'neutral': 'Neutro', 'negative': 'Negativo', 'mixed': 'Misto'} %}
+{% set urgency_labels = {'immediate': 'Imediata', 'next_7_days': 'Próximos 7 dias', 'next_30_days': 'Próximos 30 dias', 'monitor': 'Monitorar'} %}
+{% set health_labels = {'healthy': 'Saudável', 'attention': 'Atenção', 'at_risk': 'Em risco', 'insufficient_evidence': 'Evidência insuficiente'} %}
+{% set meeting_type_labels = {'support_incident': 'Suporte/incidente', 'implementation': 'Implantação', 'relationship_success': 'Relacionamento/sucesso', 'commercial_expansion': 'Expansão comercial', 'adoption_training': 'Adoção/treinamento', 'renewal_contract': 'Renovação/contrato', 'discovery': 'Descoberta', 'mixed': 'Mista', 'unknown': 'Não definida'} %}
+
+<section class="pagina" data-analysis-history>
+  <section class="grade-kpis grade-kpis-analises" aria-label="Resumo das análises concluídas">
+    <article class="kpi">
+      <span>Análises disponíveis</span>
+      <strong>{{ counters.all }}</strong>
+    </article>
+    <article class="kpi kpi-risco">
+      <span>Sinais de risco</span>
+      <strong>{{ counters.risk }}</strong>
+    </article>
+    <article class="kpi kpi-oportunidade">
+      <span>Oportunidades sugeridas</span>
+      <strong>{{ counters.opportunity }}</strong>
+    </article>
+    <article class="kpi kpi-revisao">
+      <span>Revisão necessária</span>
+      <strong>{{ counters.review }}</strong>
+    </article>
+  </section>
+
+  <div class="filtros-analises" aria-label="Filtros das reuniões analisadas">
+    <label class="busca-label filtro-busca" for="analysis-search">Buscar
+      <input id="analysis-search" type="search" placeholder="Cliente, reunião, produto ou conteúdo" data-history-search>
+    </label>
+    <label for="analysis-date-from">De
+      <input id="analysis-date-from" type="date" data-history-date-from>
+    </label>
+    <label for="analysis-date-to">Até
+      <input id="analysis-date-to" type="date" data-history-date-to>
+    </label>
+    <label for="analysis-risk">Risco
+      <select id="analysis-risk" data-history-risk>
+        <option value="">Todos</option>
+        <option value="low">Baixo</option>
+        <option value="medium">Médio</option>
+        <option value="high">Alto</option>
+        <option value="critical">Crítico</option>
+      </select>
+    </label>
+    <label for="analysis-product">Produto
+      <select id="analysis-product" data-history-product>
+        <option value="">Todos</option>
+        {% for product in products %}
+        <option value="{{ product|lower }}">{{ product }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label for="analysis-confidence">Confiança
+      <select id="analysis-confidence" data-history-confidence>
+        <option value="">Todas</option>
+        <option value="high">Alta (80% ou mais)</option>
+        <option value="medium">Média (65% a 79%)</option>
+        <option value="low">Baixa (abaixo de 65%)</option>
+      </select>
+    </label>
+    <label for="analysis-sector">Setor
+      <select id="analysis-sector" data-history-sector>
+        <option value="">Todos</option>
+        {% for sector in sectors %}<option value="{{ sector|lower }}">{{ sector }}</option>{% endfor %}
+      </select>
+    </label>
+    <label for="analysis-meeting-type">Tipo da reunião
+      <select id="analysis-meeting-type" data-history-meeting-type>
+        <option value="">Todos</option>
+        {% for meeting_type in meeting_types %}<option value="{{ meeting_type }}">{{ meeting_type_labels.get(meeting_type, meeting_type) }}</option>{% endfor %}
+      </select>
+    </label>
+    <label for="analysis-health">Saúde da relação
+      <select id="analysis-health" data-history-health>
+        <option value="">Todas</option>
+        {% for value, label in health_labels.items() %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+      </select>
+    </label>
+    <label for="analysis-priority">Prioridade contextual
+      <select id="analysis-priority" data-history-priority>
+        <option value="">Todas</option><option value="low">Baixa</option><option value="medium">Média</option><option value="high">Alta</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="abas-analises" role="tablist" aria-label="Tipo de leitura">
+    <button class="aba-analise ativo" type="button" role="tab" aria-selected="true" data-history-tab="all">
+      Todas <span>{{ counters.all }}</span>
+    </button>
+    <button class="aba-analise" type="button" role="tab" aria-selected="false" data-history-tab="risk">
+      Riscos <span>{{ counters.risk }}</span>
+    </button>
+    <button class="aba-analise" type="button" role="tab" aria-selected="false" data-history-tab="opportunity">
+      Oportunidades <span>{{ counters.opportunity }}</span>
+    </button>
+    <button class="aba-analise" type="button" role="tab" aria-selected="false" data-history-tab="review">
+      Revisão necessária <span>{{ counters.review }}</span>
+    </button>
+  </div>
+
+  {% if cards %}
+  <div class="lista-analises" data-history-list>
+    {% for card in cards %}
+    <article
+      class="reuniao-analisada"
+      data-history-card
+      data-groups="{{ card.groups }}"
+      data-risk="{{ card.risk_level }}"
+      data-products="{{ card.products|join(' ')|lower }}"
+      data-confidence="{{ card.confidence }}"
+      data-date="{{ card.date_iso }}"
+      data-sector="{{ (card.sector or '')|lower }}"
+      data-meeting-type="{{ card.meeting_type }}"
+      data-health="{{ card.relationship_health.get('status', 'insufficient_evidence') }}"
+      data-priority="{{ card.contextual_priority }}"
+    >
+      <header class="reuniao-analisada-cabecalho">
+        <div>
+          <p class="reuniao-id">Reunião {{ card.meeting.external_id }}</p>
+          <h3>{{ card.client_name }}</h3>
+          <p>
+            {{ card.meeting.occurred_at.strftime('%d/%m/%Y') if card.meeting.occurred_at else 'Sem data' }}
+            {% if card.segment %} · {{ card.segment }}{% endif %}
+            {% if card.owner %} · {{ card.owner }}{% endif %}
+          </p>
+        </div>
+        <div class="sinais-analise">
+          <span class="status status-risco-{{ card.risk_level }}">Risco {{ risk_labels.get(card.risk_level, card.risk_level) }}</span>
+          {% if card.has_opportunity %}<span class="status status-oportunidade">Oportunidade sugerida</span>{% endif %}
+          {% if card.needs_review %}<span class="status status-atencao">Revisar</span>{% endif %}
+          <span class="status status-saude-{{ card.relationship_health.get('status', 'insufficient_evidence') }}">{{ health_labels.get(card.relationship_health.get('status'), 'Evidência insuficiente') }}</span>
+        </div>
+      </header>
+
+      <div class="reuniao-analisada-corpo">
+        <dl class="info-reuniao">
+          <div><dt>Sentimento</dt><dd>{{ sentiment_labels.get(card.sentiment, card.sentiment) }}</dd></div>
+          <div><dt>Produto</dt><dd>{{ card.products|join(', ') if card.products else 'Não confirmado' }}</dd></div>
+          <div><dt>Confiança média</dt><dd>{{ card.confidence }}%</dd></div>
+          <div><dt>Evidências</dt><dd>{{ card.evidence_count }} trecho(s)</dd></div>
+          <div><dt>Setor</dt><dd>{{ card.sector or 'Não identificado' }}</dd></div>
+          <div><dt>Tipo da reunião</dt><dd>{{ meeting_type_labels.get(card.meeting_type, card.meeting_type) }}</dd></div>
+          <div>
+            <dt>Trigger principal</dt>
+            <dd>{{ card.primary_trigger.get('label') or 'Não informado' }}</dd>
+          </div>
+        </dl>
+
+        <div class="resumo-reuniao">
+          <article>
+            <span>O que aconteceu</span>
+            <p>{{ card.summary.get('what_happened') or 'Não informado.' }}</p>
+          </article>
+          <article>
+            <span>Por que importa</span>
+            <p>{{ card.summary.get('why_it_matters') or 'Não informado.' }}</p>
+          </article>
+          <article class="proximo-passo">
+            <span>Próximo passo</span>
+            <p>{{ card.summary.get('next_step') or 'Não informado.' }}</p>
+          </article>
+        </div>
+      </div>
+
+      {% if card.primary_trigger %}
+      <div class="trigger-resumido">
+        <strong>Por que este trigger foi ativado?</strong>
+        <p>{{ card.primary_trigger.get('reason') or 'A justificativa não foi informada.' }}</p>
+      </div>
+      {% endif %}
+
+      <div class="acoes-reuniao">
+        {% if current_user.role.value in ['admin', 'manager', 'analyst'] %}
+        <a class="botao-secundario link-botao" href="{{ url_for('painel.auditabilidade_ia', meeting=card.meeting.id, analysis=card.analysis.id) }}">
+          Abrir auditabilidade
+        </a>
+        <button
+          class="botao-tabela"
+          type="button"
+          aria-expanded="false"
+          aria-controls="analysis-details-{{ card.analysis.id }}"
+          data-history-details-button
+        >Ver evidências e rastreabilidade</button>
+        {% else %}
+        <a class="botao-secundario link-botao" href="{{ url_for('painel.inteligencia_artificial', meeting=card.meeting.id, analysis=card.analysis.id) }}">Abrir leitura da IA</a>
+        {% endif %}
+      </div>
+
+      {% if current_user.role.value in ['admin', 'manager', 'analyst'] %}
+      <div class="detalhes-analise" id="analysis-details-{{ card.analysis.id }}" data-history-details hidden>
+        <section>
+          <h4>Achados e evidências</h4>
+          <div class="achados-historico">
+            {% for finding in card.findings %}
+            <article>
+              <header>
+                <div>
+                  <span class="etiqueta">{{ finding.get('category', 'achado') }}</span>
+                  <h5>{{ finding.get('title') or 'Achado' }}</h5>
+                </div>
+                <strong>{{ ((finding.get('confidence', 0)|float) * 100)|round|int }}% de confiança</strong>
+              </header>
+              <p><strong>Observado:</strong> {{ finding.get('observation') or 'Não informado.' }}</p>
+              <p><strong>Interpretação:</strong> {{ finding.get('interpretation') or 'Não informada.' }}</p>
+              <p><strong>Impacto:</strong> {{ finding.get('business_impact') or 'Não informado.' }}</p>
+              <p><strong>Recomendação:</strong> {{ finding.get('recommendation') or 'Não informada.' }}</p>
+              {% for evidence in finding.get('evidence', []) %}
+              <blockquote>
+                <p>“{{ evidence.get('quote') }}”</p>
+                <footer>
+                  Segmento {{ evidence.get('segment_id') }} · {{ evidence.get('relevance') }}
+                </footer>
+              </blockquote>
+              {% endfor %}
+            </article>
+            {% endfor %}
+          </div>
+        </section>
+
+        <section class="detalhes-duas-colunas">
+          <div>
+            <h4>Próximas ações</h4>
+            <ol>
+              {% for action in card.action_items %}
+              <li>
+                <strong>{{ action.get('action') }}</strong>
+                <p>{{ action.get('rationale') }} · {{ urgency_labels.get(action.get('urgency'), action.get('urgency')) }}</p>
+              </li>
+              {% else %}
+              <li>Nenhuma ação registrada.</li>
+              {% endfor %}
+            </ol>
+          </div>
+          <div>
+            <h4>Incertezas declaradas</h4>
+            <ul>
+              {% for uncertainty in card.uncertainties %}
+              <li>{{ uncertainty }}</li>
+              {% else %}
+              <li>Nenhuma incerteza adicional registrada.</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </section>
+
+        <section class="contexto-historico">
+          <div>
+            <h4>Saúde da relação</h4>
+            <p><strong>{{ health_labels.get(card.relationship_health.get('status'), 'Evidência insuficiente') }}:</strong> {{ card.relationship_health.get('rationale') or 'Sem leitura contextual registrada.' }}</p>
+            <ul>{% for signal in card.retention_signals %}<li><strong>{{ signal.get('label') }}</strong> — {{ signal.get('description') }}</li>{% else %}<li>Nenhum sinal adicional registrado.</li>{% endfor %}</ul>
+          </div>
+          <div>
+            <h4>Influência do contexto</h4>
+            <ul>{% for item in card.context_application %}<li><strong>{{ item.get('factor') }}:</strong> {{ item.get('influence') }} <small>{{ item.get('limitation') }}</small></li>{% else %}<li>O contexto não alterou a priorização.</li>{% endfor %}</ul>
+          </div>
+        </section>
+
+        <details class="rastreabilidade">
+          <summary>Ficha técnica da análise</summary>
+          <dl>
+            <dt>Modelo</dt><dd>{{ card.traceability.model }}</dd>
+            <dt>Política</dt><dd>{{ card.traceability.policy_version }}</dd>
+            <dt>Versão do score</dt><dd>{{ card.traceability.score_version }}</dd>
+            <dt>Hash da transcrição</dt><dd>{{ card.traceability.transcript_hash }}</dd>
+            {% if card.traceability.context_version %}<dt>Contexto</dt><dd>{{ card.traceability.context_version }}</dd>{% endif %}
+            {% if card.traceability.playbook_id %}<dt>Playbook</dt><dd>{{ card.traceability.playbook_id }} · {{ card.traceability.playbook_version }}</dd>{% endif %}
+            {% if card.traceability.sector_source %}<dt>Origem do setor</dt><dd>{{ card.traceability.sector_source }}</dd>{% endif %}
+            {% if card.traceability.context_sha256 %}<dt>Hash do contexto</dt><dd>{{ card.traceability.context_sha256 }}</dd>{% endif %}
+            {% if card.traceability.exact_evidence_count is not none %}
+            <dt>Evidências exatas</dt><dd>{{ card.traceability.exact_evidence_count }}</dd>
+            {% endif %}
+            {% if card.traceability.realigned_evidence_count is not none %}
+            <dt>Evidências realinhadas</dt><dd>{{ card.traceability.realigned_evidence_count }}</dd>
+            {% endif %}
+            {% if card.traceability.format_repair_count is not none %}
+            <dt>Reparos de formato</dt><dd>{{ card.traceability.format_repair_count }}</dd>
+            {% endif %}
+            {% if card.traceability.latency_ms %}
+            <dt>Tempo de processamento</dt><dd>{{ card.traceability.latency_ms }} ms</dd>
+            {% endif %}
+            {% if card.traceability.input_tokens is not none %}
+            <dt>Tokens de entrada</dt><dd>{{ card.traceability.input_tokens }}</dd>
+            {% endif %}
+            {% if card.traceability.output_tokens is not none %}
+            <dt>Tokens de saída</dt><dd>{{ card.traceability.output_tokens }}</dd>
+            {% endif %}
+          </dl>
+        </details>
+      </div>
+      {% endif %}
+    </article>
+    {% endfor %}
+  </div>
+  <div class="estado-vazio" data-history-empty hidden>
+    <strong>Nenhuma análise corresponde aos filtros</strong>
+  </div>
+  {% else %}
+  <div class="estado-vazio">
+    <strong>Nenhuma análise concluída</strong>
+    {% if current_user.role.value in ['admin', 'manager', 'analyst'] %}
+    <a class="botao-primario link-botao" href="{{ url_for('painel.inteligencia_artificial') }}">Abrir Inteligência Artificial</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

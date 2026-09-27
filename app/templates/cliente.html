@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block titulo %}MeetMind · {{ client.name }}{% endblock %}
+{% block titulo_topo %}Visão do cliente{% endblock %}
+{% block conteudo %}
+{% set health = (latest_card.relationship_health.status if latest_card else 'insufficient_evidence') %}
+{% set health_labels = {'healthy': 'Saudável', 'attention': 'Atenção', 'at_risk': 'Em risco', 'insufficient_evidence': 'Sem evidência'} %}
+<section class="pagina client-360" data-client-page data-client-id="{{ client.id }}">
+  <header class="client-hero">
+    <div><p class="eyebrow">Conta {{ client.external_id }}</p><h2>{{ client.name }}</h2><p>{{ owner.name if owner else 'Sem responsável definido' }}</p></div>
+    <span class="client-health client-health-{{ health }}">{{ health_labels.get(health, 'Sem evidência') }}</span>
+  </header>
+
+  <section class="widget client-people" aria-labelledby="client-people-title">
+    <div class="secao-cabecalho"><h3 id="client-people-title">Responsáveis e contatos</h3></div>
+    {% if can_transfer %}
+    <form class="client-owner-form" data-owner-form>
+      <label>Responsável pela conta
+        <select name="owner_id" required>
+          {% for item in owner_options %}<option value="{{ item.id }}" {{ 'selected' if item.id == client.owner_id }}>{{ item.name }}</option>{% endfor %}
+        </select>
+      </label>
+      <button class="botao-secundario" type="submit">Transferir carteira</button>
+    </form>
+    {% endif %}
+    <div class="client-contact-list" data-contact-list>
+      {% for contact in contacts if contact.is_active %}
+      <article>
+        <div><strong>{{ contact.name }}</strong><small>{{ contact.job_title or 'Contato do cliente' }}</small></div>
+        <a href="mailto:{{ contact.email }}">{{ contact.email }}</a>
+        {% if contact.phone %}<span>{{ contact.phone }}</span>{% endif %}
+        {% if contact.is_primary %}<span class="status status-sucesso">Principal</span>{% endif %}
+        {% if can_manage_client %}<button class="botao-terciario" type="button" data-contact-deactivate="{{ contact.id }}">Desativar</button>{% endif %}
+      </article>
+      {% else %}<div class="estado-vazio">Nenhum contato ativo.</div>{% endfor %}
+    </div>
+    {% if can_manage_client %}
+    <form class="client-contact-form" data-contact-form>
+      <label>Nome<input name="name" maxlength="200" required></label>
+      <label>E-mail<input name="email" type="email" maxlength="254" required></label>
+      <label>Cargo<input name="job_title" maxlength="160"></label>
+      <label>Telefone<input name="phone" maxlength="40"></label>
+      <label class="team-active"><input name="is_primary" type="checkbox"> Contato principal</label>
+      <button class="botao-primario" type="submit">Adicionar contato</button>
+    </form>
+    {% endif %}
+    <p class="diagnostic-feedback" data-client-feedback role="status" aria-live="polite"></p>
+  </section>
+
+  <div class="client-now-grid" aria-label="Situação atual do cliente">
+    <article><span>Última reunião</span><strong>{{ meetings[0].occurred_at.strftime('%d/%m/%Y') if meetings and meetings[0].occurred_at else 'Não registrada' }}</strong></article>
+    <article class="{{ 'client-now-risk' if active_actions|length else '' }}"><span>Pendências abertas</span><strong>{{ active_actions|length }}</strong></article>
+    <article class="{{ 'client-now-attention' if active_requests|length else '' }}"><span>Encaminhamentos ativos</span><strong>{{ active_requests|length }}</strong></article>
+    <article><span>Próximo acompanhamento</span><strong>{{ next_action.due_at.strftime('%d/%m/%Y') if next_action and next_action.due_at else 'Não definido' }}</strong></article>
+  </div>
+
+  <div class="client-360-grid">
+    <section class="client-current" aria-labelledby="client-current-title">
+      <div class="secao-cabecalho"><h3 id="client-current-title">Agora</h3></div>
+      {% if latest_card %}
+      <article class="client-current-summary">
+        <span>Última leitura</span>
+        <p>{{ latest_card.summary.get('what_happened') or 'Sem síntese disponível.' }}</p>
+        <a href="{{ url_for('painel.inteligencia_artificial', meeting=latest_card.meeting.id, analysis=latest_card.analysis.id) }}">Abrir evidências</a>
+      </article>
+      <div class="client-signal-row">
+        <span class="status {{ 'status-risco' if latest_card.has_risk else 'status-neutro' }}">{{ 'Risco identificado' if latest_card.has_risk else 'Sem risco conclusivo' }}</span>
+        <span class="status {{ 'status-sucesso' if latest_card.has_opportunity else 'status-neutro' }}">{{ 'Oportunidade identificada' if latest_card.has_opportunity else 'Sem oportunidade conclusiva' }}</span>
+      </div>
+      {% else %}<div class="estado-vazio"><strong>Nenhuma reunião analisada</strong></div>{% endif %}
+
+      <div class="client-open-list">
+        <h4>Ações abertas</h4>
+        {% for action in active_actions[:5] %}
+        <a href="{{ url_for('painel.acoes', q=action.title) }}"><span>{{ action.title }}</span><small>{{ action.due_at.strftime('%d/%m/%Y') if action.due_at else 'Sem prazo' }}</small></a>
+        {% else %}<p>Nenhuma ação pendente.</p>{% endfor %}
+      </div>
+    </section>
+
+    <section class="client-history" aria-labelledby="client-history-title">
+      <div class="secao-cabecalho"><h3 id="client-history-title">Histórico</h3></div>
+      <ol class="client-history-list">
+        {% for event in timeline %}
+        <li><span>{{ event.kind }}</span><time>{{ event.at.strftime('%d/%m/%Y %H:%M') }}</time><a href="{{ event.url }}"><strong>{{ event.title }}</strong><small>{{ event.detail }}</small></a></li>
+        {% else %}<li class="estado-vazio">Nenhum evento registrado.</li>{% endfor %}
+      </ol>
+    </section>
+  </div>
+</section>
+<script type="module" src="{{ url_for('static', filename='js/cliente.js') }}"></script>
+{% endblock %}

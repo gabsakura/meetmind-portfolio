@@ -1,0 +1,60 @@
+{
+  "id": "generico", "label": "Contexto genérico", "version": "sector-playbooks-v1", "reviewed_at": "2026-08-03",
+  "aliases": ["GENERICO", "SEM SETOR", "NAO INFORMADO"], "unit_aliases": [], "cnae_prefixes": [],
+  "detection_terms": [],
+  "sources": [
+    {"id": "totvs-gestao", "title": "Portfólio TOTVS Gestão", "url": "https://www.totvs.com/gestao/", "publisher": "TOTVS", "accessed_at": "2026-08-03"}
+  ],
+  "subsectors": [],
+  "critical_processes": [
+    {"id": "operacao", "label": "Processo operacional", "aliases": ["processo", "operacao", "rotina"], "usage": "Delimitar etapa, usuário, frequência e impacto.", "source_ids": ["totvs-gestao"]},
+    {"id": "financeiro-fiscal", "label": "Financeiro e fiscal", "aliases": ["financeiro", "fiscal", "faturamento", "nota"], "usage": "Não estimar valor ou não conformidade.", "source_ids": ["totvs-gestao"]},
+    {"id": "implantacao-adocao", "label": "Implantação e adoção", "aliases": ["implantacao", "treinamento", "uso", "go live"], "usage": "Separar disponibilidade, conhecimento e aderência de processo.", "source_ids": ["totvs-gestao"]},
+    {"id": "atendimento", "label": "Atendimento e relacionamento", "aliases": ["chamado", "suporte", "atendimento", "relacionamento"], "usage": "Usar somente compromissos e percepções explícitos.", "source_ids": ["totvs-gestao"]}
+  ],
+  "technologies": [
+    {"id": "erp", "label": "ERP", "aliases": ["erp", "protheus", "datasul", "rm", "logix"], "usage": "Não inferir linha ou módulo ausente.", "source_ids": ["totvs-gestao"]},
+    {"id": "cloud", "label": "Cloud e infraestrutura", "aliases": ["cloud", "nuvem", "servidor", "infraestrutura"], "usage": "Não atribuir causa à infraestrutura sem diagnóstico.", "source_ids": ["totvs-gestao"]},
+    {"id": "integracao", "label": "Integração", "aliases": ["integracao", "api", "ipaas"], "usage": "Exigir origem, destino e evento.", "source_ids": ["totvs-gestao"]},
+    {"id": "analytics", "label": "Analytics", "aliases": ["dashboard", "bi", "analytics", "indicador"], "usage": "Priorizar definição de métrica antes de ferramenta.", "source_ids": ["totvs-gestao"]}
+  ],
+  "common_indicators": [
+    {"id": "tempo-processo", "label": "Tempo e volume do processo", "aliases": ["tempo", "volume", "fila"], "usage": "Exigir período e unidade.", "source_ids": ["totvs-gestao"]},
+    {"id": "retrabalho", "label": "Retrabalho e exceções", "aliases": ["retrabalho", "manual", "contorno"], "usage": "Não atribuir causa automaticamente.", "source_ids": ["totvs-gestao"]},
+    {"id": "adocao", "label": "Adoção por equipe ou processo", "aliases": ["adocao", "usuarios ativos", "uso"], "usage": "Não confundir login com valor percebido.", "source_ids": ["totvs-gestao"]}
+  ],
+  "possible_problems": [
+    {"signal": "Processo manual ou desconectado", "meaning": "Pode gerar retrabalho ou baixa visibilidade.", "usage": "Exigir fluxo concreto.", "source_ids": ["totvs-gestao"]},
+    {"signal": "Pendência sem responsável ou prazo", "meaning": "Pode reduzir previsibilidade e confiança.", "usage": "Usar somente compromisso explícito.", "source_ids": ["totvs-gestao"]}
+  ],
+  "positive_signals": [
+    {"signal": "Resultado reconhecido com evidência", "meaning": "Indica valor percebido.", "usage": "Exigir fala, indicador ou exemplo.", "source_ids": ["totvs-gestao"]},
+    {"signal": "Plano de ação com responsável", "meaning": "Indica colaboração.", "usage": "Registrar responsável e prazo literais.", "source_ids": ["totvs-gestao"]}
+  ],
+  "attention_signals": [
+    {"signal": "Insatisfação ou problema recorrente", "meaning": "Pode pressionar a relação.", "usage": "Exigir recorrência ou declaração explícita.", "source_ids": ["totvs-gestao"]},
+    {"signal": "Dependência prolongada de contorno manual", "meaning": "Pode limitar adoção e confiança.", "usage": "Exigir processo e duração.", "source_ids": ["totvs-gestao"]}
+  ],
+  "diagnostic_questions": [
+    {"id": "q-processo", "label": "Qual processo, usuário, frequência e impacto estão envolvidos?", "aliases": [], "usage": "Usar em descrições genéricas.", "source_ids": ["totvs-gestao"]},
+    {"id": "q-reproducao", "label": "Qual evento inicia o problema e qual resultado era esperado?", "aliases": [], "usage": "Usar em incidentes.", "source_ids": ["totvs-gestao"]},
+    {"id": "q-sucesso", "label": "Qual resultado verificável definirá sucesso?", "aliases": [], "usage": "Usar em implantação ou melhoria.", "source_ids": ["totvs-gestao"]}
+  ],
+  "conditional_recommendations": [
+    {"id": "r-delimitar", "label": "Delimitar processo, ocorrência e impacto", "aliases": [], "usage": "Quando o achado estiver amplo.", "source_ids": ["totvs-gestao"]},
+    {"id": "r-responsavel", "label": "Definir responsável, prazo e critério de aceite", "aliases": [], "usage": "Quando houver compromisso sem fechamento.", "source_ids": ["totvs-gestao"]},
+    {"id": "r-baseline", "label": "Registrar baseline antes da mudança", "aliases": [], "usage": "Quando o benefício ainda não estiver mensurado.", "source_ids": ["totvs-gestao"]}
+  ],
+  "prohibited_inferences": ["Não inferir setor desconhecido como fato.", "Não atribuir causa técnica sem diagnóstico.", "Não estimar impacto financeiro.", "Não fazer recomendação comercial automática.", "Não elevar risco por região ou faturamento."],
+  "meeting_type_rules": {
+    "support_incident": {"prioritize": ["reprodução", "escopo", "impacto", "contorno"], "avoid": ["causa sem teste"]},
+    "implementation": {"prioritize": ["escopo", "dados", "integrações", "aceite"], "avoid": ["assumir prontidão"]},
+    "relationship_success": {"prioritize": ["valor percebido", "adoção", "pendências"], "avoid": ["confundir cordialidade com satisfação"]},
+    "commercial_expansion": {"prioritize": ["necessidade explícita", "processo", "impacto"], "avoid": ["upsell automático"]},
+    "renewal_contract": {"prioritize": ["resultados", "riscos abertos", "compromissos"], "avoid": ["probabilidade de churn"]},
+    "discovery": {"prioritize": ["processo atual", "dor", "objetivo", "restrições"], "avoid": ["prescrever antes de entender"]},
+    "adoption_training": {"prioritize": ["público", "tarefa", "lacuna", "aplicação"], "avoid": ["culpar usuário"]},
+    "mixed": {"prioritize": ["separar objetivos", "priorizar evidências"], "avoid": ["misturar compromissos"]},
+    "unknown": {"prioritize": ["declarar incerteza", "pedir objetivo"], "avoid": ["forçar classificação"]}
+  }
+}

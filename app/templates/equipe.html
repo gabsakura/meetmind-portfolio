@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block titulo %}MeetMind · Equipe{% endblock %}
+{% block titulo_topo %}Equipe{% endblock %}
+{% block conteudo %}
+<section class="pagina team-page" data-team-page>
+  <div class="team-grid">
+    <section class="widget">
+      <div class="secao-cabecalho"><h2>Equipes de Customer Success</h2></div>
+      <form class="team-create-form" data-team-form>
+        <label>Nome<input name="name" maxlength="120" required></label>
+        <label>Coordenação
+          <select name="manager_id">
+            <option value="">Sem coordenação</option>
+            {% for user in users if user.role.value == 'manager' and user.is_active_record %}
+            <option value="{{ user.id }}">{{ user.name }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <button class="botao-primario" type="submit">Criar equipe</button>
+      </form>
+      <div class="team-list">
+        {% for team in teams %}
+        <article><strong>{{ team.name }}</strong><span>{{ users|selectattr('id', 'equalto', team.manager_id)|map(attribute='name')|first or 'Sem coordenação' }}</span></article>
+        {% else %}<div class="estado-vazio">Nenhuma equipe cadastrada.</div>{% endfor %}
+      </div>
+    </section>
+    <section class="widget">
+      <div class="secao-cabecalho"><h2>Usuários</h2></div>
+      <div class="team-users">
+        {% for user in users %}
+        <form data-user-form data-user-id="{{ user.id }}">
+          <div><strong>{{ user.name }}</strong><small>{{ user.email }}</small></div>
+          <select name="role" aria-label="Cargo de {{ user.name }}">
+            {% for value, label in [('admin','Administração'),('manager','Coordenação'),('analyst','Analista'),('viewer','Somente leitura')] %}
+            <option value="{{ value }}" {{ 'selected' if user.role.value == value }}>{{ label }}</option>
+            {% endfor %}
+          </select>
+          <select name="team_id" aria-label="Equipe de {{ user.name }}">
+            <option value="">Sem equipe</option>
+            {% for team in teams %}<option value="{{ team.id }}" {{ 'selected' if user.team_id == team.id }}>{{ team.name }}</option>{% endfor %}
+          </select>
+          <label class="team-active"><input type="checkbox" name="active" {{ 'checked' if user.is_active_record }}> Ativo</label>
+          <button class="botao-secundario" type="submit">Salvar</button>
+        </form>
+        {% endfor %}
+      </div>
+      <p class="diagnostic-feedback" data-team-feedback role="status" aria-live="polite"></p>
+    </section>
+  </div>
+</section>
+<script type="module" src="{{ url_for('static', filename='js/equipe.js') }}"></script>
+{% endblock %}

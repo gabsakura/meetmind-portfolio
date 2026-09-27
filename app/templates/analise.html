@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block titulo %}MeetMind · Auditabilidade da IA{% endblock %}
+{% block titulo_topo %}Auditabilidade da IA{% endblock %}
+{% block conteudo %}
+<div class="pagina" data-analysis-page data-selected-analysis="{{ selected_analysis_id }}" data-initial-meeting="{{ selected_meeting_id }}">
+  {% if meetings %}
+  <section class="analysis-picker" aria-labelledby="selecionar-analise-titulo">
+    <div class="form-linha">
+      <div class="campo-grupo">
+        <label for="meeting-select">Reunião</label>
+        <select id="meeting-select">
+          {% for meeting in meetings %}
+          <option value="{{ meeting.id }}"
+            {{ 'selected' if selected_meeting_id == meeting.id }}>
+            {{ meeting.external_id }} · {{ meeting.client.name if meeting.client else 'Cliente não identificado' }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <a class="botao-secundario link-botao" href="{{ url_for('painel.inteligencia_artificial') }}">Voltar à Inteligência Artificial</a>
+    </div>
+  </section>
+
+  <div id="analysis-state" class="estado-processamento" hidden>
+    <span class="spinner" aria-hidden="true"></span>
+    <strong>Preparando análise</strong>
+  </div>
+  <div id="analysis-result" class="resultado-grid analysis-resultado" hidden>
+    <div class="analise-meta" data-legacy-analysis-section>
+      <span class="etiqueta">Sentimento: <strong data-analysis-value="sentiment"></strong></span>
+      <span class="etiqueta">Risco: <strong data-analysis-value="risk"></strong></span>
+      <span class="etiqueta">Produtos: <strong data-analysis-value="products"></strong></span>
+      <span class="etiqueta">Setor: <strong data-analysis-value="sector"></strong></span>
+      <span class="etiqueta">Tipo: <strong data-analysis-value="meeting_type"></strong></span>
+    </div>
+
+    <div class="analise-meta" id="modes-analysis-meta" hidden>
+      <span class="etiqueta">Origem: <strong data-mode-value="source"></strong></span>
+      <span class="etiqueta">Tipo: <strong data-mode-value="meeting_type"></strong></span>
+      <span class="etiqueta">Modos: <strong data-mode-value="selected_modes"></strong></span>
+    </div>
+
+    <section id="modes-routing" class="modo-roteamento" hidden aria-labelledby="modes-routing-title">
+      <div class="secao-cabecalho">
+        <div><h3 id="modes-routing-title">Como a análise foi direcionada</h3><p id="modes-routing-reason"></p></div>
+        <span class="status" id="modes-routing-badge"></span>
+      </div>
+    </section>
+
+    <section class="contexto-relacao-grid" data-legacy-analysis-section aria-label="Contexto e saúde da relação">
+      <article class="saude-relacao-card" data-relationship-health>
+        <div class="secao-cabecalho">
+          <div>
+            <h3>Saúde da relação</h3>
+          </div>
+          <span class="status" data-analysis-value="relationship_health"></span>
+        </div>
+        <p data-analysis-value="relationship_rationale"></p>
+        <div id="retention-signals" class="sinais-retencao"></div>
+      </article>
+      <article class="contexto-conta-card">
+        <div class="secao-cabecalho">
+          <div>
+            <h3>Como o contexto influenciou</h3>
+          </div>
+          <span class="etiqueta">Prioridade <strong data-analysis-value="contextual_priority"></strong></span>
+        </div>
+        <dl id="account-context" class="contexto-conta-lista"></dl>
+        <div id="context-application" class="aplicacoes-contexto"></div>
+        <p class="aviso-contexto">Setor, localização e faturamento ajustam somente a interpretação e a prioridade operacional; não provam risco.</p>
+      </article>
+    </section>
+
+    <section class="resumo-executivo" aria-labelledby="resumo-executivo-titulo">
+      <div class="secao-cabecalho">
+        <div>
+          <h3 id="resumo-executivo-titulo">Resumo executivo</h3>
+        </div>
+      </div>
+      <div class="resumo-executivo-grid">
+        <article>
+          <span class="passo-numero">1</span>
+          <h4>O que aconteceu</h4>
+          <p data-analysis-value="what_happened"></p>
+        </article>
+        <article>
+          <span class="passo-numero">2</span>
+          <h4>Por que importa</h4>
+          <p data-analysis-value="why_it_matters"></p>
+        </article>
+        <article>
+          <span class="passo-numero">3</span>
+          <h4>O que fazer depois</h4>
+          <p data-analysis-value="next_step"></p>
+        </article>
+      </div>
+    </section>
+
+    <section data-legacy-analysis-section aria-labelledby="achados-titulo">
+      <div class="secao-cabecalho">
+        <div>
+          <h3 id="achados-titulo">Achados rastreáveis</h3>
+        </div>
+      </div>
+      <div id="analysis-findings" class="achados-lista"></div>
+    </section>
+
+    <section data-legacy-analysis-section aria-labelledby="triggers-locais-titulo">
+      <div class="secao-cabecalho">
+        <div>
+          <h3 id="triggers-locais-titulo">Triggers determinísticos</h3>
+        </div>
+      </div>
+      <div id="local-trigger-events" class="triggers-lista"></div>
+    </section>
+
+    <section class="resultado-duas-colunas">
+      <article data-legacy-analysis-section>
+        <h3>Próximas ações</h3>
+        <ol id="analysis-actions" class="acoes-lista"></ol>
+      </article>
+      <article>
+        <h3>Incertezas</h3>
+        <ul id="analysis-uncertainties"></ul>
+      </article>
+    </section>
+
+    <section id="mode-results-section" hidden aria-labelledby="mode-results-title">
+      <div class="secao-cabecalho">
+        <div><h3 id="mode-results-title">Leituras por modo</h3></div>
+        <button class="botao-secundario" id="reanalyze-button" type="button">Reanalisar com outros modos</button>
+      </div>
+      <div id="mode-results" class="modo-resultados"></div>
+    </section>
+
+    <details class="rastreabilidade">
+      <summary>Ficha de rastreabilidade técnica</summary>
+      <dl id="analysis-traceability"></dl>
+    </details>
+
+    <section class="audit-full" aria-labelledby="audit-decisions-title">
+      <div class="secao-cabecalho"><div><h3 id="audit-decisions-title">Conclusões e evidências do painel operacional</h3></div></div>
+      <div id="audit-manufacturing-brief" class="audit-executions"></div>
+    </section>
+    <section class="audit-full" aria-labelledby="audit-full-title">
+      <div class="secao-cabecalho"><div><h3 id="audit-full-title">Tentativas, custo e validações</h3></div></div>
+      <div id="audit-executions" class="audit-executions"></div>
+    </section>
+    <section class="audit-full" aria-labelledby="audit-context-title">
+      <div class="secao-cabecalho"><div><h3 id="audit-context-title">Contexto fornecido ao modelo</h3></div></div>
+      <pre id="audit-context" class="audit-json"></pre>
+    </section>
+    <section class="audit-full" aria-labelledby="audit-actions-title">
+      <div class="secao-cabecalho"><div><h3 id="audit-actions-title">Envios ao Kanban e eventos</h3></div></div>
+      <div id="audit-actions" class="audit-executions"></div>
+    </section>
+    <section class="audit-full" aria-labelledby="audit-transcript-title">
+      <div class="secao-cabecalho"><div><h3 id="audit-transcript-title">Transcrição utilizada</h3></div></div>
+      <div id="audit-transcript" class="audit-transcript"></div>
+    </section>
+  </div>
+  {% else %}
+  <section class="estado-vazio">
+    <span aria-hidden="true">✦</span>
+    <h2>Escolha uma reunião para abrir a trilha</h2>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

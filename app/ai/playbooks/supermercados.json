@@ -1,0 +1,61 @@
+{
+  "id": "supermercados", "label": "Supermercados", "version": "sector-playbooks-v1", "reviewed_at": "2026-08-03",
+  "aliases": ["SUPERMERCADOS", "SUPERMERCADO", "ATACAREJO"], "unit_aliases": ["TOTVS SUPERMERCADOS", "CONSINCO"], "cnae_prefixes": ["47113", "47121"],
+  "detection_terms": ["supermercado", "atacarejo", "perecivel", "validade", "ruptura", "frente de caixa", "consinco", "loja"],
+  "sources": [
+    {"id": "totvs-supermercados", "title": "TOTVS Varejo Supermercados", "url": "https://www.totvs.com/varejo/supermercados/", "publisher": "TOTVS", "accessed_at": "2026-08-03"},
+    {"id": "totvs-varejo", "title": "Portfólio TOTVS Varejo", "url": "https://www.totvs.com/varejo/", "publisher": "TOTVS", "accessed_at": "2026-08-03"}
+  ],
+  "subsectors": [
+    {"id": "supermercado", "label": "Supermercados", "aliases": ["supermercado", "mercado"], "cnae_prefixes": ["47113"]},
+    {"id": "hiper-atacarejo", "label": "Hipermercado e atacarejo", "aliases": ["hipermercado", "atacarejo"], "cnae_prefixes": ["47113"]},
+    {"id": "minimercado", "label": "Minimercados", "aliases": ["minimercado", "loja de proximidade"], "cnae_prefixes": ["47121"]}
+  ],
+  "critical_processes": [
+    {"id": "frente-caixa", "label": "Frente de caixa e PDV", "aliases": ["pdv", "frente de caixa", "checkout"], "usage": "Distinguir falha local, loja e rede.", "source_ids": ["totvs-supermercados"]},
+    {"id": "precos-promocoes", "label": "Preços e promoções", "aliases": ["preco", "promocao", "encarte"], "usage": "Exigir item, loja e vigência.", "source_ids": ["totvs-supermercados"]},
+    {"id": "estoque-pereciveis", "label": "Estoque, perecíveis e perdas", "aliases": ["perecivel", "validade", "perda", "ruptura"], "usage": "Não estimar quebra ou perda.", "source_ids": ["totvs-supermercados"]},
+    {"id": "abastecimento-lojas", "label": "Compras e abastecimento de lojas", "aliases": ["reposicao", "fornecedor", "abastecimento"], "usage": "Distinguir CD, loja e fornecedor.", "source_ids": ["totvs-supermercados"]}
+  ],
+  "technologies": [
+    {"id": "erp-supermercado", "label": "ERP supermercadista", "aliases": ["consinco", "erp supermercado"], "usage": "Usar apenas com linha ou processo citado.", "source_ids": ["totvs-supermercados"]},
+    {"id": "pdv", "label": "PDV", "aliases": ["pdv", "checkout", "caixa"], "usage": "Usar em frente de loja.", "source_ids": ["totvs-supermercados"]},
+    {"id": "wms", "label": "WMS", "aliases": ["wms", "centro de distribuicao"], "usage": "Não recomendar sem operação de CD explícita.", "source_ids": ["totvs-supermercados"]},
+    {"id": "pricing-insights", "label": "Inteligência de preços e dados", "aliases": ["pricing", "pesquisa de preco", "data insights"], "usage": "Tratar como apoio, não preço ótimo garantido.", "source_ids": ["totvs-supermercados"]}
+  ],
+  "common_indicators": [
+    {"id": "ruptura", "label": "Ruptura por loja e item", "aliases": ["ruptura", "falta na gondola"], "usage": "Exigir loja, item e período.", "source_ids": ["totvs-supermercados"]},
+    {"id": "perdas", "label": "Perdas, validade e quebra", "aliases": ["perda", "quebra", "validade"], "usage": "Não estimar sem inventário.", "source_ids": ["totvs-supermercados"]},
+    {"id": "fila-pdv", "label": "Disponibilidade e fila no PDV", "aliases": ["fila", "pdv indisponivel"], "usage": "Exigir horário, duração e lojas.", "source_ids": ["totvs-supermercados"]}
+  ],
+  "possible_problems": [
+    {"signal": "Preço divergente entre retaguarda, etiqueta e PDV", "meaning": "Pode gerar retrabalho e experiência ruim.", "usage": "Exigir item, loja e evento.", "source_ids": ["totvs-supermercados"]},
+    {"signal": "Reposição sem refletir venda e estoque", "meaning": "Pode contribuir para ruptura ou excesso.", "usage": "Não atribuir causa automaticamente.", "source_ids": ["totvs-supermercados"]}
+  ],
+  "positive_signals": [
+    {"signal": "Operação integrada entre CD, loja e PDV", "meaning": "Indica adoção transversal.", "usage": "Exigir etapas confirmadas.", "source_ids": ["totvs-supermercados"]},
+    {"signal": "Indicadores por loja com plano de ação", "meaning": "Indica governança operacional.", "usage": "Exigir indicador e responsável.", "source_ids": ["totvs-supermercados"]}
+  ],
+  "attention_signals": [
+    {"signal": "Problema recorrente em preço ou frente de caixa", "meaning": "Pode pressionar operação e confiança.", "usage": "Exigir recorrência e lojas.", "source_ids": ["totvs-supermercados"]},
+    {"signal": "Contorno manual de validade, perda ou estoque", "meaning": "Pode indicar baixa confiança no processo.", "usage": "Exigir ocorrência.", "source_ids": ["totvs-supermercados"]}
+  ],
+  "diagnostic_questions": [
+    {"id": "q-loja-item", "label": "Quais lojas, itens, lotes e horários foram afetados?", "aliases": [], "usage": "Usar antes de priorizar impacto.", "source_ids": ["totvs-supermercados"]},
+    {"id": "q-preco", "label": "Em qual etapa preço ou promoção deixa de coincidir?", "aliases": [], "usage": "Usar em divergência.", "source_ids": ["totvs-supermercados"]},
+    {"id": "q-estoque", "label": "A divergência nasce no recebimento, reposição, venda ou inventário?", "aliases": [], "usage": "Usar em ruptura ou perda.", "source_ids": ["totvs-supermercados"]}
+  ],
+  "conditional_recommendations": [
+    {"id": "r-rastrear-preco", "label": "Rastrear regra de preço até o PDV", "aliases": [], "usage": "Quando etiqueta e caixa divergirem.", "source_ids": ["totvs-supermercados"]},
+    {"id": "r-rastrear-lote", "label": "Rastrear lote, validade e movimentações", "aliases": [], "usage": "Quando perecíveis ou perdas forem citados.", "source_ids": ["totvs-supermercados"]},
+    {"id": "r-piloto-loja", "label": "Validar correção em loja piloto e horário representativo", "aliases": [], "usage": "Quando a mudança afetar múltiplas lojas.", "source_ids": ["totvs-supermercados"]}
+  ],
+  "prohibited_inferences": ["Não estimar perda, ruptura ou margem.", "Não generalizar uma loja para toda a rede.", "Não atribuir divergência ao ERP sem rastreamento.", "Não recomendar WMS ou pricing automaticamente."],
+  "meeting_type_rules": {
+    "support_incident": {"prioritize": ["loja", "item", "lote", "horário"], "avoid": ["generalização para a rede"]},
+    "implementation": {"prioritize": ["loja piloto", "cadastros", "PDV", "integrações"], "avoid": ["go-live em pico"]},
+    "relationship_success": {"prioritize": ["adoção por loja", "estabilidade", "indicadores"], "avoid": ["confundir venda com satisfação"]},
+    "commercial_expansion": {"prioritize": ["gargalo", "rede", "capacidade atual"], "avoid": ["oferta automática"]},
+    "renewal_contract": {"prioritize": ["continuidade", "valor percebido", "pendências"], "avoid": ["probabilidade de churn"]}
+  }
+}

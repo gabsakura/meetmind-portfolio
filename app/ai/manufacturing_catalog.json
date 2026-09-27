@@ -1,0 +1,215 @@
+{
+  "schema_version": "1.0.0",
+  "source_generated_at": "2026-08-18",
+  "usage_policy": [
+    "Use only entries matched by explicit transcript terms.",
+    "Context supports interpretation but never proves root cause.",
+    "Preserve Portuguese aliases and original evidence quotes."
+  ],
+  "products": [
+    {
+      "id": "totvs-manufatura-protheus",
+      "name": "TOTVS Manufatura — Linha Protheus",
+      "line": "Protheus",
+      "aliases": ["protheus", "microsiga", "manufatura protheus", "erp protheus"],
+      "summary": "Suite industrial integrada a engenharia, PCP, MRP, chão de fábrica, custos e qualidade."
+    },
+    {
+      "id": "protheus-pcp-sigapcp",
+      "name": "Planejamento e Controle da Produção — SIGAPCP",
+      "line": "Protheus",
+      "aliases": ["pcp", "sigapcp", "mrp", "carga máquina", "carga-maquina", "ordem de produção"],
+      "summary": "Planeja materiais e capacidade e acompanha ordens, produção, estoque e custos."
+    },
+    {
+      "id": "protheus-dpr",
+      "name": "Desenvolvedor de Produtos — DPR",
+      "line": "Protheus",
+      "aliases": ["dpr", "desenvolvedor de produtos", "engenharia de produto", "revisão de produto", "protótipo"],
+      "summary": "Controla criação, testes, versões e aprovações de produtos antes da produção."
+    },
+    {
+      "id": "protheus-qualidade",
+      "name": "Gestão da Qualidade — Linha Protheus",
+      "line": "Protheus",
+      "aliases": ["qualidade", "inspeção de entrada", "inspeção de processo", "não conformidade", "metrologia", "ppap"],
+      "summary": "Registra inspeções, não conformidades, ações, auditorias e instrumentos."
+    },
+    {
+      "id": "protheus-acd-minha-producao",
+      "name": "ACD, Meu Coletor de Dados e App Minha Produção",
+      "line": "Protheus",
+      "aliases": ["acd", "coletor", "código de barras", "minha produção", "apontamento mobile", "server client"],
+      "summary": "Digitaliza movimentações, inventário, apontamentos e inspeções em dispositivos móveis."
+    },
+    {
+      "id": "protheus-manutencao-ativos",
+      "name": "TOTVS Manutenção de Ativos — Linha Protheus",
+      "line": "Protheus",
+      "aliases": ["manutenção de ativos", "pcm", "ordem de manutenção", "preventiva", "corretiva", "minha manutenção"],
+      "summary": "Gerencia ativos, planos, ordens e histórico de manutenção."
+    },
+    {
+      "id": "protheus-pms-sge-dta",
+      "name": "PMS, SGE e DTA Manufatura — complementos Protheus",
+      "line": "Protheus",
+      "aliases": ["pms", "project management system", "sge", "gestão ambiental", "dta manufatura", "inteligência artificial manufatura"],
+      "summary": "Agrupa produção por projetos, gestão ambiental e consultas industriais por linguagem natural."
+    },
+    {
+      "id": "totvs-manufatura-datasul",
+      "name": "TOTVS Manufatura — Linha Datasul",
+      "line": "Datasul",
+      "aliases": ["datasul", "manufatura datasul", "ems", "totvs 12"],
+      "summary": "Suite industrial para engenharia, planejamento, produção, custos e qualidade."
+    },
+    {
+      "id": "datasul-modulos-manufatura",
+      "name": "Módulos industriais Datasul",
+      "line": "Datasul",
+      "aliases": ["mcp", "mpl", "mpm", "men", "mdp", "mcs", "mcf", "mdb", "sfc", "blk"],
+      "summary": "Família modular para engenharia, planejamento, capacidade, produção, custos e chão de fábrica."
+    },
+    {
+      "id": "datasul-manutencao-ativos",
+      "name": "TOTVS Manutenção de Ativos — Linha Datasul",
+      "line": "Datasul",
+      "aliases": ["manutenção datasul", "manutenção de ativos datasul", "ordem manutenção"],
+      "summary": "Gerencia ativos e manutenção integrado ao Backoffice e Manufatura Datasul."
+    },
+    {
+      "id": "totvs-manufatura-logix",
+      "name": "TOTVS Manufatura — Linha Logix",
+      "line": "Logix",
+      "aliases": ["logix", "manufatura logix", "erp logix"],
+      "summary": "Suite industrial para engenharia, PCP, chão de fábrica, custos, qualidade e manutenção."
+    },
+    {
+      "id": "totvs-manufatura-aps",
+      "name": "TOTVS Manufatura APS",
+      "line": "Cross-line",
+      "aliases": ["aps", "planejamento avançado", "sequenciamento", "carga máquina", "mrp aps"],
+      "summary": "Planeja materiais, capacidade e sequenciamento integrado a Protheus, Datasul e Logix."
+    },
+    {
+      "id": "mes-ppi-multitask",
+      "name": "MES by PPI-Multitask",
+      "line": "Cross-line",
+      "aliases": ["mes", "ppi", "multitask", "oee", "sensor", "chão de fábrica"],
+      "summary": "Coleta produção, paradas, qualidade e manutenção no chão de fábrica em tempo real."
+    },
+    {
+      "id": "totvs-wms-datasul",
+      "name": "TOTVS WMS — Linha Datasul",
+      "line": "Datasul",
+      "aliases": ["wms datasul", "armazenagem", "endereçamento", "separação", "inventário"],
+      "summary": "Controla recebimento, armazenagem, separação, inventário e expedição."
+    },
+    {
+      "id": "totvs-wms-logix",
+      "name": "TOTVS WMS — Linha Logix",
+      "line": "Logix",
+      "aliases": ["wms logix", "rfid", "código de barras", "inventário logix"],
+      "summary": "Gerencia armazenagem, conferência, embarque, inventário e serviços logísticos."
+    },
+    {
+      "id": "sop-neogrid",
+      "name": "S&OP by Neogrid",
+      "line": "Cross-line",
+      "aliases": ["s&op", "sop", "neogrid", "previsão de demanda", "sales and operations planning"],
+      "summary": "Apoia planejamento colaborativo de vendas, demanda e operações."
+    },
+    {
+      "id": "balanceamento-estoque-neogrid",
+      "name": "Balanceamento de Estoque by Neogrid",
+      "line": "Cross-line",
+      "aliases": ["balanceamento de estoque", "neogrid", "reposição", "sku virtual", "estoque ótimo"],
+      "summary": "Sugere compra, transferência, devolução e reposição por SKU."
+    },
+    {
+      "id": "totvs-cloud",
+      "name": "TOTVS Cloud — PaaS e IaaS",
+      "line": "Plataforma",
+      "aliases": ["totvs cloud", "t-cloud", "cloud", "paas", "iaas", "nuvem totvs"],
+      "summary": "Hospeda e gerencia aplicações e infraestrutura conforme oferta e SLA contratados."
+    },
+    {
+      "id": "totvs-cloud-disaster-recovery-replication",
+      "name": "Disaster Recovery e replicação de ambiente — TOTVS Cloud",
+      "line": "Plataforma",
+      "aliases": ["replication", "replicação", "disaster recovery", "dr", "rpo", "data center secundário"],
+      "summary": "Replica ambientes para contingência; o sentido de replication precisa ser desambiguado."
+    },
+    {
+      "id": "totvs-application-server",
+      "name": "TOTVS Application Server",
+      "line": "Tecnologia Protheus/Logix",
+      "aliases": ["appserver", "application server", "server protheus", "serviço protheus", "broker"],
+      "summary": "Executa lógica da aplicação e integra clientes, DBAccess e licenciamento."
+    },
+    {
+      "id": "totvs-dbaccess",
+      "name": "TOTVS DBAccess",
+      "line": "Tecnologia Protheus",
+      "aliases": ["dbaccess", "topconnect", "dbmonitor", "banco de dados protheus", "odbc"],
+      "summary": "Intermedeia a conexão entre Protheus e bancos SQL."
+    },
+    {
+      "id": "totvs-smartclient-webapp",
+      "name": "TOTVS SmartClient, SmartClient HTML e WebApp",
+      "line": "Tecnologia Protheus/Logix",
+      "aliases": ["smartclient", "smart client", "webapp", "smartclient html", "cliente protheus", "po ui"],
+      "summary": "Fornece interfaces desktop e web para acesso às aplicações."
+    },
+    {
+      "id": "totvs-license-server",
+      "name": "TOTVS License Server",
+      "line": "Tecnologia cross-line",
+      "aliases": ["license server", "licença totvs", "license client", "hard lock", "totvslic.key", "sem licença"],
+      "summary": "Centraliza autorização e consumo de licenças conforme produto e contrato."
+    },
+    {
+      "id": "progress-openedge-datasul",
+      "name": "Progress OpenEdge e Progress User no contexto Datasul",
+      "line": "Datasul",
+      "aliases": ["progress", "progress user", "usuário progress", "openedge", "progress.cfg", "dataserver", "client networking"],
+      "summary": "Tecnologia de banco, aplicação e licenciamento Datasul; Progress User é ambíguo."
+    },
+    {
+      "id": "totvs-eai-mensagem-unica-replicacao",
+      "name": "EAI, Mensagem Única e replicação de cadastros",
+      "line": "Cross-line",
+      "aliases": ["eai", "mensagem única", "replication", "replicação", "sincronização", "de-para", "webservice", "api"],
+      "summary": "Integra produtos por mensagens, serviços e APIs; replication pode ter outros sentidos."
+    },
+    {
+      "id": "totvs-backoffice-industrial",
+      "name": "TOTVS Backoffice — Protheus, Datasul e Logix",
+      "line": "Multi-line",
+      "aliases": ["backoffice", "estoque", "compras", "faturamento", "financeiro", "contabilidade", "fiscal"],
+      "summary": "Integra os processos administrativos e transacionais à manufatura."
+    }
+  ],
+  "ambiguous_terms": [
+    {
+      "term": "replication / replicação",
+      "possible_meanings": ["TOTVS Cloud disaster recovery", "EAI data synchronization", "Protheus routine", "database-native replication"],
+      "rule": "Do not assign product or complaint polarity without origin, destination and replicated object."
+    },
+    {
+      "term": "Progress User",
+      "possible_meanings": ["Progress/OpenEdge license", "concurrent session", "Datasul user", "database user", "Client Networking component"],
+      "rule": "Classify as ambiguous Datasul technology/licensing with low confidence until context clarifies it."
+    },
+    {
+      "term": "servidor / instabilidade",
+      "possible_meanings": ["Application Server", "DBAccess", "database", "License Server", "customer network", "TOTVS Cloud", "MES gateway"],
+      "rule": "Do not convert servidor into a TOTVS Cloud complaint automatically."
+    },
+    {
+      "term": "licença",
+      "possible_meanings": ["commercial module license", "TOTVS License Server consumption", "Progress/OpenEdge license", "Cloud connection", "third-party license"],
+      "rule": "Separate commercial negotiation from technical license-consumption failure."
+    }
+  ]
+}

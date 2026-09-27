@@ -1,0 +1,57 @@
+{
+  "version": "meetmind-autopsy-manufacturing-v1",
+  "scope": {
+    "playbook_ids": ["manufatura"],
+    "purpose": "guided_review_not_prediction"
+  },
+  "sources": [
+    {
+      "kind": "google_colab_notebook",
+      "id": "1_F55W_rR_zdgiZvamXLLqj9Yk0JfWx1q",
+      "title": "MeetMind_Autopsia_Arvores_Colab_Leitura_Guiada.ipynb",
+      "version_marker": "2026-09-03T01:51:21.075Z",
+      "reference_sha256": "ccc29cbe387b69e00150dc9133ebed1575e29225904fe20d952ca27fd325bbc1"
+    },
+    {
+      "kind": "google_document",
+      "id": "16EYKnUs6XVlGcOWe2UOxuo5H0dWhzBqH5-tOGIcJMVA",
+      "title": "Relatorio_Autopsia_Reunioes_Manufatura",
+      "version_marker": "ANLCKQltT18_W2222aaqrW0k7CJ5sJjWHbkk296TJrY720VGeUurcu-zS_BDSyx_wiKc_cYkJHXcxiMrllJY-FDLpp9n_xYJZ_LLGwskGIo",
+      "reference_sha256": "437e00225ba0a155277e25946d551450880618dc8ce06b3aa52f01da51d9518a"
+    }
+  ],
+  "definitions": {
+    "objective": "Resultado retrospectivo do objetivo explícito da reunião, nunca previsão de continuidade.",
+    "continuity": "Próximo encontro explicitamente agendado, presencial ou apenas proposto; não equivale a contrato, conversão ou ausência de churn.",
+    "customization": "Tema que deve ser separado em requisito, limitação percebida, hipótese técnica e próximo passo de escopo.",
+    "conflict": "Tensão ou discussão acalorada explícita; debate técnico normal não é conflito."
+  },
+  "questions": {
+    "objective": "Qual era o objetivo explícito e qual trecho prova se ele foi atingido, parcialmente atingido, não atingido ou permaneceu incerto?",
+    "continuity": "Existe próximo encontro explicitamente agendado, presencial ou somente proposto? Não converta continuidade em venda ou saúde da relação.",
+    "customization": "A customização foi requisito do cliente, limitação percebida, hipótese técnica ou apenas menção? Há responsável, limite e próximo passo de escopo?",
+    "conflict": "Há tensão explícita entre participantes ou somente debate técnico? Se houver follow-up após conflito, trate-o como possível recuperação, diagnóstico ou renegociação.",
+    "capture_quality": "Os sinais de duração, densidade ou participação podem indicar captura incompleta ou diarização incorreta?",
+    "participants": "Os papéis de cliente e TOTVS estão identificados de forma suficiente para atribuir pedidos e decisões?"
+  },
+  "operational_paths": {
+    "objective_unresolved": ["objective", "continuity", "conflict"],
+    "objective_unclear": ["objective", "capture_quality", "participants", "continuity", "conflict"],
+    "objective_resolved_without_customization": ["objective", "continuity", "conflict"],
+    "objective_resolved_with_customization": ["objective", "customization", "continuity", "conflict"]
+  },
+  "exploratory_cautions": [
+    "Duração, total de palavras e participação do cliente são sinais de qualidade de captura, não metas ou causas.",
+    "Resultados de conflito são especialmente incertos por haver poucos casos positivos no estudo.",
+    "Porte, condição de cliente e contexto setorial orientam perguntas, nunca tratamento desigual ou decisão automática.",
+    "Associações observadas na amostra não demonstram causalidade nem probabilidade individual."
+  ],
+  "prohibited_inferences": [
+    "Não inferir churn, venda, contrato, conversão ou saúde da relação a partir de continuidade.",
+    "Não inferir satisfação ou oportunidade a partir de customização.",
+    "Não inferir conflito a partir de discordância técnica sem tensão explícita.",
+    "Não usar percentuais históricos ou folhas da árvore como previsão individual.",
+    "Não completar fatos ausentes com o estudo, metadados ou contexto setorial."
+  ],
+  "customization_terms": ["customização", "customizacao", "customizar", "customizado", "customizada"]
+}

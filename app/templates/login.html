@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MeetMind · Entrar</title>
+  <link rel="icon" href="{{ url_for('static', filename='img/meetmind-icon.svg') }}" type="image/svg+xml">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/tema.css') }}">
+</head>
+<body class="login-body">
+  <main class="login-card">
+    <div class="login-brand meetmind-brand" aria-label="MeetMind">
+      <span class="meetmind-brand-mark" aria-hidden="true">M</span>
+      <span class="meetmind-brand-word">MeetMind</span>
+    </div>
+    <h1>Boas-vindas</h1>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="aviso aviso-erro" role="alert">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+    {% if oidc_enabled %}
+      <a class="botao-primario" href="{{ url_for('auth.oidc_start') }}">Entrar com conta corporativa</a>
+    {% endif %}
+    {% if local_enabled %}
+    {% if emergency %}<div class="aviso" role="status">Acesso local de emergência auditado.</div>{% endif %}
+    <form method="post" class="form-stack">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
+      <label for="email">E-mail</label>
+      <input id="email" name="email" type="email" autocomplete="username" required maxlength="254">
+      <label for="password">Senha</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required>
+      <button class="botao-primario" type="submit">Entrar</button>
+    </form>
+    {% elif oidc_enabled %}
+      <p class="texto-secundario">O acesso local está desativado. Contas de emergência continuam disponíveis somente para administradores autorizados.</p>
+    {% endif %}
+    <footer class="login-legal">
+      <p>Projeto acadêmico independente para portfólio. Sem vínculo ou endosso comercial da TOTVS.</p>
+      <a href="{{ url_for('auth.privacidade') }}">Privacidade</a>
+      <a href="{{ url_for('auth.termos') }}">Termos de uso</a>
+    </footer>
+  </main>
+</body>
+</html>

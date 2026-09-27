@@ -18,8 +18,8 @@ def validate_runtime_config(app) -> None:
             for key in ("OIDC_DISCOVERY_URL", "OIDC_CLIENT_ID", "OIDC_CLIENT_SECRET")
         ):
             errors.append("configuração OIDC completa")
-        if portfolio_demo and len(str(app.config.get("DEMO_PORTFOLIO_PASSWORD", ""))) < 16:
-            errors.append("DEMO_PORTFOLIO_PASSWORD com 16+ caracteres")
+        if portfolio_demo and len(str(app.config.get("DEMO_PORTFOLIO_PASSWORD", ""))) < 9:
+            errors.append("DEMO_PORTFOLIO_PASSWORD com 9+ caracteres")
         if not app.config.get("SESSION_COOKIE_SECURE"):
             errors.append("COOKIE_SECURE=true")
         if not app.config.get("PRIVACY_CONTACT_EMAIL"):

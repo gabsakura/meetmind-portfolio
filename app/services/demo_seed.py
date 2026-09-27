@@ -389,9 +389,9 @@ def _result(spec: dict, segments: list[Segment]) -> dict:
 
 def seed_demo(*, password: str | None = None, commit: bool = True) -> dict[str, int | str]:
     password = password or str(current_app.config.get("DEMO_PORTFOLIO_PASSWORD") or "")
-    if len(password) < 16:
+    if len(password) < 9:
         raise ValueError(
-            "Informe uma senha de demonstração com pelo menos 16 caracteres."
+            "Informe uma senha de demonstração com pelo menos 9 caracteres."
         )
     organization = Organization.query.filter_by(slug=DEMO_ORGANIZATION_SLUG).first()
     if organization is None:
@@ -687,9 +687,9 @@ def seed_demo(*, password: str | None = None, commit: bool = True) -> dict[str, 
 
 def reset_demo(*, password: str | None = None) -> dict[str, int | str]:
     password = password or str(current_app.config.get("DEMO_PORTFOLIO_PASSWORD") or "")
-    if len(password) < 16:
+    if len(password) < 9:
         raise ValueError(
-            "Informe uma senha de demonstração com pelo menos 16 caracteres."
+            "Informe uma senha de demonstração com pelo menos 9 caracteres."
         )
     organization = Organization.query.filter_by(slug=DEMO_ORGANIZATION_SLUG).first()
     if organization is None:

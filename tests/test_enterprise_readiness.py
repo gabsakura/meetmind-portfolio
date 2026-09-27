@@ -69,7 +69,7 @@ def test_production_accepts_hardened_portfolio_demo_configuration():
             "SERVICE_ROLE": "web",
             "AUTH_MODE": "local",
             "PORTFOLIO_DEMO_ENABLED": True,
-            "DEMO_PORTFOLIO_PASSWORD": "portfolio-password-with-16-chars",
+            "DEMO_PORTFOLIO_PASSWORD": "demo12345",
             "PRIVACY_CONTACT_EMAIL": "privacy@example.test",
             "SECRET_KEY": "production-portfolio-secret-key-32-chars",
             "SESSION_COOKIE_SECURE": True,

@@ -60,16 +60,22 @@ def login():
     if request.method == "POST":
         email = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "")
+        portfolio_demo = bool(current_app.config.get("PORTFOLIO_DEMO_ENABLED"))
+        demo_organization = (
+            Organization.query.filter_by(slug="meetmind-demo").first()
+            if portfolio_demo
+            else None
+        )
         organization_id = str(session.get("organization_id") or DEFAULT_ORGANIZATION_ID)
         with tenant_scope(organization_id):
             user = User.query.filter_by(organization_id=organization_id, email=email).first()
-        portfolio_lookup = bool(
-            current_app.config.get("PORTFOLIO_DEMO_ENABLED")
-            and email.startswith("meetmind.demo.")
-        )
-        if user is None and (
-            current_app.config["APP_ENV"] != "production" or portfolio_lookup
-        ):
+        if user is None and demo_organization is not None:
+            with tenant_scope(demo_organization.id):
+                user = User.query.filter_by(
+                    organization_id=demo_organization.id,
+                    email=email,
+                ).first()
+        if user is None and current_app.config["APP_ENV"] != "production":
             candidates = []
             organizations = db.session.scalars(
                 db.select(Organization).order_by(Organization.created_at.asc())
@@ -103,20 +109,26 @@ def login():
             session["organization_id"] = user.organization_id
             session["session_version"] = user.session_version
             return redirect(next_url or url_for("painel.dashboard"))
-        db.session.add(
-            SecurityEvent(
+        event_organization_id = (
+            user.organization_id
+            if user
+            else demo_organization.id
+            if demo_organization is not None
+            else DEFAULT_ORGANIZATION_ID
+        )
+        with tenant_scope(event_organization_id):
+            db.session.add(SecurityEvent(
                 event_type="LOGIN_FAILED",
                 severity="medium",
                 user_id=user.id if user else None,
-                organization_id=(user.organization_id if user else DEFAULT_ORGANIZATION_ID),
+                organization_id=event_organization_id,
                 route=request.path,
                 masked_ip=mask_ip(request.remote_addr or "unknown"),
                 ip_hash=hash_value(request.remote_addr or "unknown"),
                 user_agent_hash=hash_value(request.user_agent.string or "unknown"),
                 details={},
-            )
-        )
-        db.session.commit()
+            ))
+            db.session.commit()
         flash("E-mail ou senha inválidos.", "error")
     emergency = request.args.get("emergency") == "1"
     local_enabled = current_app.config["AUTH_MODE"] in {"local", "hybrid"}
@@ -124,12 +136,21 @@ def login():
         local_enabled = emergency or bool(
             current_app.config.get("PORTFOLIO_DEMO_ENABLED")
         )
+    demo_accounts = []
+    if current_app.config.get("PORTFOLIO_DEMO_ENABLED"):
+        from app.services.demo_seed import DEMO_USERS
+
+        demo_accounts = [
+            {"email": email, "name": name.split(" — ", 1)[0]}
+            for email, name, _role in DEMO_USERS
+        ]
     return render_template(
         "login.html",
         next_url=next_url,
         oidc_enabled=current_app.config["OIDC_ENABLED"],
         local_enabled=local_enabled,
         emergency=emergency,
+        demo_accounts=demo_accounts,
     )
 
 

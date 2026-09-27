@@ -43,6 +43,21 @@ def test_demo_seed_is_idempotent_and_scopes_meetings(app):
     assert bruno.get("/api/v1/meetings").get_json()["total"] == 2
 
 
+def test_production_portfolio_login_finds_demo_tenant_and_handles_invalid_account(app):
+    with app.app_context():
+        seed_demo(password=PASSWORD)
+    app.config.update(APP_ENV="production", PORTFOLIO_DEMO_ENABLED=True, AUTH_MODE="local")
+
+    valid = app.test_client()
+    assert _login(valid, "ana@meetmind.example").status_code == 302
+
+    invalid = app.test_client()
+    response = _login(invalid, "meetmind.demo.ana@gmail.com")
+    assert response.status_code == 200
+    assert "E-mail ou senha inválidos." in response.get_data(as_text=True)
+    assert "ana@meetmind.example" in response.get_data(as_text=True)
+
+
 def test_demo_has_no_admin_and_manager_cannot_open_security(app):
     with app.app_context():
         seed_demo(password=PASSWORD)

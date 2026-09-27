@@ -285,6 +285,9 @@ input, select { min-height: 46px; padding: 10px 12px; color: var(--text); backgr
 .login-card img { width: 190px; padding: 10px; margin: -10px 0 24px; border-radius: 10px; background: var(--shell); }
 .login-card h1 { margin: 5px 0; }
 .login-card .form-stack { margin-top: 24px; }
+.login-demo { display: grid; gap: 3px; margin-top: 18px; padding: 11px 13px; border: 1px solid #d9d0f8; border-radius: 10px; background: #f7f4ff; color: var(--ink); font-size: .8rem; }
+.login-demo span, .login-demo small { color: var(--muted); }
+.login-demo code { color: var(--violet); font-family: inherit; font-weight: 700; }
 
 .secao-cabecalho { margin-bottom: 16px; }
 

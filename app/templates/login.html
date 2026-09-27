@@ -24,6 +24,13 @@
     {% endif %}
     {% if local_enabled %}
     {% if emergency %}<div class="aviso" role="status">Acesso local de emergência auditado.</div>{% endif %}
+    {% if demo_accounts %}
+      <div class="login-demo" role="note">
+        <strong>Conta recomendada</strong>
+        <span>{{ demo_accounts[1].name }} · <code>{{ demo_accounts[1].email }}</code></span>
+        <small>Use a senha definida no Render.</small>
+      </div>
+    {% endif %}
     <form method="post" class="form-stack">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}

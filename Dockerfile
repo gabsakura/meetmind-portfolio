@@ -9,8 +9,10 @@ RUN pip install --no-cache-dir --require-hashes -r requirements.txt
 COPY app ./app
 COPY migrations ./migrations
 COPY config.py run.py ./
+COPY docker-entrypoint.sh ./
 RUN mkdir -p /data/submissions && \
+    chmod +x /app/docker-entrypoint.sh && \
     chown -R meetmind:meetmind /app /data/submissions
 USER meetmind
 EXPOSE 8000
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "2", "--threads", "4", "run:app"]
+CMD ["/app/docker-entrypoint.sh"]

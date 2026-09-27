@@ -6,7 +6,6 @@ services:
     dockerfilePath: ./Dockerfile
     dockerContext: .
     healthCheckPath: /api/v1/health/ready
-    preDeployCommand: flask --app run.py db upgrade && flask --app run.py seed-demo
     envVars:
       - key: APP_ENV
         value: production

@@ -15,6 +15,10 @@ services:
         value: local
       - key: PORTFOLIO_DEMO_ENABLED
         value: "true"
+      - key: PORTFOLIO_CHAT_ENABLED
+        value: "true"
+      - key: GEMINI_API_KEY
+        sync: false
       - key: SECRET_KEY
         generateValue: true
       - key: DEMO_PORTFOLIO_PASSWORD

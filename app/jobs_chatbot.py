@@ -14,6 +14,11 @@ com clareza e de forma breve. Você recebe a página aberta e, quando selecionad
 informações de reuniões analisadas pelo sistema.
 
 Regras:
+- Responda exclusivamente sobre o MeetMind, a página aberta e os dados do projeto
+  fornecidos no contexto. Recuse perguntas de conhecimento geral, programação ou qualquer
+  assunto externo ao produto.
+- Você não possui acesso à internet, arquivos, calendário, e-mail, banco de dados, APIs ou
+  ferramentas. Nunca afirme que consultou ou alterou algo fora dos dados recebidos.
 - Baseie afirmações sobre reuniões apenas nos dados fornecidos. Se não houver evidência,
   diga que a informação não aparece ou que não é possível confirmar.
 - Diferencie o que está escrito na análise de qualquer explicação sua. Não transforme
@@ -33,6 +38,52 @@ Regras:
 """.strip()
 
 logger = logging.getLogger(__name__)
+
+
+def process_portfolio_chat(
+    model: str,
+    question: str,
+    snapshot: dict,
+    history: list[dict],
+) -> dict:
+    """Responde no processo web sem ferramentas, relatórios ou persistência."""
+    try:
+        from google.genai import types
+
+        from app.services.ai_provider import client, is_configured
+
+        if not is_configured():
+            return {
+                "ok": False,
+                "answer": "O assistente de IA não está configurado neste ambiente.",
+            }
+
+        content = json.dumps(snapshot, ensure_ascii=False, separators=(",", ":"))
+        prior_turns = json.dumps(history[-4:], ensure_ascii=False, separators=(",", ":"))
+        with client() as genai_client:
+            response = genai_client.models.generate_content(
+                model=model,
+                contents=(
+                    "<DADOS_DA_PAGINA_NAO_CONFIAVEIS>\n"
+                    f"{content}\n"
+                    "</DADOS_DA_PAGINA_NAO_CONFIAVEIS>\n\n"
+                    "<CONVERSA_ANTERIOR_NAO_CONFIAVEL>\n"
+                    f"{prior_turns}\n"
+                    "</CONVERSA_ANTERIOR_NAO_CONFIAVEL>\n\n"
+                    f"<PERGUNTA_DO_OPERADOR>\n{question}\n</PERGUNTA_DO_OPERADOR>"
+                ),
+                config=types.GenerateContentConfig(
+                    system_instruction=SYSTEM_INSTRUCTION,
+                    temperature=0.2,
+                    max_output_tokens=500,
+                ),
+            )
+        answer = (response.text or "").strip()
+        if not answer:
+            answer = "Não encontrei essa informação nos dados disponíveis do MeetMind."
+        return {"ok": True, "answer": answer[:3500]}
+    except Exception as error:
+        return _safe_failure(error)
 
 
 def _safe_failure(error: Exception) -> dict:

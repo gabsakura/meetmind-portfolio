@@ -111,10 +111,12 @@
     </div>
     <form class="meetmind-chat-form" data-chat-form>
       <label class="sr-only" for="meetmind-chat-question">Sua pergunta</label>
-      <textarea id="meetmind-chat-question" name="question" rows="1" maxlength="1200" placeholder="Pergunte sobre esta página…" required></textarea>
+      <textarea id="meetmind-chat-question" name="question" rows="1" maxlength="{{ 600 if config.PORTFOLIO_CHAT_ENABLED else 1200 }}" placeholder="Pergunte sobre esta página…" required></textarea>
       <button type="submit" aria-label="Enviar pergunta"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m4 12 16-8-5 16-3-7-8-1Z"/><path d="m12 13 4-5"/></svg></button>
     </form>
-    <p class="meetmind-chat-footnote">A conversa não fica salva. Relatórios expiram após 30 minutos.</p>
+    <p class="meetmind-chat-footnote">
+      {% if config.PORTFOLIO_CHAT_ENABLED %}Somente dados visíveis do MeetMind. A conversa não fica salva.{% else %}A conversa não fica salva. Relatórios expiram após 30 minutos.{% endif %}
+    </p>
   </section>
   <button class="meetmind-chat-launcher" type="button" aria-label="Abrir assistente MeetMind" aria-expanded="false" aria-controls="meetmind-chat-panel" data-chat-open>
     <svg aria-hidden="true" viewBox="0 0 40 40"><path d="M20 3c1.8 9 5 12.2 14 14-9 1.8-12.2 5-14 14-1.8-9-5-12.2-14-14 9-1.8 12.2-5 14-14Z"/><path d="M31 25c.8 4 2.3 5.5 6 6.3-3.7.8-5.2 2.3-6 6-.8-3.7-2.3-5.2-6-6 3.7-.8 5.2-2.3 6-6Z"/></svg>

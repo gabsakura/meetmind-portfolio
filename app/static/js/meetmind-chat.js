@@ -56,6 +56,8 @@ if (panel && launcher && form && input && messages) {
     });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(payload.error || "Não foi possível enviar a pergunta.");
+    if (payload.status === "succeeded") return payload;
+    if (!payload.status_url) throw new Error("O assistente retornou uma resposta inválida.");
 
     for (let attempt = 0; attempt < 70; attempt += 1) {
       await new Promise((resolve) => window.setTimeout(resolve, 1200));

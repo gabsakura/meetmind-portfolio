@@ -43,6 +43,19 @@ def test_demo_seed_is_idempotent_and_scopes_meetings(app):
     assert bruno.get("/api/v1/meetings").get_json()["total"] == 2
 
 
+def test_demo_seed_enables_external_ai_only_for_portfolio_chat(app):
+    app.config["PORTFOLIO_CHAT_ENABLED"] = True
+    with app.app_context():
+        seed_demo(password=PASSWORD)
+        organization = Organization.query.filter_by(slug=DEMO_ORGANIZATION_SLUG).one()
+        assert organization.external_ai_enabled is True
+
+        app.config["PORTFOLIO_CHAT_ENABLED"] = False
+        seed_demo(password=PASSWORD)
+        db.session.refresh(organization)
+        assert organization.external_ai_enabled is False
+
+
 def test_production_portfolio_login_finds_demo_tenant_and_handles_invalid_account(app):
     with app.app_context():
         seed_demo(password=PASSWORD)

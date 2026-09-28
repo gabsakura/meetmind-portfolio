@@ -30,6 +30,12 @@ from app.services.meeting_access import (
 
 chat_api_bp = Blueprint("chat_api", __name__, url_prefix="/api/v1/chat")
 
+
+def _chat_rate_limit() -> str:
+    if current_app.config.get("PORTFOLIO_CHAT_ENABLED"):
+        return "5 per 10 minutes"
+    return "20 per minute"
+
 _PAGE_LABELS = {
     "/": "Visão geral",
     "/clientes": "Clientes",
@@ -278,10 +284,29 @@ def _page_snapshot(payload: ChatRequest) -> dict:
 
 @chat_api_bp.post("")
 @login_required
-@limiter.limit("20 per minute")
+@limiter.limit(_chat_rate_limit)
 def submit_chat_message():
     try:
         payload = ChatRequest.model_validate(request.get_json(silent=True) or {})
+        portfolio_chat = bool(current_app.config.get("PORTFOLIO_CHAT_ENABLED"))
+        if portfolio_chat and len(payload.question.strip()) > 600:
+            return (
+                jsonify(
+                    error="Use até 600 caracteres por pergunta.",
+                    code="question_too_long",
+                ),
+                422,
+            )
+        if portfolio_chat and (
+            payload.report_context or is_report_request(payload.question, None)
+        ):
+            return (
+                jsonify(
+                    error="Relatórios não estão disponíveis no modo de portfólio.",
+                    code="reports_disabled",
+                ),
+                422,
+            )
         report_context_size = len(json.dumps(payload.report_context or {}, ensure_ascii=False))
         if report_context_size > 24_000:
             return (
@@ -308,6 +333,18 @@ def submit_chat_message():
             ),
             403,
         )
+    if current_app.config.get("PORTFOLIO_CHAT_ENABLED"):
+        from app.jobs_chatbot import process_portfolio_chat
+
+        result = process_portfolio_chat(
+            current_app.config["GEMINI_MODEL"],
+            payload.question.strip(),
+            snapshot,
+            [turn.model_dump() for turn in payload.history[-4:]],
+        )
+        if result.get("ok") is False:
+            return jsonify(status="failed", error=result.get("answer")), 503
+        return jsonify(status="succeeded", answer=result.get("answer", "")), 200
     if not current_app.config.get("QUEUE_ENABLED"):
         return (
             jsonify(error="O serviço do assistente está indisponível.", code="queue_disabled"),

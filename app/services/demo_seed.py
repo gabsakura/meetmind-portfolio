@@ -399,11 +399,13 @@ def seed_demo(*, password: str | None = None, commit: bool = True) -> dict[str, 
             slug=DEMO_ORGANIZATION_SLUG,
             name="MeetMind — Demonstração",
             retention_days=30,
-            external_ai_enabled=False,
+            external_ai_enabled=bool(current_app.config.get("PORTFOLIO_CHAT_ENABLED")),
         )
         db.session.add(organization)
         db.session.flush()
-    organization.external_ai_enabled = False
+    organization.external_ai_enabled = bool(
+        current_app.config.get("PORTFOLIO_CHAT_ENABLED")
+    )
     organization.retention_days = 30
     try:
         active_organization_id = current_organization_id()

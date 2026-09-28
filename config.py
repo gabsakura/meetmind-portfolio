@@ -95,6 +95,9 @@ class Config:
     PORTFOLIO_DEMO_ENABLED = (
         os.environ.get("PORTFOLIO_DEMO_ENABLED", "false").lower() == "true"
     )
+    PORTFOLIO_CHAT_ENABLED = (
+        os.environ.get("PORTFOLIO_CHAT_ENABLED", "false").lower() == "true"
+    )
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"
     SESSION_COOKIE_SECURE = os.environ.get("COOKIE_SECURE", "false").lower() == "true"

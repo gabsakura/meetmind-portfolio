@@ -80,10 +80,22 @@ def create_app(config_object="config.Config", config_overrides=None):
         }
         calendar_oauth_available = bool(
             app.config.get("PORTFOLIO_CALENDAR_OAUTH_ENABLED")
-            and str(current_user.email).casefold()
-            == str(app.config.get("PORTFOLIO_CALENDAR_TEST_EMAIL", "")).casefold()
+            and str(current_user.email).casefold() in {
+                str(app.config.get("PORTFOLIO_CALENDAR_TEST_EMAIL", "")).casefold(),
+                str(app.config.get("PORTFOLIO_MANAGER_TEST_EMAIL", "")).casefold(),
+            }
         )
         if endpoint in calendar_endpoints and calendar_oauth_available:
+            return None
+        private_operation_accounts = {
+            str(app.config.get("PORTFOLIO_CALENDAR_TEST_EMAIL", "")).casefold(),
+            str(app.config.get("PORTFOLIO_MANAGER_TEST_EMAIL", "")).casefold(),
+        }
+        if (
+            app.config.get("PORTFOLIO_CALENDAR_OAUTH_ENABLED")
+            and str(current_user.email).casefold() in private_operation_accounts
+            and request.path.startswith("/api/v1/team-deliveries")
+        ):
             return None
         blocked = (
             request.method not in {"GET", "HEAD", "OPTIONS"}
@@ -189,6 +201,7 @@ def create_app(config_object="config.Config", config_overrides=None):
             return {
                 "is_demo_environment": False,
                 "calendar_oauth_available": False,
+                "portfolio_operations_available": False,
             }
         from app.models import Organization
 
@@ -200,10 +213,20 @@ def create_app(config_object="config.Config", config_overrides=None):
                 not is_demo
                 or (
                     app.config.get("PORTFOLIO_CALENDAR_OAUTH_ENABLED")
-                    and str(current_user.email).casefold()
-                    == str(
-                        app.config.get("PORTFOLIO_CALENDAR_TEST_EMAIL", "")
-                    ).casefold()
+                    and str(current_user.email).casefold() in {
+                        str(app.config.get("PORTFOLIO_CALENDAR_TEST_EMAIL", "")).casefold(),
+                        str(app.config.get("PORTFOLIO_MANAGER_TEST_EMAIL", "")).casefold(),
+                    }
+                )
+            ),
+            "portfolio_operations_available": bool(
+                not is_demo
+                or (
+                    app.config.get("PORTFOLIO_CALENDAR_OAUTH_ENABLED")
+                    and str(current_user.email).casefold() in {
+                        str(app.config.get("PORTFOLIO_CALENDAR_TEST_EMAIL", "")).casefold(),
+                        str(app.config.get("PORTFOLIO_MANAGER_TEST_EMAIL", "")).casefold(),
+                    }
                 )
             ),
         }

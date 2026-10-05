@@ -1,22 +1,50 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime
+
 from flask import Blueprint, jsonify, request
 from flask_login import current_user, login_required
 from sqlalchemy.exc import IntegrityError
 
 from app.extensions import db
-from app.models import Client, ClientContact, Meeting, MeetingParticipant, Role, User
+from app.models import (
+    Client,
+    ClientContact,
+    DeliveryStatus,
+    Meeting,
+    MeetingParticipant,
+    Role,
+    TeamDelivery,
+    User,
+    utcnow,
+)
 from app.security import audit, role_required, sensitive_operation
 from app.services.access_policy import (
     can_access_client,
+    can_access_delivery,
     can_access_meeting,
+    can_cancel_delivery,
     can_manage_client,
     can_manage_meeting,
     can_manage_user,
     can_share_with,
+    deliveries_for,
 )
+from app.services.team_deliveries import delivery_json, sync_delivery_calendar
 
 operations_api_bp = Blueprint("operations_api", __name__, url_prefix="/api/v1")
+
+
+def _delivery_due_at(value) -> datetime:
+    try:
+        due_at = datetime.fromisoformat(str(value or "").replace("Z", "+00:00"))
+    except ValueError as error:
+        raise ValueError("invalid_due_at") from error
+    if due_at.tzinfo is None:
+        due_at = due_at.replace(tzinfo=UTC)
+    if due_at <= utcnow():
+        raise ValueError("invalid_due_at")
+    return due_at
 
 
 def _contact_json(item: ClientContact) -> dict:
@@ -265,3 +293,144 @@ def remove_meeting_participant(meeting_id: str, user_id: str):
     audit("MEETING_PARTICIPANT_REMOVED", "meeting", meeting.id, user_id=user_id)
     db.session.commit()
     return "", 204
+
+
+@operations_api_bp.get("/team-deliveries")
+@login_required
+def list_team_deliveries():
+    query = deliveries_for(current_user)
+    status = str(request.args.get("status") or "").strip()
+    if status:
+        if status not in {item.value for item in DeliveryStatus}:
+            return jsonify(error="Estado inválido.", code="invalid_payload"), 422
+        query = query.filter(TeamDelivery.status == status)
+    assignee_id = str(request.args.get("assignee_id") or "").strip()
+    if assignee_id:
+        query = query.filter(TeamDelivery.assignee_id == assignee_id)
+    items = query.order_by(TeamDelivery.due_at.asc(), TeamDelivery.created_at.desc())
+    return jsonify(items=[delivery_json(item) for item in items.limit(100)])
+
+
+@operations_api_bp.post("/team-deliveries")
+@role_required(Role.ADMIN, Role.MANAGER)
+@sensitive_operation
+def create_team_delivery():
+    payload = request.get_json(silent=True) or {}
+    title = str(payload.get("title") or "").strip()
+    description = str(payload.get("description") or "").strip() or None
+    priority = str(payload.get("priority") or "medium").strip()
+    provider = str(payload.get("calendar_provider") or "").strip()
+    assignee = db.session.get(User, str(payload.get("assignee_id") or "").strip())
+    if not 3 <= len(title) <= 500 or (description and len(description) > 4_000):
+        return jsonify(error="Informe uma entrega válida.", code="invalid_payload"), 422
+    if priority not in {"high", "medium", "low"}:
+        return jsonify(error="Prioridade inválida.", code="invalid_payload"), 422
+    if provider not in {"google", "microsoft"}:
+        return jsonify(error="Selecione Google ou Microsoft.", code="invalid_provider"), 422
+    if (
+        assignee is None
+        or assignee.id == current_user.id
+        or assignee.role != Role.ANALYST
+        or not assignee.is_active_record
+        or not can_manage_user(current_user, assignee)
+    ):
+        return jsonify(error="Subordinado inválido.", code="invalid_assignee"), 422
+    try:
+        due_at = _delivery_due_at(payload.get("due_at"))
+    except ValueError:
+        return jsonify(error="Defina um prazo futuro.", code="invalid_due_at"), 422
+    item = TeamDelivery(
+        organization_id=current_user.organization_id,
+        title=title,
+        description=description,
+        priority=priority,
+        assigned_by_id=current_user.id,
+        assignee_id=assignee.id,
+        due_at=due_at,
+        calendar_provider=provider,
+    )
+    db.session.add(item)
+    db.session.flush()
+    audit(
+        "TEAM_DELIVERY_CREATED", "team_delivery", item.id,
+        assignee_id=assignee.id,
+        due_at=due_at.isoformat(),
+        calendar_provider=provider,
+    )
+    db.session.commit()
+    response = sync_delivery_calendar(item)
+    audit(
+        "TEAM_DELIVERY_CALENDAR_SYNCED"
+        if item.calendar_status == "synced"
+        else "TEAM_DELIVERY_CALENDAR_FAILED",
+        "team_delivery", item.id,
+        calendar_provider=provider,
+        calendar_error=item.calendar_error,
+    )
+    db.session.commit()
+    return jsonify(response), 201
+
+
+@operations_api_bp.patch("/team-deliveries/<delivery_id>")
+@login_required
+@sensitive_operation
+def update_team_delivery(delivery_id: str):
+    item = db.session.get(TeamDelivery, delivery_id)
+    if not can_access_delivery(current_user, item):
+        return jsonify(error="Entrega não encontrada.", code="not_found"), 404
+    payload = request.get_json(silent=True) or {}
+    if int(payload.get("expected_version", -1)) != item.version:
+        return jsonify(error="A entrega foi alterada.", code="version_conflict"), 409
+    requested = str(payload.get("status") or "").strip()
+    if requested not in {status.value for status in DeliveryStatus}:
+        return jsonify(error="Estado inválido.", code="invalid_payload"), 422
+    if current_user.id == item.assignee_id:
+        allowed = {
+            DeliveryStatus.PENDING.value: {
+                DeliveryStatus.IN_PROGRESS.value,
+                DeliveryStatus.COMPLETED.value,
+            },
+            DeliveryStatus.IN_PROGRESS.value: {DeliveryStatus.COMPLETED.value},
+        }
+    elif can_cancel_delivery(current_user, item):
+        allowed = {
+            DeliveryStatus.PENDING.value: {DeliveryStatus.CANCELLED.value},
+            DeliveryStatus.IN_PROGRESS.value: {DeliveryStatus.CANCELLED.value},
+        }
+    else:
+        return jsonify(error="Entrega não encontrada.", code="not_found"), 404
+    if requested not in allowed.get(item.status, set()):
+        return jsonify(error="Transição inválida.", code="invalid_transition"), 409
+    previous = item.status
+    item.status = requested
+    item.version += 1
+    item.completed_at = utcnow() if requested == DeliveryStatus.COMPLETED.value else None
+    audit(
+        "TEAM_DELIVERY_UPDATED", "team_delivery", item.id,
+        previous_status=previous,
+        status=requested,
+        assignee_id=item.assignee_id,
+    )
+    db.session.commit()
+    return jsonify(delivery_json(item))
+
+
+@operations_api_bp.post("/team-deliveries/<delivery_id>/calendar/retry")
+@login_required
+@sensitive_operation
+def retry_team_delivery_calendar(delivery_id: str):
+    item = db.session.get(TeamDelivery, delivery_id)
+    if not can_access_delivery(current_user, item):
+        return jsonify(error="Entrega não encontrada.", code="not_found"), 404
+    if current_user.id != item.assignee_id and current_user.role not in {
+        Role.ADMIN, Role.MANAGER,
+    }:
+        return jsonify(error="Entrega não encontrada.", code="not_found"), 404
+    response = sync_delivery_calendar(item)
+    audit(
+        "TEAM_DELIVERY_CALENDAR_RETRIED", "team_delivery", item.id,
+        calendar_status=item.calendar_status,
+        calendar_error=item.calendar_error,
+    )
+    db.session.commit()
+    return jsonify(response)

@@ -591,6 +591,46 @@ class ActionEvent(TenantScopedMixin, db.Model):
     occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 
+class DeliveryStatus(StrEnum):
+    PENDING = "pending"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+
+
+class TeamDelivery(TenantScopedMixin, db.Model):
+    """Entrega direta da coordenação para uma pessoa da equipe."""
+
+    __tablename__ = "team_deliveries"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    title: Mapped[str] = mapped_column(String(500))
+    description: Mapped[str | None] = mapped_column(Text)
+    priority: Mapped[str] = mapped_column(String(20), default="medium", index=True)
+    status: Mapped[str] = mapped_column(
+        String(30), default=DeliveryStatus.PENDING.value, index=True
+    )
+    assigned_by_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    assignee_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    due_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    calendar_provider: Mapped[str] = mapped_column(String(20), index=True)
+    calendar_status: Mapped[str] = mapped_column(
+        String(20), default="pending", index=True
+    )
+    calendar_event_id: Mapped[str | None] = mapped_column(String(300))
+    calendar_event_url: Mapped[str | None] = mapped_column(Text)
+    calendar_error: Mapped[str | None] = mapped_column(String(120))
+    calendar_synced_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True)
+    )
+    version: Mapped[int] = mapped_column(Integer, default=1)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, onupdate=utcnow
+    )
+
+
 class KanbanRequestStatus(StrEnum):
     QUEUED = "queued"
     IN_PROGRESS = "in_progress"

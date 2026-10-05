@@ -22,6 +22,8 @@ dependem de playbooks e validações próprias antes de serem habilitados.
 - análise estruturada com citações literais e incerteza explícita;
 - trilha de evidência até plano, ação e encaminhamento;
 - dashboard diário por carteira, equipe e papel;
+- entregas do gestor para a equipe com prazo, acompanhamento e calendário;
+- visão individual de reuniões, carteira, pendências e encaminhamentos do analista;
 - visão 360º do cliente e contatos;
 - rascunhos de comunicação com aprovação humana;
 - OAuth para Google Calendar e Microsoft 365 no ambiente completo;
@@ -32,8 +34,9 @@ dependem de playbooks e validações próprias antes de serem habilitados.
 
 A publicação de portfólio usa somente dados sintéticos e é somente leitura. Uploads,
 alterações e funções administrativas ficam desativados para evitar abuso. Calendários
-permanecem bloqueados nas contas públicas; uma conta privada, criada por segredos do
-ambiente, pode validar o OAuth real sem compartilhar a agenda com visitantes.
+permanecem bloqueados nas contas públicas; uma dupla privada de gestor e analista,
+criada por segredos do ambiente, valida atribuição e OAuth real sem compartilhar a
+agenda com visitantes.
 
 ```powershell
 Copy-Item .env.example .env

@@ -27,6 +27,103 @@ const modeConfig = {
 
 const page = document.querySelector("[data-actions-page]");
 if (page) {
+  const deliveryPanel = page.querySelector("[data-delivery-panel]");
+  const deliveryForm = deliveryPanel?.querySelector("[data-delivery-form]");
+  const deliveryFeedback = deliveryPanel?.querySelector("[data-delivery-feedback]");
+
+  deliveryPanel?.querySelectorAll("[data-delivery-due]").forEach((item) => {
+    const value = new Date(item.dateTime);
+    if (!Number.isNaN(value.getTime())) item.textContent = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(value);
+  });
+
+  const setDeliveryFeedback = (message, tone = "") => {
+    if (!deliveryFeedback) return;
+    deliveryFeedback.textContent = message;
+    deliveryFeedback.dataset.tone = tone;
+  };
+  const setDeliveryPending = (button, pending, label = "Enviando…") => {
+    if (!button) return;
+    if (pending) {
+      button.dataset.originalLabel = button.textContent;
+      button.textContent = label;
+      button.disabled = true;
+    } else {
+      button.textContent = button.dataset.originalLabel || button.textContent;
+      button.disabled = false;
+    }
+  };
+  const syncDeliveryProviders = () => {
+    if (!deliveryForm) return;
+    const assignee = deliveryForm.elements.assignee_id.selectedOptions[0];
+    const providerSelect = deliveryForm.elements.calendar_provider;
+    let providers = [];
+    try { providers = JSON.parse(assignee?.dataset.providers || "[]"); } catch (_) { providers = []; }
+    providerSelect.replaceChildren(new Option(providers.length ? "Selecione" : "Sem calendário conectado", ""));
+    providers.forEach((provider) => providerSelect.add(new Option(provider.label, provider.id)));
+    if (providers.length === 1) providerSelect.value = providers[0].id;
+    providerSelect.disabled = providers.length === 0;
+  };
+
+  deliveryForm?.elements.assignee_id?.addEventListener("change", syncDeliveryProviders);
+  deliveryForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const button = deliveryForm.querySelector('button[type="submit"]');
+    const dueAt = new Date(deliveryForm.elements.due_at.value);
+    if (Number.isNaN(dueAt.getTime())) return setDeliveryFeedback("Informe uma data e hora válidas.", "error");
+    setDeliveryPending(button, true);
+    setDeliveryFeedback("");
+    try {
+      const result = await api("/api/v1/team-deliveries", {
+        method: "POST",
+        body: JSON.stringify({
+          assignee_id: deliveryForm.elements.assignee_id.value,
+          title: deliveryForm.elements.title.value.trim(),
+          description: deliveryForm.elements.description.value.trim(),
+          due_at: dueAt.toISOString(),
+          priority: deliveryForm.elements.priority.value,
+          calendar_provider: deliveryForm.elements.calendar_provider.value,
+        }),
+      });
+      sessionStorage.setItem("meetmind-delivery-feedback", result.calendar_status === "synced"
+        ? `Entrega atribuída e adicionada ao calendário de ${result.assignee}.`
+        : `Entrega atribuída a ${result.assignee}. A sincronização com o calendário ficou pendente.`);
+      window.location.reload();
+    } catch (error) {
+      setDeliveryFeedback(error.message, "error");
+      setDeliveryPending(button, false);
+    }
+  });
+
+  const persistedDeliveryFeedback = sessionStorage.getItem("meetmind-delivery-feedback");
+  if (persistedDeliveryFeedback) {
+    setDeliveryFeedback(persistedDeliveryFeedback, "success");
+    sessionStorage.removeItem("meetmind-delivery-feedback");
+  }
+  deliveryPanel?.addEventListener("click", async (event) => {
+    const retry = event.target.closest("[data-delivery-retry]");
+    const statusButton = event.target.closest("[data-delivery-status]");
+    const trigger = retry || statusButton;
+    if (!trigger) return;
+    const card = trigger.closest("[data-delivery-card]");
+    setDeliveryPending(trigger, true, retry ? "Sincronizando…" : "Salvando…");
+    setDeliveryFeedback("");
+    try {
+      const result = retry
+        ? await api(`/api/v1/team-deliveries/${card.dataset.deliveryId}/calendar/retry`, { method: "POST", body: "{}" })
+        : await api(`/api/v1/team-deliveries/${card.dataset.deliveryId}`, {
+          method: "PATCH",
+          body: JSON.stringify({ status: statusButton.dataset.deliveryStatus, expected_version: Number(card.dataset.version) }),
+        });
+      sessionStorage.setItem("meetmind-delivery-feedback", retry && result.calendar_status !== "synced"
+        ? "A entrega continua salva, mas o calendário ainda não respondeu. Verifique a conexão no Perfil."
+        : retry ? "Calendário sincronizado." : "Entrega atualizada.");
+      window.location.reload();
+    } catch (error) {
+      setDeliveryFeedback(error.code === "version_conflict" ? "Outra pessoa atualizou esta entrega. Recarregue a página." : error.message, "error");
+      setDeliveryPending(trigger, false);
+    }
+  });
+
   const dialog = page.querySelector("[data-action-dialog]");
   const form = dialog?.querySelector("[data-action-form]");
   const pageFeedback = page.querySelector("[data-action-feedback]");

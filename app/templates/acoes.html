@@ -4,6 +4,65 @@
 {% block conteudo %}
 {% set labels = {'proposed': 'Aguardando revisão', 'accepted': 'Pendentes', 'in_progress': 'Em andamento', 'completed': 'Concluídas', 'dismissed': 'Descartadas'} %}
 <section class="pagina" data-actions-page data-current-user-id="{{ current_user.id }}" data-can-decide="{{ 'true' if current_user.role.value in ['admin', 'manager', 'analyst'] else 'false' }}">
+  <section class="team-delivery-panel" data-delivery-panel>
+    <header class="team-delivery-header">
+      <div>
+        <span class="eyebrow">{{ 'Coordenação da equipe' if can_assign_deliveries else 'Meu trabalho' }}</span>
+        <h2>{{ 'Entregas da equipe' if can_assign_deliveries else 'Entregas recebidas' }}</h2>
+      </div>
+      <span class="status status-neutro">{{ deliveries|length }} no painel</span>
+    </header>
+    {% if can_assign_deliveries %}
+    <form class="team-delivery-form" data-delivery-form>
+      <label>Subordinado
+        <select name="assignee_id" required>
+          <option value="">Selecione</option>
+          {% for user in delivery_assignees %}
+          {% set options = delivery_calendar_options.get(user.id, []) %}
+          <option value="{{ user.id }}" data-providers="{{ options|tojson|forceescape }}" {{ 'disabled' if not options }}>{{ user.name }}{{ '' if options else ' — calendário indisponível' }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Entrega<input name="title" maxlength="500" required placeholder="Ex.: enviar plano de recuperação"></label>
+      <label>Prazo<input name="due_at" type="datetime-local" required></label>
+      <label>Prioridade<select name="priority"><option value="high">Alta</option><option value="medium" selected>Média</option><option value="low">Baixa</option></select></label>
+      <label>Calendário<select name="calendar_provider" required disabled><option value="">Selecione a pessoa</option></select></label>
+      <label class="team-delivery-description">Orientação<textarea name="description" maxlength="4000" rows="2" placeholder="Contexto suficiente para executar sem outra reunião"></textarea></label>
+      <button class="botao-primario" type="submit">Atribuir e agendar</button>
+      {% if not delivery_assignees %}<p class="team-delivery-hint">Nenhum analista disponível na sua equipe.</p>{% endif %}
+    </form>
+    {% endif %}
+    <p class="diagnostic-feedback" data-delivery-feedback role="status" aria-live="polite"></p>
+    <div class="team-delivery-list">
+      {% for delivery in deliveries %}
+      <article class="team-delivery-card {{ 'is-overdue' if delivery.overdue }}" data-delivery-card data-delivery-id="{{ delivery.id }}" data-version="{{ delivery.version }}">
+        <div class="team-delivery-card-top">
+          <span class="status delivery-status-{{ delivery.status }}">{{ delivery_status_labels.get(delivery.status, delivery.status) }}</span>
+          <span class="delivery-priority delivery-priority-{{ delivery.priority }}">Prioridade {{ {'high':'alta','medium':'média','low':'baixa'}.get(delivery.priority, 'média') }}</span>
+        </div>
+        <h3>{{ delivery.title }}</h3>
+        {% if delivery.description %}<p>{{ delivery.description }}</p>{% endif %}
+        <dl>
+          <div><dt>Responsável</dt><dd>{{ delivery.assignee }}</dd></div>
+          <div><dt>Gestor</dt><dd>{{ delivery.assigned_by }}</dd></div>
+          <div><dt>Prazo</dt><dd><time data-delivery-due datetime="{{ delivery.due_at }}">{{ delivery.due_at[:16]|replace('T', ' · ') }}</time></dd></div>
+        </dl>
+        <div class="team-delivery-calendar delivery-calendar-{{ delivery.calendar_status }}">
+          {% if delivery.calendar_status == 'synced' %}
+          <span>✓ Sincronizada com {{ 'Google' if delivery.calendar_provider == 'google' else 'Microsoft 365' }}</span>
+          {% if delivery.calendar_event_url %}<a href="{{ delivery.calendar_event_url }}" target="_blank" rel="noopener noreferrer">Abrir evento</a>{% endif %}
+          {% else %}<span>Calendário pendente</span><button type="button" class="botao-terciario" data-delivery-retry>Tentar novamente</button>{% endif %}
+        </div>
+        <div class="team-delivery-actions">
+          {% if delivery.assignee_id == current_user.id and delivery.status == 'pending' %}<button type="button" class="botao-secundario" data-delivery-status="in_progress">Iniciar</button><button type="button" class="botao-primario" data-delivery-status="completed">Concluir</button>
+          {% elif delivery.assignee_id == current_user.id and delivery.status == 'in_progress' %}<button type="button" class="botao-primario" data-delivery-status="completed">Concluir</button>{% endif %}
+          {% if delivery.status in ['pending','in_progress'] and (current_user.role.value == 'admin' or delivery.assigned_by_id == current_user.id) %}<button type="button" class="botao-terciario" data-delivery-status="cancelled">Cancelar</button>{% endif %}
+        </div>
+      </article>
+      {% else %}<div class="team-delivery-empty">Nenhuma entrega atribuída.</div>{% endfor %}
+    </div>
+  </section>
+
   <div class="action-stat-grid" aria-label="Resumo das ações">
     {% for status, label in labels.items() if status != 'dismissed' %}
     <article class="action-stat action-stat-{{ status }}"><span>{{ label }}</span><strong>{{ action_stats.get(status, 0) }}</strong></article>

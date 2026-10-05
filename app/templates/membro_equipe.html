@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block titulo %}MeetMind · {{ member.name }}{% endblock %}
+{% block titulo_topo %}Rotina da equipe{% endblock %}
+{% block conteudo %}
+<section class="pagina">
+  <section class="widget">
+    <div class="secao-cabecalho">
+      <div><span class="eyebrow">{{ team.name if team else 'Sem equipe' }}</span><h2>{{ member.name }}</h2><p class="texto-secundario">{{ member.email }}</p></div>
+      <a class="botao-primario link-botao" href="{{ url_for('painel.acoes', owner=member.id) }}">Ver e atribuir entregas</a>
+    </div>
+    <div class="member-summary">
+      <article><span>Clientes</span><strong>{{ stats.clients }}</strong></article>
+      <article><span>Reuniões recentes</span><strong>{{ stats.meetings }}</strong></article>
+      <article><span>Ações abertas</span><strong>{{ stats.open_actions }}</strong></article>
+      <article><span>Entregas abertas</span><strong>{{ stats.open_deliveries }}</strong></article>
+    </div>
+  </section>
+
+  <div class="member-profile-grid">
+    <section class="widget">
+      <div class="secao-cabecalho"><h2>Pendências e entregas</h2></div>
+      <div class="member-activity-list">
+        {% for item in deliveries if item.status in ['pending','in_progress'] %}
+        <article><strong>{{ item.title }}</strong><p>{{ delivery_status_labels.get(item.status, item.status) if delivery_status_labels is defined else item.status }} · {{ item.due_at[:16]|replace('T',' · ') }}</p></article>
+        {% endfor %}
+        {% for action in actions if action.status in ['proposed','accepted','in_progress'] %}
+        <article><strong>{{ action.title }}</strong><p>Ação · {{ action.status }}{% if action.due_at %} · {{ action.due_at.strftime('%d/%m/%Y %H:%M') }}{% endif %}</p></article>
+        {% else %}{% if not deliveries %}<div class="estado-vazio">Nenhuma pendência aberta.</div>{% endif %}{% endfor %}
+      </div>
+    </section>
+    <section class="widget">
+      <div class="secao-cabecalho"><h2>Calendários</h2></div>
+      <div class="member-activity-list">
+        {% for provider in calendar_providers %}
+        <article><strong>{{ provider.label }}</strong><p>{{ 'Conectado para receber entregas' if provider.connection and provider.write_enabled else 'Não conectado' }}</p></article>
+        {% endfor %}
+      </div>
+    </section>
+    <section class="widget">
+      <div class="secao-cabecalho"><h2>Reuniões recentes</h2></div>
+      <div class="member-activity-list">
+        {% for meeting in meetings %}<article><a href="{{ url_for('painel.inteligencia_artificial', meeting=meeting.id) }}"><strong>{{ meeting.title }}</strong></a><p>{{ meeting.occurred_at.strftime('%d/%m/%Y %H:%M') }}</p></article>
+        {% else %}<div class="estado-vazio">Nenhuma reunião visível.</div>{% endfor %}
+      </div>
+    </section>
+    <section class="widget">
+      <div class="secao-cabecalho"><h2>Carteira e encaminhamentos</h2></div>
+      <div class="member-activity-list">
+        {% for client in clients %}<article><a href="{{ url_for('painel.cliente_timeline', client_id=client.id) }}"><strong>{{ client.name }}</strong></a><p>Cliente sob responsabilidade</p></article>{% endfor %}
+        {% for item in requests %}<article><strong>{{ item.department }}</strong><p>{{ item.status }} · {{ item.request_type|replace('_',' ') }}</p></article>{% endfor %}
+        {% if not clients and not requests %}<div class="estado-vazio">Nenhuma atividade vinculada.</div>{% endif %}
+      </div>
+    </section>
+  </div>
+</section>
+{% endblock %}

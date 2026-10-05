@@ -12,6 +12,8 @@ Calendar ou Microsoft 365 no Render, configure os seguintes segredos no serviço
 PORTFOLIO_CALENDAR_OAUTH_ENABLED=true
 PORTFOLIO_CALENDAR_TEST_EMAIL=<seu e-mail privado de acesso ao MeetMind>
 PORTFOLIO_CALENDAR_TEST_PASSWORD=<senha exclusiva com 12+ caracteres>
+PORTFOLIO_MANAGER_TEST_EMAIL=<outro e-mail privado para o gestor>
+PORTFOLIO_MANAGER_TEST_PASSWORD=<outra senha exclusiva com 12+ caracteres>
 CALENDAR_TOKEN_ENCRYPTION_KEY=<chave Fernet>
 PUBLIC_BASE_URL=https://<seu-servico>.onrender.com
 ```
@@ -40,9 +42,10 @@ a tela de consentimento estiver em Testing. No Microsoft Entra, selecione contas
 qualquer organização e contas pessoais caso queira aceitar Outlook/Hotmail, e mantenha o
 tenant `common`.
 
-Depois de salvar os segredos, faça um novo deploy. O seed criará a conta privada sem
-exibi-la na tela de login. Entre com `PORTFOLIO_CALENDAR_TEST_EMAIL` e
-`PORTFOLIO_CALENDAR_TEST_PASSWORD`, abra **Perfil → Agenda e trabalho** e conecte o
-provedor desejado.
+Depois de salvar os segredos, faça um novo deploy. O seed criará uma equipe privada sem
+exibir suas contas na tela de login. Entre como analista com
+`PORTFOLIO_CALENDAR_TEST_EMAIL`, abra **Perfil → Agenda e trabalho** e conecte o
+provedor. Depois entre com `PORTFOLIO_MANAGER_TEST_EMAIL`, abra **Equipe**, consulte a
+rotina do analista e use **Ações → Entregas da equipe** para atribuir e agendar.
 
 Nunca coloque client secrets, senha privada, chave Fernet ou tokens no Git.

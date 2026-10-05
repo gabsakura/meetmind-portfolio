@@ -4,7 +4,7 @@ import hashlib
 import hmac
 from datetime import UTC, datetime
 
-from flask import Blueprint, Response, current_app, jsonify, request
+from flask import Blueprint, Response, current_app, jsonify, request, url_for
 from flask_login import current_user, login_required
 from pydantic import ValidationError
 from redis.exceptions import RedisError
@@ -21,6 +21,7 @@ from app.models import (
     AnalysisFeedback,
     AnalysisStatus,
     Client,
+    DeliveryStatus,
     EvidenceIssue,
     KanbanRequest,
     KanbanRequestStatus,
@@ -33,6 +34,7 @@ from app.models import (
     ProductEvent,
     Role,
     Segment,
+    TeamDelivery,
     TeamsConnection,
     TeamsTranscriptReceipt,
     User,
@@ -46,6 +48,7 @@ from app.services.access_policy import (
     can_access_client,
     can_manage_request,
     can_manage_user,
+    deliveries_for,
 )
 from app.services.actions import (
     action_json,
@@ -1584,6 +1587,40 @@ def dashboard_daily_briefing():
                 "url": item.get("source_url"),
             }
         )
+    delivery_items = (
+        deliveries_for(current_user)
+        .filter(
+            TeamDelivery.status.in_([
+                DeliveryStatus.PENDING.value,
+                DeliveryStatus.IN_PROGRESS.value,
+            ])
+        )
+        .order_by(TeamDelivery.due_at.asc())
+        .limit(40)
+        .all()
+    )
+    external_ids = {item.get("id") for item in calendar_items}
+    for item in delivery_items:
+        due_at = item.due_at if item.due_at.tzinfo else item.due_at.replace(tzinfo=UTC)
+        provider_event_id = (
+            f"{item.calendar_provider}-{item.calendar_event_id}"
+            if item.calendar_event_id else None
+        )
+        if provider_event_id in external_ids:
+            continue
+        task_items.append({
+            "id": f"delivery-{item.id}",
+            "type": "task",
+            "title": item.title,
+            "starts_at": due_at.isoformat(),
+            "ends_at": None,
+            "all_day": False,
+            "detail": "Entrega da equipe",
+            "critical": bool(item.priority == "high" or due_at < now),
+            "source": "meetmind",
+            "kind_label": "Entrega",
+            "url": url_for("painel.acoes"),
+        })
     items = [*calendar_items, *task_items]
     items.sort(key=lambda item: item["starts_at"])
     return jsonify(generated_at=now.isoformat(), items=items)

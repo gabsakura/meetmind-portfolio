@@ -11,6 +11,7 @@ from app.models import (
     MeetingParticipant,
     Role,
     Team,
+    TeamDelivery,
     User,
 )
 
@@ -111,7 +112,12 @@ def meetings_for(user: User):
     if user.role == Role.MANAGER:
         owners = managed_user_ids(user)
         return query.outerjoin(Client, Meeting.client_id == Client.id).filter(
-            or_(Meeting.created_by_id.in_(owners), Client.owner_id.in_(owners), participant)
+            or_(
+                Meeting.created_by_id.in_(owners),
+                Client.owner_id.in_(owners),
+                Meeting.participants.any(MeetingParticipant.user_id.in_(owners)),
+                participant,
+            )
         )
     if user.role == Role.ANALYST:
         return query.outerjoin(Client, Meeting.client_id == Client.id).filter(
@@ -177,6 +183,35 @@ def can_access_action(user: User, action: ActionItem | None) -> bool:
 
 def can_manage_action(user: User, action: ActionItem | None) -> bool:
     return user.role != Role.VIEWER and can_access_action(user, action)
+
+
+def deliveries_for(user: User):
+    query = TeamDelivery.query
+    if user.role == Role.ADMIN:
+        return query
+    if user.role == Role.MANAGER:
+        ids = managed_user_ids(user)
+        return query.filter(
+            or_(
+                TeamDelivery.assigned_by_id == user.id,
+                TeamDelivery.assignee_id.in_(ids),
+            )
+        )
+    return query.filter(TeamDelivery.assignee_id == user.id)
+
+
+def can_access_delivery(user: User, delivery: TeamDelivery | None) -> bool:
+    if delivery is None or delivery.organization_id != user.organization_id:
+        return False
+    return deliveries_for(user).filter(TeamDelivery.id == delivery.id).first() is not None
+
+
+def can_cancel_delivery(user: User, delivery: TeamDelivery | None) -> bool:
+    if not can_access_delivery(user, delivery):
+        return False
+    return user.role == Role.ADMIN or (
+        user.role == Role.MANAGER and delivery.assigned_by_id == user.id
+    )
 
 
 def requests_for(user: User):

@@ -23,6 +23,10 @@ services:
         sync: false
       - key: PORTFOLIO_CALENDAR_TEST_PASSWORD
         sync: false
+      - key: PORTFOLIO_MANAGER_TEST_EMAIL
+        sync: false
+      - key: PORTFOLIO_MANAGER_TEST_PASSWORD
+        sync: false
       - key: CALENDAR_TOKEN_ENCRYPTION_KEY
         sync: false
       - key: GOOGLE_CALENDAR_CLIENT_ID

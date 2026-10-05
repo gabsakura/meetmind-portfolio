@@ -181,10 +181,14 @@ def test_demo_blocks_upload_calendar_and_profile_changes(app):
 def test_private_demo_account_can_start_calendar_oauth_without_unlocking_public_users(app):
     private_email = "calendar.owner@example.test"
     private_password = "private-calendar-password"
+    manager_email = "calendar.manager@example.test"
+    manager_password = "private-manager-password"
     app.config.update(
         PORTFOLIO_CALENDAR_OAUTH_ENABLED=True,
         PORTFOLIO_CALENDAR_TEST_EMAIL=private_email,
         PORTFOLIO_CALENDAR_TEST_PASSWORD=private_password,
+        PORTFOLIO_MANAGER_TEST_EMAIL=manager_email,
+        PORTFOLIO_MANAGER_TEST_PASSWORD=manager_password,
         GOOGLE_CALENDAR_CLIENT_ID="google-client",
         GOOGLE_CALENDAR_CLIENT_SECRET="google-secret",
         PUBLIC_BASE_URL="https://meetmind.example",
@@ -196,7 +200,14 @@ def test_private_demo_account_can_start_calendar_oauth_without_unlocking_public_
             organization_id=organization.id,
             email=private_email,
         ).one()
-        assert private_user.role == Role.VIEWER
+        manager = User.query.filter_by(
+            organization_id=organization.id,
+            email=manager_email,
+        ).one()
+        assert private_user.role == Role.ANALYST
+        assert manager.role == Role.MANAGER
+        assert private_user.team_id == manager.team_id
+        private_user_id = private_user.id
         assert report["private_calendar_user"] is True
 
     private_client = app.test_client()
@@ -213,6 +224,17 @@ def test_private_demo_account_can_start_calendar_oauth_without_unlocking_public_
     assert connect.status_code == 302
     assert connect.headers["Location"].startswith("https://accounts.google.com/")
     assert private_client.post("/perfil/foto").status_code == 403
+
+    manager_client = app.test_client()
+    manager_login = manager_client.post(
+        "/auth/login",
+        data={"email": manager_email, "password": manager_password},
+        follow_redirects=False,
+    )
+    assert manager_login.status_code == 302
+    assert manager_client.get("/equipe").status_code == 200
+    assert manager_client.get(f"/equipe/{private_user_id}").status_code == 200
+    assert manager_client.get("/api/v1/meetings").get_json()["total"] == 1
 
     public_client = app.test_client()
     assert _login(public_client, "ana@meetmind.example").status_code == 302

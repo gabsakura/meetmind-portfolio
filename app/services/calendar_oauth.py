@@ -525,6 +525,7 @@ def create_event(
     description: str = "",
     attendee_emails: list[str] | None = None,
     idempotency_key: str | None = None,
+    online_meeting: bool = True,
 ) -> dict:
     _provider(provider)
     connection = CalendarConnection.query.filter_by(
@@ -584,8 +585,12 @@ def create_event(
                     }
                     for email in attendees
                 ],
-                "isOnlineMeeting": True,
-                "onlineMeetingProvider": "teamsForBusiness",
+                "isOnlineMeeting": online_meeting,
+                **(
+                    {"onlineMeetingProvider": "teamsForBusiness"}
+                    if online_meeting
+                    else {}
+                ),
                 **({"transactionId": idempotency_key[:255]} if idempotency_key else {}),
             },
             timeout=20,

@@ -5,7 +5,8 @@
 <section class="pagina team-page" data-team-page>
   <div class="team-grid">
     <section class="widget">
-      <div class="secao-cabecalho"><h2>Equipes de Customer Success</h2></div>
+      <div class="secao-cabecalho"><h2>{{ 'Equipes de Customer Success' if can_administer else 'Minha equipe' }}</h2></div>
+      {% if can_administer %}
       <form class="team-create-form" data-team-form>
         <label>Nome<input name="name" maxlength="120" required></label>
         <label>Coordenação
@@ -18,6 +19,7 @@
         </label>
         <button class="botao-primario" type="submit">Criar equipe</button>
       </form>
+      {% endif %}
       <div class="team-list">
         {% for team in teams %}
         <article><strong>{{ team.name }}</strong><span>{{ users|selectattr('id', 'equalto', team.manager_id)|map(attribute='name')|first or 'Sem coordenação' }}</span></article>
@@ -28,6 +30,7 @@
       <div class="secao-cabecalho"><h2>Usuários</h2></div>
       <div class="team-users">
         {% for user in users %}
+        {% if can_administer %}
         <form data-user-form data-user-id="{{ user.id }}">
           <div><strong>{{ user.name }}</strong><small>{{ user.email }}</small></div>
           <select name="role" aria-label="Cargo de {{ user.name }}">
@@ -42,11 +45,19 @@
           <label class="team-active"><input type="checkbox" name="active" {{ 'checked' if user.is_active_record }}> Ativo</label>
           <button class="botao-secundario" type="submit">Salvar</button>
         </form>
+        {% else %}
+        <article class="team-member-readonly">
+          <div><strong>{{ user.name }}</strong><small>{{ user.email }}</small></div>
+          <span class="status">{{ {'manager':'Coordenação','analyst':'Analista','viewer':'Somente leitura'}.get(user.role.value, user.role.value) }}</span>
+          {% if user.id != current_user.id %}<a class="botao-secundario link-botao" href="{{ url_for('painel.membro_equipe', user_id=user.id) }}">Ver rotina</a>{% endif %}
+        </article>
+        {% endif %}
         {% endfor %}
       </div>
+      {% if not can_administer and portfolio_operations_available %}<a class="botao-primario link-botao" href="{{ url_for('painel.acoes') }}">Atribuir entrega</a>{% endif %}
       <p class="diagnostic-feedback" data-team-feedback role="status" aria-live="polite"></p>
     </section>
   </div>
 </section>
-<script type="module" src="{{ url_for('static', filename='js/equipe.js') }}"></script>
+{% if can_administer %}<script type="module" src="{{ url_for('static', filename='js/equipe.js') }}"></script>{% endif %}
 {% endblock %}

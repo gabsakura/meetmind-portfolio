@@ -28,13 +28,16 @@ from app.models import (
     ClientContact,
     CommunicationDraft,
     CommunicationRevision,
+    DeliveryStatus,
     KanbanRequest,
     Meeting,
+    MeetingParticipant,
     MeetingPlan,
     MeetingSubmission,
     Role,
     SecurityEvent,
     Team,
+    TeamDelivery,
     User,
     utcnow,
 )
@@ -44,7 +47,9 @@ from app.services.access_policy import (
     actions_for,
     can_access_client,
     can_manage_client,
+    can_manage_user,
     clients_for,
+    deliveries_for,
     managed_user_ids,
 )
 from app.services.actions import action_json
@@ -66,6 +71,7 @@ from app.services.kanban import request_json as kanban_request_json
 from app.services.meeting_access import can_access_analysis, meetings_for
 from app.services.sector_context import load_playbooks
 from app.services.security_events import group_security_events
+from app.services.team_deliveries import delivery_json
 
 painel_bp = Blueprint("painel", __name__)
 
@@ -297,6 +303,40 @@ def acoes():
         ActionItem.due_at < utcnow(),
         ActionItem.status.notin_([ActionStatus.COMPLETED.value, ActionStatus.DISMISSED.value]),
     ).count()
+    delivery_rows = (
+        deliveries_for(current_user)
+        .order_by(TeamDelivery.due_at.asc(), TeamDelivery.created_at.desc())
+        .limit(100)
+        .all()
+    )
+    delivery_assignees = [
+        user
+        for user in active_users
+        if user.id != current_user.id and user.role == Role.ANALYST
+    ]
+    calendar_options_by_user = {
+        user.id: [
+            {
+                "id": item["id"],
+                "label": (
+                    item["label"]
+                    if item["connection"] is not None and item["write_enabled"]
+                    else f"{item['label']} — conexão pendente"
+                ),
+            }
+            for item in provider_statuses(user)
+            if item["configured"]
+        ]
+        for user in delivery_assignees
+    }
+    can_assign_deliveries = current_user.role in {Role.ADMIN, Role.MANAGER}
+    if current_app.config.get("PORTFOLIO_DEMO_ENABLED"):
+        can_assign_deliveries = bool(
+            can_assign_deliveries
+            and current_app.config.get("PORTFOLIO_CALENDAR_OAUTH_ENABLED")
+            and str(current_user.email).casefold()
+            == str(current_app.config.get("PORTFOLIO_MANAGER_TEST_EMAIL", "")).casefold()
+        )
     return render_template(
         "acoes.html",
         aba="acoes",
@@ -324,6 +364,16 @@ def acoes():
             and item["connection"].status == "connected"
             and item["write_enabled"]
         ],
+        can_assign_deliveries=can_assign_deliveries,
+        delivery_assignees=delivery_assignees,
+        delivery_calendar_options=calendar_options_by_user,
+        deliveries=[delivery_json(item) for item in delivery_rows],
+        delivery_status_labels={
+            DeliveryStatus.PENDING.value: "Pendente",
+            DeliveryStatus.IN_PROGRESS.value: "Em andamento",
+            DeliveryStatus.COMPLETED.value: "Concluída",
+            DeliveryStatus.CANCELLED.value: "Cancelada",
+        },
     )
 
 
@@ -806,17 +856,114 @@ def seguranca():
 @painel_bp.get("/equipe")
 @login_required
 def equipe():
-    if current_user.role != Role.ADMIN:
+    if current_user.role not in {Role.ADMIN, Role.MANAGER}:
         abort(404)
+    if current_user.role == Role.ADMIN:
+        teams = Team.query.filter_by(
+            organization_id=current_user.organization_id
+        ).order_by(Team.name.asc()).all()
+        users = User.query.filter_by(
+            organization_id=current_user.organization_id
+        ).order_by(User.name.asc()).all()
+    else:
+        team_ids = {
+            team.id
+            for team in Team.query.filter_by(
+                organization_id=current_user.organization_id,
+                manager_id=current_user.id,
+                is_active=True,
+            )
+        }
+        teams = Team.query.filter(Team.id.in_(team_ids)).order_by(Team.name.asc()).all()
+        users = (
+            User.query.filter(
+                User.organization_id == current_user.organization_id,
+                User.team_id.in_(team_ids),
+            ).order_by(User.name.asc()).all()
+            if team_ids else []
+        )
     return render_template(
         "equipe.html",
         aba="equipe",
-        teams=Team.query.filter_by(
-            organization_id=current_user.organization_id
-        ).order_by(Team.name.asc()).all(),
-        users=User.query.filter_by(
-            organization_id=current_user.organization_id
-        ).order_by(User.name.asc()).all(),
+        teams=teams,
+        users=users,
+        can_administer=current_user.role == Role.ADMIN,
+    )
+
+
+@painel_bp.get("/equipe/<user_id>")
+@login_required
+def membro_equipe(user_id: str):
+    if current_user.role not in {Role.ADMIN, Role.MANAGER}:
+        abort(404)
+    member = db.session.get(User, user_id)
+    if not can_manage_user(current_user, member):
+        abort(404)
+    team = db.session.get(Team, member.team_id) if member.team_id else None
+    clients = Client.query.filter_by(owner_id=member.id).order_by(Client.name.asc()).all()
+    meetings = (
+        Meeting.query.outerjoin(Client, Meeting.client_id == Client.id)
+        .filter(
+            or_(
+                Meeting.created_by_id == member.id,
+                Client.owner_id == member.id,
+                Meeting.participants.any(MeetingParticipant.user_id == member.id),
+            )
+        )
+        .order_by(Meeting.occurred_at.desc())
+        .limit(12)
+        .all()
+    )
+    actions = (
+        ActionItem.query.outerjoin(Client, ActionItem.client_id == Client.id)
+        .filter(or_(ActionItem.owner_id == member.id, Client.owner_id == member.id))
+        .order_by(ActionItem.due_at.asc(), ActionItem.created_at.desc())
+        .limit(20)
+        .all()
+    )
+    deliveries = (
+        TeamDelivery.query.filter_by(assignee_id=member.id)
+        .order_by(TeamDelivery.due_at.asc(), TeamDelivery.created_at.desc())
+        .limit(20)
+        .all()
+    )
+    requests = (
+        KanbanRequest.query.filter(
+            or_(
+                KanbanRequest.created_by_id == member.id,
+                KanbanRequest.assigned_to_id == member.id,
+            )
+        )
+        .order_by(KanbanRequest.updated_at.desc())
+        .limit(12)
+        .all()
+    )
+    open_action_statuses = {
+        ActionStatus.PROPOSED.value,
+        ActionStatus.ACCEPTED.value,
+        ActionStatus.IN_PROGRESS.value,
+    }
+    open_delivery_statuses = {
+        DeliveryStatus.PENDING.value,
+        DeliveryStatus.IN_PROGRESS.value,
+    }
+    return render_template(
+        "membro_equipe.html",
+        aba="equipe",
+        member=member,
+        team=team,
+        clients=clients,
+        meetings=meetings,
+        actions=actions,
+        deliveries=[delivery_json(item) for item in deliveries],
+        requests=requests,
+        calendar_providers=provider_statuses(member),
+        stats={
+            "clients": len(clients),
+            "meetings": len(meetings),
+            "open_actions": sum(item.status in open_action_statuses for item in actions),
+            "open_deliveries": sum(item.status in open_delivery_statuses for item in deliveries),
+        },
     )
 
 

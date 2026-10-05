@@ -29,6 +29,20 @@ def validate_runtime_config(app) -> None:
                 errors.append("conta privada de calendário fora das contas públicas")
             if len(str(app.config.get("PORTFOLIO_CALENDAR_TEST_PASSWORD", ""))) < 12:
                 errors.append("PORTFOLIO_CALENDAR_TEST_PASSWORD com 12+ caracteres")
+            manager_email = str(app.config.get("PORTFOLIO_MANAGER_TEST_EMAIL", ""))
+            manager_password = str(app.config.get("PORTFOLIO_MANAGER_TEST_PASSWORD", ""))
+            if bool(manager_email) != bool(manager_password):
+                errors.append("credenciais completas do gestor privado")
+            if manager_email.casefold().endswith(
+                "@meetmind.example"
+            ):
+                errors.append("gestor privado fora das contas públicas")
+            elif manager_email and manager_email.casefold() == str(
+                app.config.get("PORTFOLIO_CALENDAR_TEST_EMAIL", "")
+            ).casefold():
+                errors.append("contas privadas distintas para gestor e analista")
+            if manager_password and len(manager_password) < 12:
+                errors.append("PORTFOLIO_MANAGER_TEST_PASSWORD com 12+ caracteres")
             if not app.config.get("CALENDAR_TOKEN_ENCRYPTION_KEY"):
                 errors.append("CALENDAR_TOKEN_ENCRYPTION_KEY")
             google = (

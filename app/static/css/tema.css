@@ -1084,6 +1084,60 @@ input, select { min-height: 46px; padding: 10px 12px; color: var(--text); backgr
   .friendly-uncertainties { margin: 0 18px 18px; }
 }
 
+/* Equipe e entregas da coordenação */
+.team-grid { display: grid; grid-template-columns: minmax(260px, .7fr) minmax(0, 1.5fr); gap: 18px; }
+.team-create-form, .team-users form, .team-member-readonly { display: grid; gap: 12px; align-items: end; }
+.team-create-form { grid-template-columns: 1fr 1fr auto; margin-bottom: 18px; }
+.team-list, .team-users { display: grid; gap: 10px; }
+.team-list article, .team-member-readonly { padding: 13px 14px; background: #f7f9fb; border: 1px solid #dce3ea; border-radius: 12px; }
+.team-list article span, .team-users small { display: block; margin-top: 3px; color: var(--muted); font-size: .74rem; }
+.team-users form { grid-template-columns: minmax(180px, 1fr) minmax(130px, .55fr) minmax(130px, .55fr) auto auto; }
+.team-member-readonly { grid-template-columns: minmax(0, 1fr) auto auto; }
+.team-member-readonly .link-botao { align-self: center; }
+.team-active { display: flex; align-items: center; gap: 7px; font-size: .78rem; font-weight: 750; }
+.team-active input { width: 17px; height: 17px; min-height: 17px; margin: 0; }
+.team-delivery-panel { display: grid; gap: 18px; padding: 22px; background: linear-gradient(135deg, #fff, #faf8ff); border: 1px solid #d9dfe8; border-radius: 18px; box-shadow: 0 8px 28px rgba(17,35,54,.06); }
+.team-delivery-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.team-delivery-header h2 { margin: 3px 0 0; font-size: 1.15rem; }
+.team-delivery-header .eyebrow { color: #6541a5; font-size: .68rem; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }
+.team-delivery-form { display: grid; grid-template-columns: minmax(150px,.9fr) minmax(210px,1.4fr) minmax(165px,.8fr) minmax(110px,.55fr) minmax(140px,.7fr) auto; gap: 12px; align-items: end; padding: 16px; background: #f4f1fb; border: 1px solid #ded4ef; border-radius: 14px; }
+.team-delivery-form label { display: grid; gap: 6px; min-width: 0; color: var(--text-2); font-size: .76rem; font-weight: 800; }
+.team-delivery-form :is(input,select,textarea) { width: 100%; min-width: 0; }
+.team-delivery-description { grid-column: 1 / -2; }
+.team-delivery-description textarea { min-height: 66px; resize: vertical; }
+.team-delivery-list { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,310px),1fr)); gap: 12px; }
+.team-delivery-card { position: relative; display: grid; gap: 12px; min-width: 0; padding: 17px; overflow: hidden; background: white; border: 1px solid #d9e1e9; border-radius: 14px; }
+.team-delivery-card::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 4px; background: #7652b7; }
+.team-delivery-card.is-overdue { border-color: #e5a49e; }
+.team-delivery-card.is-overdue::before { background: #b42318; }
+.team-delivery-card-top, .team-delivery-calendar, .team-delivery-actions { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+.team-delivery-card-top { justify-content: space-between; }
+.delivery-priority { color: var(--muted); font-size: .68rem; font-weight: 850; text-transform: uppercase; }
+.delivery-priority-high { color: #a02d24; }
+.team-delivery-card h3 { margin: 0; font-size: 1rem; line-height: 1.35; overflow-wrap: anywhere; }
+.team-delivery-card > p { margin: 0; color: var(--text-2); font-size: .83rem; line-height: 1.5; }
+.team-delivery-card dl { display: grid; gap: 7px; margin: 0; }
+.team-delivery-card dl div { display: grid; grid-template-columns: 82px minmax(0,1fr); gap: 8px; }
+.team-delivery-card dt { color: var(--muted); font-size: .71rem; }
+.team-delivery-card dd { min-width: 0; margin: 0; font-size: .77rem; overflow-wrap: anywhere; }
+.team-delivery-calendar { justify-content: space-between; padding: 9px 11px; color: #5f3f18; background: #fff8e7; border-radius: 10px; font-size: .75rem; font-weight: 750; }
+.team-delivery-calendar.delivery-calendar-synced { color: #116044; background: #eaf7f1; }
+.team-delivery-calendar a { color: inherit; }
+.team-delivery-empty { grid-column: 1 / -1; padding: 22px; color: var(--muted); background: #f7f9fb; border: 1px dashed #cbd5df; border-radius: 12px; text-align: center; }
+.team-delivery-panel [data-delivery-feedback]:empty { display: none; }
+.team-delivery-panel [data-delivery-feedback][data-tone="success"] { color: #116044; }
+.team-delivery-panel [data-delivery-feedback][data-tone="error"] { color: #a02d24; }
+.delivery-status-completed { color: #176b4c; background: #e6f5ef; }
+.delivery-status-cancelled { color: #596875; background: #edf1f4; }
+.member-summary { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 12px; }
+.member-summary article { padding: 16px; background: white; border: 1px solid var(--border); border-radius: 14px; }
+.member-summary span { display: block; color: var(--muted); font-size: .75rem; }
+.member-summary strong { display: block; margin-top: 6px; font-size: 1.4rem; }
+.member-profile-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 18px; }
+.member-activity-list { display: grid; gap: 9px; }
+.member-activity-list article { padding: 13px; background: #f7f9fb; border: 1px solid var(--border); border-radius: 11px; }
+.member-activity-list p { margin: 5px 0 0; color: var(--text-2); font-size: .8rem; }
+
 /* Central operacional de ações */
 .action-stat-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
 .action-stat-grid article {
@@ -2476,3 +2530,14 @@ input[type="checkbox"] {
 .legal-document p { margin: 0; color: var(--text-2); line-height: 1.68; }
 .legal-version { font-size: .82rem; }
 .legal-back { display: inline-block; margin-bottom: 24px; font-weight: 700; text-decoration: none; }
+
+@media (max-width: 1100px) {
+  .team-grid, .member-profile-grid { grid-template-columns: minmax(0,1fr); }
+  .team-delivery-form { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .team-delivery-description { grid-column: 1 / -1; }
+}
+@media (max-width: 700px) {
+  .member-summary, .team-delivery-form { grid-template-columns: minmax(0,1fr); }
+  .team-member-readonly, .team-users form, .team-create-form { grid-template-columns: minmax(0,1fr); }
+  .team-delivery-panel { padding: 17px; }
+}

@@ -17,6 +17,24 @@ services:
         value: "true"
       - key: PORTFOLIO_CHAT_ENABLED
         value: "true"
+      - key: PORTFOLIO_CALENDAR_OAUTH_ENABLED
+        sync: false
+      - key: PORTFOLIO_CALENDAR_TEST_EMAIL
+        sync: false
+      - key: PORTFOLIO_CALENDAR_TEST_PASSWORD
+        sync: false
+      - key: CALENDAR_TOKEN_ENCRYPTION_KEY
+        sync: false
+      - key: GOOGLE_CALENDAR_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CALENDAR_CLIENT_SECRET
+        sync: false
+      - key: MICROSOFT_CALENDAR_CLIENT_ID
+        sync: false
+      - key: MICROSOFT_CALENDAR_CLIENT_SECRET
+        sync: false
+      - key: MICROSOFT_CALENDAR_TENANT
+        value: common
       - key: GEMINI_API_KEY
         sync: false
       - key: SECRET_KEY

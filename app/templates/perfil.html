@@ -51,7 +51,7 @@
     <h2>Agenda e trabalho</h2>
     <span class="status status-neutro">Microsoft 365 e Google</span>
   </div>
-  {% if is_demo_environment %}
+  {% if is_demo_environment and not calendar_oauth_available %}
   <div class="aviso" role="status">Integrações pessoais não ficam disponíveis na demonstração pública.</div>
   {% else %}
   <div class="calendar-provider-list">

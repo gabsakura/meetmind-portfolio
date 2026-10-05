@@ -1,5 +1,5 @@
 from app.extensions import db
-from app.models import CalendarConnection, Meeting, Organization, Role, User
+from app.models import CalendarConnection, Meeting, Organization, Role, Team, User
 from app.services.demo_seed import DEMO_ORGANIZATION_SLUG, reset_demo, seed_demo
 from app.tenancy import tenant_scope
 
@@ -22,8 +22,18 @@ def test_demo_seed_is_idempotent_and_scopes_meetings(app):
         with tenant_scope(organization.id):
             ana_meeting = Meeting.query.filter_by(external_id="demo-atlas-risco").one()
             assert Meeting.query.count() == 6
+            teams = Team.query.order_by(Team.name.asc()).all()
+            assert {team.name for team in teams} == {
+                "CS Manufatura — Adoção e Expansão",
+                "CS Manufatura — Contas Estratégicas",
+            }
+            assert User.query.filter_by(email="ana@meetmind.example").one().team_id \
+                == next(team.id for team in teams if "Contas" in team.name)
+            assert User.query.filter_by(email="bruno@meetmind.example").one().team_id \
+                == next(team.id for team in teams if "Adoção" in team.name)
         assert first["meetings_created"] == 6
         assert second["meetings_created"] == 0
+        assert first["teams"] == 2
 
     ana = app.test_client()
     assert _login(ana, "ana@meetmind.example").status_code == 302
@@ -166,6 +176,47 @@ def test_demo_blocks_upload_calendar_and_profile_changes(app):
     assert upload.get_json()["code"] == "demo_read_only"
     assert client.get("/perfil/calendario/conectar/google").status_code == 403
     assert client.post("/perfil/foto").status_code == 403
+
+
+def test_private_demo_account_can_start_calendar_oauth_without_unlocking_public_users(app):
+    private_email = "calendar.owner@example.test"
+    private_password = "private-calendar-password"
+    app.config.update(
+        PORTFOLIO_CALENDAR_OAUTH_ENABLED=True,
+        PORTFOLIO_CALENDAR_TEST_EMAIL=private_email,
+        PORTFOLIO_CALENDAR_TEST_PASSWORD=private_password,
+        GOOGLE_CALENDAR_CLIENT_ID="google-client",
+        GOOGLE_CALENDAR_CLIENT_SECRET="google-secret",
+        PUBLIC_BASE_URL="https://meetmind.example",
+    )
+    with app.app_context():
+        report = seed_demo(password=PASSWORD)
+        organization = Organization.query.filter_by(slug=DEMO_ORGANIZATION_SLUG).one()
+        private_user = User.query.filter_by(
+            organization_id=organization.id,
+            email=private_email,
+        ).one()
+        assert private_user.role == Role.VIEWER
+        assert report["private_calendar_user"] is True
+
+    private_client = app.test_client()
+    response = private_client.post(
+        "/auth/login",
+        data={"email": private_email, "password": private_password},
+        follow_redirects=False,
+    )
+    assert response.status_code == 302
+    profile = private_client.get("/perfil")
+    assert profile.status_code == 200
+    assert "Google Calendar" in profile.get_data(as_text=True)
+    connect = private_client.get("/perfil/calendario/conectar/google")
+    assert connect.status_code == 302
+    assert connect.headers["Location"].startswith("https://accounts.google.com/")
+    assert private_client.post("/perfil/foto").status_code == 403
+
+    public_client = app.test_client()
+    assert _login(public_client, "ana@meetmind.example").status_code == 302
+    assert public_client.get("/perfil/calendario/conectar/google").status_code == 403
 
 
 def test_privacy_and_terms_are_public(client):

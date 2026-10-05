@@ -31,8 +31,9 @@ dependem de playbooks e validações próprias antes de serem habilitados.
 ## Vitrine pública
 
 A publicação de portfólio usa somente dados sintéticos e é somente leitura. Uploads,
-alterações, IA externa, calendários e funções administrativas ficam desativados para
-evitar custo, abuso e tratamento indevido de dados.
+alterações e funções administrativas ficam desativados para evitar abuso. Calendários
+permanecem bloqueados nas contas públicas; uma conta privada, criada por segredos do
+ambiente, pode validar o OAuth real sem compartilhar a agenda com visitantes.
 
 ```powershell
 Copy-Item .env.example .env

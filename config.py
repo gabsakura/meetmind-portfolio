@@ -98,6 +98,15 @@ class Config:
     PORTFOLIO_CHAT_ENABLED = (
         os.environ.get("PORTFOLIO_CHAT_ENABLED", "false").lower() == "true"
     )
+    PORTFOLIO_CALENDAR_OAUTH_ENABLED = (
+        os.environ.get("PORTFOLIO_CALENDAR_OAUTH_ENABLED", "false").lower() == "true"
+    )
+    PORTFOLIO_CALENDAR_TEST_EMAIL = os.environ.get(
+        "PORTFOLIO_CALENDAR_TEST_EMAIL", ""
+    ).strip().lower()
+    PORTFOLIO_CALENDAR_TEST_PASSWORD = os.environ.get(
+        "PORTFOLIO_CALENDAR_TEST_PASSWORD", ""
+    )
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"
     SESSION_COOKIE_SECURE = os.environ.get("COOKIE_SECURE", "false").lower() == "true"

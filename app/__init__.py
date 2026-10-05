@@ -72,6 +72,19 @@ def create_app(config_object="config.Config", config_overrides=None):
         if not organization or organization.slug != "meetmind-demo":
             return None
         endpoint = str(request.endpoint or "")
+        calendar_endpoints = {
+            "painel.perfil_calendario_conectar",
+            "painel.perfil_calendario_callback",
+            "painel.perfil_calendario_sincronizar",
+            "painel.perfil_calendario_desconectar",
+        }
+        calendar_oauth_available = bool(
+            app.config.get("PORTFOLIO_CALENDAR_OAUTH_ENABLED")
+            and str(current_user.email).casefold()
+            == str(app.config.get("PORTFOLIO_CALENDAR_TEST_EMAIL", "")).casefold()
+        )
+        if endpoint in calendar_endpoints and calendar_oauth_available:
+            return None
         blocked = (
             request.method not in {"GET", "HEAD", "OPTIONS"}
             and endpoint != "auth.logout"
@@ -173,13 +186,25 @@ def create_app(config_object="config.Config", config_overrides=None):
     @app.context_processor
     def _demo_environment():
         if not current_user.is_authenticated:
-            return {"is_demo_environment": False}
+            return {
+                "is_demo_environment": False,
+                "calendar_oauth_available": False,
+            }
         from app.models import Organization
 
         organization = db.session.get(Organization, current_user.organization_id)
+        is_demo = bool(organization and organization.slug == "meetmind-demo")
         return {
-            "is_demo_environment": bool(
-                organization and organization.slug == "meetmind-demo"
-            )
+            "is_demo_environment": is_demo,
+            "calendar_oauth_available": bool(
+                not is_demo
+                or (
+                    app.config.get("PORTFOLIO_CALENDAR_OAUTH_ENABLED")
+                    and str(current_user.email).casefold()
+                    == str(
+                        app.config.get("PORTFOLIO_CALENDAR_TEST_EMAIL", "")
+                    ).casefold()
+                )
+            ),
         }
     return app

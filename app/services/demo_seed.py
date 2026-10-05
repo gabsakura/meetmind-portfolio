@@ -46,10 +46,77 @@ DEMO_USERS = (
     ("diego@meetmind.example", "Diego Martins — Somente leitura", Role.VIEWER),
 )
 
+DEMO_TEAMS = (
+    (
+        "CS Manufatura — Contas Estratégicas",
+        "carla@meetmind.example",
+        ("carla@meetmind.example", "ana@meetmind.example", "diego@meetmind.example"),
+    ),
+    (
+        "CS Manufatura — Adoção e Expansão",
+        "marina@meetmind.example",
+        ("marina@meetmind.example", "bruno@meetmind.example"),
+    ),
+)
+
 
 def generate_demo_password() -> str:
     """Cria uma credencial temporária que nunca é persistida no repositório."""
     return secrets.token_urlsafe(24)
+
+
+def _ensure_demo_teams(organization: Organization, users: dict[str, User]) -> list[Team]:
+    legacy = Team.query.filter_by(
+        organization_id=organization.id,
+        name="Customer Success Manufatura",
+    ).first()
+    strategic = Team.query.filter_by(
+        organization_id=organization.id,
+        name=DEMO_TEAMS[0][0],
+    ).first()
+    if strategic is None and legacy is not None:
+        legacy.name = DEMO_TEAMS[0][0]
+
+    teams = []
+    for name, manager_email, member_emails in DEMO_TEAMS:
+        team = Team.query.filter_by(
+            organization_id=organization.id,
+            name=name,
+        ).first()
+        if team is None:
+            team = Team(organization_id=organization.id, name=name)
+            db.session.add(team)
+            db.session.flush()
+        team.manager_id = users[manager_email].id
+        for email in member_emails:
+            users[email].team_id = team.id
+        teams.append(team)
+    return teams
+
+
+def _ensure_private_calendar_user(organization: Organization) -> bool:
+    if not current_app.config.get("PORTFOLIO_CALENDAR_OAUTH_ENABLED"):
+        return False
+    email = str(current_app.config.get("PORTFOLIO_CALENDAR_TEST_EMAIL", "")).strip().lower()
+    password = str(current_app.config.get("PORTFOLIO_CALENDAR_TEST_PASSWORD", ""))
+    if not email or len(password) < 12 or email in {item[0] for item in DEMO_USERS}:
+        return False
+    user = User.query.filter_by(organization_id=organization.id, email=email).first()
+    if user is None:
+        user = User(
+            organization_id=organization.id,
+            email=email,
+            name="Teste privado de calendário",
+            role=Role.VIEWER,
+            auth_source="local",
+        )
+        db.session.add(user)
+    user.name = "Teste privado de calendário"
+    user.role = Role.VIEWER
+    user.is_active_record = True
+    user.team_id = None
+    user.set_password(password)
+    return True
 
 MEETINGS = (
     {
@@ -444,24 +511,8 @@ def seed_demo(*, password: str | None = None, commit: bool = True) -> dict[str, 
         user.set_password(password)
         users[email] = user
     db.session.flush()
-    team = Team.query.filter_by(
-        organization_id=organization.id, name="Customer Success Manufatura"
-    ).first()
-    if team is None:
-        team = Team(
-            organization_id=organization.id,
-            name="Customer Success Manufatura",
-        )
-        db.session.add(team)
-        db.session.flush()
-    team.manager_id = users["carla@meetmind.example"].id
-    for email in (
-        "ana@meetmind.example",
-        "bruno@meetmind.example",
-        "carla@meetmind.example",
-        "diego@meetmind.example",
-    ):
-        users[email].team_id = team.id
+    teams = _ensure_demo_teams(organization, users)
+    private_calendar_user = _ensure_private_calendar_user(organization)
 
     now = utcnow()
     created_meetings = 0
@@ -683,6 +734,8 @@ def seed_demo(*, password: str | None = None, commit: bool = True) -> dict[str, 
     return {
         "organization": organization.slug,
         "users": len(DEMO_USERS),
+        "teams": len(teams),
+        "private_calendar_user": private_calendar_user,
         "meetings_created": created_meetings,
     }
 

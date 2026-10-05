@@ -20,6 +20,31 @@ def validate_runtime_config(app) -> None:
             errors.append("configuração OIDC completa")
         if portfolio_demo and len(str(app.config.get("DEMO_PORTFOLIO_PASSWORD", ""))) < 9:
             errors.append("DEMO_PORTFOLIO_PASSWORD com 9+ caracteres")
+        if portfolio_demo and app.config.get("PORTFOLIO_CALENDAR_OAUTH_ENABLED"):
+            if not app.config.get("PORTFOLIO_CALENDAR_TEST_EMAIL"):
+                errors.append("PORTFOLIO_CALENDAR_TEST_EMAIL")
+            elif str(app.config.get("PORTFOLIO_CALENDAR_TEST_EMAIL")).casefold().endswith(
+                "@meetmind.example"
+            ):
+                errors.append("conta privada de calendário fora das contas públicas")
+            if len(str(app.config.get("PORTFOLIO_CALENDAR_TEST_PASSWORD", ""))) < 12:
+                errors.append("PORTFOLIO_CALENDAR_TEST_PASSWORD com 12+ caracteres")
+            if not app.config.get("CALENDAR_TOKEN_ENCRYPTION_KEY"):
+                errors.append("CALENDAR_TOKEN_ENCRYPTION_KEY")
+            google = (
+                bool(app.config.get("GOOGLE_CALENDAR_CLIENT_ID")),
+                bool(app.config.get("GOOGLE_CALENDAR_CLIENT_SECRET")),
+            )
+            microsoft = (
+                bool(app.config.get("MICROSOFT_CALENDAR_CLIENT_ID")),
+                bool(app.config.get("MICROSOFT_CALENDAR_CLIENT_SECRET")),
+            )
+            if google[0] != google[1]:
+                errors.append("credenciais completas do Google Calendar")
+            if microsoft[0] != microsoft[1]:
+                errors.append("credenciais completas do Microsoft Calendar")
+            if not all(google) and not all(microsoft):
+                errors.append("ao menos um provedor de calendário configurado")
         if not app.config.get("SESSION_COOKIE_SECURE"):
             errors.append("COOKIE_SECURE=true")
         if not app.config.get("PRIVACY_CONTACT_EMAIL"):

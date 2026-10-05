@@ -27,7 +27,7 @@
         </summary>
         <div class="profile-popover">
           <a href="{{ url_for('painel.perfil') }}">Meu perfil</a>
-          {% if not is_demo_environment %}
+          {% if calendar_oauth_available %}
           <a href="{{ url_for('painel.perfil', _anchor='calendario') }}">Integrar calendário</a>
           {% endif %}
         </div>

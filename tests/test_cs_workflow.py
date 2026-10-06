@@ -88,6 +88,8 @@ def test_client_portfolio_and_360_use_existing_records(admin_client, app):
     assert detail.status_code == 200
     assert b"Pend\xc3\xaancias abertas" in detail.data
     assert b"O cliente relatou lentid\xc3\xa3o" in detail.data
+    assert b"client-people-grid" in detail.data
+    assert b"client-contact-create" in detail.data
 
 
 def test_analyst_actions_page_renders_without_duplicate_client_join(

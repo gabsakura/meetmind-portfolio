@@ -4,6 +4,7 @@
 {% block conteudo %}
 {% set health = (latest_card.relationship_health.status if latest_card else 'insufficient_evidence') %}
 {% set health_labels = {'healthy': 'Saudável', 'attention': 'Atenção', 'at_risk': 'Em risco', 'insufficient_evidence': 'Sem evidência'} %}
+{% set active_contacts = contacts|selectattr('is_active')|list %}
 <section class="pagina client-360" data-client-page data-client-id="{{ client.id }}">
   <header class="client-hero">
     <div><p class="eyebrow">Conta {{ client.external_id }}</p><h2>{{ client.name }}</h2><p>{{ owner.name if owner else 'Sem responsável definido' }}</p></div>
@@ -11,38 +12,46 @@
   </header>
 
   <section class="widget client-people" aria-labelledby="client-people-title">
-    <div class="secao-cabecalho"><h3 id="client-people-title">Responsáveis e contatos</h3></div>
-    {% if can_transfer %}
-    <form class="client-owner-form" data-owner-form>
-      <label>Responsável pela conta
-        <select name="owner_id" required>
-          {% for item in owner_options %}<option value="{{ item.id }}" {{ 'selected' if item.id == client.owner_id }}>{{ item.name }}</option>{% endfor %}
-        </select>
-      </label>
-      <button class="botao-secundario" type="submit">Transferir carteira</button>
-    </form>
-    {% endif %}
-    <div class="client-contact-list" data-contact-list>
-      {% for contact in contacts if contact.is_active %}
-      <article>
-        <div><strong>{{ contact.name }}</strong><small>{{ contact.job_title or 'Contato do cliente' }}</small></div>
-        <a href="mailto:{{ contact.email }}">{{ contact.email }}</a>
-        {% if contact.phone %}<span>{{ contact.phone }}</span>{% endif %}
-        {% if contact.is_primary %}<span class="status status-sucesso">Principal</span>{% endif %}
-        {% if can_manage_client %}<button class="botao-terciario" type="button" data-contact-deactivate="{{ contact.id }}">Desativar</button>{% endif %}
-      </article>
-      {% else %}<div class="estado-vazio">Nenhum contato ativo.</div>{% endfor %}
+    <div class="secao-cabecalho client-people-heading">
+      <div><span class="eyebrow">Relacionamento</span><h3 id="client-people-title">Responsáveis e contatos</h3></div>
+      <span class="status status-neutro">{{ active_contacts|length }} {{ 'contato' if active_contacts|length == 1 else 'contatos' }}</span>
     </div>
-    {% if can_manage_client %}
-    <form class="client-contact-form" data-contact-form>
-      <label>Nome<input name="name" maxlength="200" required></label>
-      <label>E-mail<input name="email" type="email" maxlength="254" required></label>
-      <label>Cargo<input name="job_title" maxlength="160"></label>
-      <label>Telefone<input name="phone" maxlength="40"></label>
-      <label class="team-active"><input name="is_primary" type="checkbox"> Contato principal</label>
-      <button class="botao-primario" type="submit">Adicionar contato</button>
-    </form>
-    {% endif %}
+    <div class="client-people-grid">
+      <article class="client-owner-card">
+        <header><span class="client-person-avatar" aria-hidden="true">{{ (owner.name[:1] if owner else '?')|upper }}</span><div><span>Responsável pela conta</span><strong>{{ owner.name if owner else 'Não definido' }}</strong><small>{{ owner.email if owner else 'Selecione um responsável' }}</small></div></header>
+        {% if can_transfer %}
+        <form class="client-owner-form" data-owner-form>
+          <label for="client-owner">Transferir carteira</label>
+          <div><select id="client-owner" name="owner_id" required>
+            {% for item in owner_options %}<option value="{{ item.id }}" {{ 'selected' if item.id == client.owner_id }}>{{ item.name }}</option>{% endfor %}
+          </select><button class="botao-secundario" type="submit">Atualizar</button></div>
+        </form>
+        {% endif %}
+      </article>
+
+      <section class="client-contacts-area" aria-labelledby="client-contacts-title">
+        <div class="client-contacts-title"><div><span class="eyebrow">Pessoas do cliente</span><h4 id="client-contacts-title">Contatos ativos</h4></div></div>
+        <div class="client-contact-list" data-contact-list>
+          {% for contact in active_contacts %}
+          <article class="client-contact-card">
+            <header><span class="client-person-avatar client-contact-avatar" aria-hidden="true">{{ contact.name[:1]|upper }}</span><div><strong>{{ contact.name }}</strong><small>{{ contact.job_title or 'Contato do cliente' }}</small></div>{% if contact.is_primary %}<span class="status status-sucesso">Principal</span>{% endif %}</header>
+            <div class="client-contact-details"><a href="mailto:{{ contact.email }}">{{ contact.email }}</a>{% if contact.phone %}<a href="tel:{{ contact.phone }}">{{ contact.phone }}</a>{% endif %}</div>
+            {% if can_manage_client %}<button class="botao-terciario client-contact-deactivate" type="button" data-contact-deactivate="{{ contact.id }}">Desativar contato</button>{% endif %}
+          </article>
+          {% else %}<div class="estado-vazio">Nenhum contato ativo.</div>{% endfor %}
+        </div>
+
+        {% if can_manage_client %}
+        <details class="client-contact-create">
+          <summary>Adicionar contato</summary>
+          <form class="client-contact-form" data-contact-form>
+            <div class="client-contact-fields"><label>Nome<input name="name" maxlength="200" required></label><label>E-mail<input name="email" type="email" maxlength="254" required></label><label>Cargo<input name="job_title" maxlength="160"></label><label>Telefone<input name="phone" maxlength="40"></label></div>
+            <div class="client-contact-form-actions"><label class="client-primary-check"><input name="is_primary" type="checkbox"> Definir como contato principal</label><button class="botao-primario" type="submit">Salvar contato</button></div>
+          </form>
+        </details>
+        {% endif %}
+      </section>
+    </div>
     <p class="diagnostic-feedback" data-client-feedback role="status" aria-live="polite"></p>
   </section>
 

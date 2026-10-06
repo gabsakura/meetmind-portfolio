@@ -57,7 +57,7 @@
           <span>✓ Tarefa criada no {{ 'Google Tasks' if delivery.calendar_provider == 'google' else 'Microsoft To Do' }}</span>
           {% if delivery.calendar_event_url %}<a href="{{ delivery.calendar_event_url }}" target="_blank" rel="noopener noreferrer">Abrir tarefa</a>{% endif %}
           {% elif delivery.calendar_status == 'not_requested' %}<span>Somente no MeetMind</span>
-          {% else %}<span>Sincronização pendente</span><button type="button" class="botao-terciario" data-delivery-retry>Tentar novamente</button>
+          {% else %}<div><strong>Sincronização pendente</strong>{% if delivery.calendar_error_message %}<small>{{ delivery.calendar_error_message }}</small>{% endif %}</div><a class="botao-terciario" href="{{ url_for('painel.perfil', _anchor='calendario') }}">Ver Perfil</a><button type="button" class="botao-terciario" data-delivery-retry>Tentar novamente</button>
           {% endif %}
         </div>
         <div class="team-delivery-actions">

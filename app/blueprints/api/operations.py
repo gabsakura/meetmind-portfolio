@@ -31,7 +31,12 @@ from app.services.access_policy import (
     can_share_with,
     deliveries_for,
 )
-from app.services.team_deliveries import delivery_json, notify_delivery, sync_delivery_calendar
+from app.services.team_deliveries import (
+    delivery_json,
+    notify_delivery,
+    notify_delivery_user,
+    sync_delivery_calendar,
+)
 
 operations_api_bp = Blueprint("operations_api", __name__, url_prefix="/api/v1")
 
@@ -449,6 +454,21 @@ def update_team_delivery(delivery_id: str):
     item.status = requested
     item.version += 1
     item.completed_at = utcnow() if requested == DeliveryStatus.COMPLETED.value else None
+    if current_user.id == item.assignee_id:
+        status_label = (
+            "Tarefa concluída"
+            if requested == DeliveryStatus.COMPLETED.value
+            else "Tarefa iniciada"
+        )
+        notify_delivery_user(
+            item,
+            item.assigned_by_id,
+            f"delivery_{requested}",
+            status_label,
+            f"{current_user.name}: {item.title}",
+        )
+    elif requested == DeliveryStatus.CANCELLED.value:
+        notify_delivery(item, "delivery_cancelled", "Tarefa cancelada", item.title)
     audit(
         "TEAM_DELIVERY_UPDATED",
         "team_delivery",
@@ -504,16 +524,12 @@ def request_team_delivery_change(delivery_id: str):
     item.change_request = reason
     item.change_requested_at = utcnow()
     item.version += 1
-    db.session.add(
-        UserNotification(
-            organization_id=item.organization_id,
-            user_id=item.assigned_by_id,
-            kind="delivery_change_requested",
-            title="Alteração solicitada",
-            body=f"{current_user.name}: {item.title}",
-            target_type="team_delivery",
-            target_id=item.id,
-        )
+    notify_delivery_user(
+        item,
+        item.assigned_by_id,
+        "delivery_change_requested",
+        "Alteração solicitada",
+        f"{current_user.name}: {item.title}",
     )
     audit("TEAM_DELIVERY_CHANGE_REQUESTED", "team_delivery", item.id, reason=reason)
     db.session.commit()

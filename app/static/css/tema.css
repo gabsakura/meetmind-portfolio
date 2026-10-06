@@ -1130,7 +1130,16 @@ input, select { min-height: 46px; padding: 10px 12px; color: var(--text); backgr
 .team-delivery-card dd { min-width: 0; margin: 0; font-size: .77rem; overflow-wrap: anywhere; }
 .team-delivery-calendar { justify-content: space-between; padding: 9px 11px; color: #5f3f18; background: #fff8e7; border-radius: 10px; font-size: .75rem; font-weight: 750; }
 .team-delivery-calendar.delivery-calendar-synced { color: #116044; background: #eaf7f1; }
+.team-delivery-calendar > div { display: grid; gap: 3px; min-width: 180px; flex: 1; }
+.team-delivery-calendar small { color: inherit; font-weight: 550; line-height: 1.35; }
 .team-delivery-calendar a { color: inherit; }
+.perfil-email-test { margin-top: 12px; }
+.calendar-readiness { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 0; padding: 0; list-style: none; }
+.calendar-readiness li { padding: 6px 10px; border: 1px solid #ccd7e3; border-radius: 999px; color: #526579; background: #f6f8fb; font-size: .76rem; font-weight: 700; }
+.calendar-readiness li::before { content: "○"; margin-right: 6px; }
+.calendar-readiness li.is-ready { color: #087f5b; border-color: #b9e2d4; background: #edf9f4; }
+.calendar-readiness li.is-ready::before { content: "✓"; }
+.calendar-readiness li.is-pending { color: #8a5a10; border-color: #efd8a9; background: #fff8e7; }
 .team-delivery-empty { grid-column: 1 / -1; padding: 22px; color: var(--muted); background: #f7f9fb; border: 1px dashed #cbd5df; border-radius: 12px; text-align: center; }
 .team-delivery-panel [data-delivery-feedback]:empty { display: none; }
 .team-delivery-panel [data-delivery-feedback][data-tone="success"] { color: #116044; }

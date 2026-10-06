@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 
 from app.extensions import db
-from app.models import DeliveryStatus, Role, Team, TeamDelivery, User
+from app.models import DeliveryStatus, Role, Team, TeamDelivery, User, UserNotification
 from app.services.calendar_oauth import CalendarOAuthError
 from tests.conftest import login
 
@@ -106,6 +106,14 @@ def test_manager_assigns_delivery_and_sees_employee_profile(app, monkeypatch):
     assert completed.status_code == 200
     with app.app_context():
         assert db.session.get(TeamDelivery, response.json["id"]).assigned_by_id == manager_id
+        notifications = UserNotification.query.filter_by(
+            user_id=manager_id,
+            target_id=response.json["id"],
+        ).all()
+        assert {item.kind for item in notifications} == {
+            "delivery_in_progress",
+            "delivery_completed",
+        }
 
 
 def test_manager_cannot_assign_or_view_outside_team(app, monkeypatch):
@@ -136,6 +144,8 @@ def test_calendar_failure_keeps_delivery_and_retry_syncs(app, monkeypatch):
     )
     assert created.status_code == 201
     assert created.json["calendar_status"] == "failed"
+    assert created.json["calendar_error"] == "calendar_connection_missing"
+    assert "Conecte esse provedor" in created.json["calendar_error_message"]
     with app.app_context():
         assert db.session.get(TeamDelivery, created.json["id"]) is not None
 

@@ -42,7 +42,7 @@ from app.models import (
     User,
     utcnow,
 )
-from app.security import audit
+from app.security import audit, sensitive_operation
 from app.services import avatars
 from app.services.access_policy import (
     actions_for,
@@ -70,6 +70,7 @@ from app.services.kanban import KANBAN_ROUTING
 from app.services.kanban import list_requests as list_kanban_requests
 from app.services.kanban import request_json as kanban_request_json
 from app.services.meeting_access import can_access_analysis, meetings_for
+from app.services.notifications import delivery_email_status, send_delivery_email
 from app.services.sector_context import load_playbooks
 from app.services.security_events import group_security_events
 from app.services.team_deliveries import delivery_json
@@ -1037,6 +1038,7 @@ def perfil():
         aba="perfil",
         limite_kb=avatars.max_bytes() // 1024,
         calendar_providers=provider_statuses(current_user),
+        delivery_email=delivery_email_status(),
     )
 
 
@@ -1194,6 +1196,29 @@ def perfil_notificacoes():
     )
     db.session.commit()
     flash("Preferências de notificação atualizadas.", "success")
+    return redirect(url_for("painel.perfil", _anchor="notificacoes"))
+
+
+@painel_bp.post("/perfil/notificacoes/testar")
+@login_required
+@limiter.limit("5 per hour")
+@sensitive_operation
+def perfil_notificacoes_testar():
+    if not current_user.email_delivery_notifications:
+        flash("Ative e salve os avisos por e-mail antes de testar.", "error")
+    elif send_delivery_email(
+        current_user,
+        "MeetMind · avisos por e-mail ativos",
+        "Este é um teste. As novas tarefas e alterações importantes chegarão neste endereço.",
+    ):
+        audit("DELIVERY_EMAIL_TEST_SENT", "user", current_user.id)
+        db.session.commit()
+        flash("E-mail de teste enviado. Confira também a caixa de spam.", "success")
+    else:
+        flash(
+            "Não foi possível enviar o teste. Verifique a configuração SMTP do Render.",
+            "error",
+        )
     return redirect(url_for("painel.perfil", _anchor="notificacoes"))
 
 

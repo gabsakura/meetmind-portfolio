@@ -4,9 +4,63 @@ from datetime import UTC
 from typing import Any
 
 from app.extensions import db
-from app.models import DeliveryStatus, TeamDelivery, User, UserNotification, utcnow
+from app.models import (
+    DeliveryStatus,
+    TeamDelivery,
+    User,
+    UserNotification,
+    utcnow,
+)
 from app.services.calendar_oauth import CalendarOAuthError, create_task
 from app.services.notifications import send_delivery_email
+
+CALENDAR_ERROR_GUIDANCE = {
+    "calendar_connection_missing": (
+        "Conecte esse provedor no Perfil antes de tentar novamente.",
+        "connect",
+    ),
+    "team_delivery_consent_required": (
+        "No Perfil, autorize tarefas da equipe para este provedor.",
+        "consent",
+    ),
+    "calendar_reconnect_required": (
+        "Reconecte o provedor para conceder a permissão de tarefas.",
+        "reconnect",
+    ),
+    "calendar_refresh_token_missing": (
+        "Reconecte o provedor para renovar a autorização.",
+        "reconnect",
+    ),
+    "calendar_refresh_rejected": (
+        "A autorização expirou. Reconecte o provedor no Perfil.",
+        "reconnect",
+    ),
+    "calendar_task_list_missing": (
+        "Crie uma lista padrão no aplicativo de tarefas e tente novamente.",
+        "provider",
+    ),
+    "calendar_task_rejected": (
+        "O provedor recusou a tarefa. Verifique a permissão e a API de tarefas.",
+        "provider",
+    ),
+    "calendar_event_unavailable": (
+        "O provedor está temporariamente indisponível. Tente novamente.",
+        "retry",
+    ),
+    "delivery_assignee_unavailable": (
+        "O responsável está inativo ou indisponível.",
+        "assignee",
+    ),
+}
+
+
+def calendar_error_guidance(code: str | None) -> tuple[str | None, str | None]:
+    if not code:
+        return None, None
+    return CALENDAR_ERROR_GUIDANCE.get(
+        code,
+        ("Não foi possível sincronizar. Atualize a conexão no Perfil.", "retry"),
+    )
 
 
 def delivery_json(item: TeamDelivery) -> dict[str, Any]:
@@ -15,6 +69,9 @@ def delivery_json(item: TeamDelivery) -> dict[str, Any]:
     due_at = item.due_at
     if due_at.tzinfo is None:
         due_at = due_at.replace(tzinfo=UTC)
+    calendar_error_message, calendar_error_action = calendar_error_guidance(
+        item.calendar_error
+    )
     return {
         "id": item.id,
         "title": item.title,
@@ -40,6 +97,8 @@ def delivery_json(item: TeamDelivery) -> dict[str, Any]:
         "calendar_event_id": item.calendar_event_id,
         "calendar_event_url": item.calendar_event_url,
         "calendar_error": item.calendar_error,
+        "calendar_error_message": calendar_error_message,
+        "calendar_error_action": calendar_error_action,
         "calendar_synced_at": (
             item.calendar_synced_at.isoformat() if item.calendar_synced_at else None
         ),
@@ -50,11 +109,17 @@ def delivery_json(item: TeamDelivery) -> dict[str, Any]:
     }
 
 
-def notify_delivery(item: TeamDelivery, kind: str, title: str, body: str | None = None) -> None:
+def notify_delivery_user(
+    item: TeamDelivery,
+    user_id: str,
+    kind: str,
+    title: str,
+    body: str | None = None,
+) -> None:
     db.session.add(
         UserNotification(
             organization_id=item.organization_id,
-            user_id=item.assignee_id,
+            user_id=user_id,
             kind=kind,
             title=title[:300],
             body=body,
@@ -62,9 +127,13 @@ def notify_delivery(item: TeamDelivery, kind: str, title: str, body: str | None 
             target_id=item.id,
         )
     )
-    user = db.session.get(User, item.assignee_id)
+    user = db.session.get(User, user_id)
     if user is not None:
         send_delivery_email(user, title, body or item.title)
+
+
+def notify_delivery(item: TeamDelivery, kind: str, title: str, body: str | None = None) -> None:
+    notify_delivery_user(item, item.assignee_id, kind, title, body)
 
 
 def sync_delivery_calendar(item: TeamDelivery) -> dict[str, Any]:

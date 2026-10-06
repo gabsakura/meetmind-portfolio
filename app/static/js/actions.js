@@ -89,7 +89,7 @@ if (page) {
         ? `Entrega atribuída e adicionada ao calendário de ${result.assignee}.`
         : result.calendar_status === "not_requested"
           ? `Entrega atribuída a ${result.assignee} no MeetMind.`
-          : `Entrega atribuída a ${result.assignee}. A sincronização externa ficou pendente.`);
+          : `Entrega atribuída a ${result.assignee}. ${result.calendar_error_message || "A sincronização externa ficou pendente."}`);
       window.location.reload();
     } catch (error) {
       setDeliveryFeedback(error.message, "error");
@@ -121,7 +121,7 @@ if (page) {
           body: JSON.stringify({ status: statusButton.dataset.deliveryStatus, expected_version: Number(card.dataset.version) }),
         });
       sessionStorage.setItem("meetmind-delivery-feedback", retry && result.calendar_status !== "synced"
-        ? "A entrega continua salva, mas o calendário ainda não respondeu. Verifique a conexão no Perfil."
+        ? (result.calendar_error_message || "A entrega continua salva, mas o calendário ainda não respondeu.")
         : retry ? "Calendário sincronizado." : "Entrega atualizada.");
       window.location.reload();
     } catch (error) {

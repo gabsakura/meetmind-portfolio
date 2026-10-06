@@ -8,13 +8,32 @@ from flask import current_app
 from app.models import User
 
 
+def delivery_email_status() -> dict[str, bool | str]:
+    """Return a safe readiness summary without exposing SMTP credentials."""
+    host = str(current_app.config.get("SMTP_HOST") or "").strip()
+    sender = str(current_app.config.get("SMTP_FROM") or "").strip()
+    username = str(current_app.config.get("SMTP_USERNAME") or "").strip()
+    password = str(current_app.config.get("SMTP_PASSWORD") or "").strip()
+    configured = bool(host and sender and (not username or password))
+    return {
+        "configured": configured,
+        "sender": sender,
+        "message": (
+            f"Envio disponível por {sender}."
+            if configured
+            else "O envio por e-mail ainda não foi configurado pelo administrador."
+        ),
+    }
+
+
 def send_delivery_email(user: User, subject: str, body: str) -> bool:
     if not user.email_delivery_notifications:
         return False
-    host = str(current_app.config.get("SMTP_HOST") or "").strip()
-    sender = str(current_app.config.get("SMTP_FROM") or "").strip()
-    if not host or not sender:
+    status = delivery_email_status()
+    if not status["configured"]:
         return False
+    host = str(current_app.config["SMTP_HOST"]).strip()
+    sender = str(status["sender"])
     message = EmailMessage()
     message["From"] = sender
     message["To"] = user.email

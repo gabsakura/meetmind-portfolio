@@ -47,16 +47,25 @@
   </div>
 </section>
 <section class="widget" id="notificacoes">
-  <div class="secao-cabecalho"><h2>Notificações de tarefas</h2></div>
+  <div class="secao-cabecalho">
+    <h2>Notificações de tarefas</h2>
+    <span class="status {{ 'status-sucesso' if delivery_email.configured else 'status-atencao' }}">{{ 'E-mail disponível' if delivery_email.configured else 'Configuração pendente' }}</span>
+  </div>
   <form action="{{ url_for('painel.perfil_notificacoes') }}" method="post" class="form-stack">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <label class="action-dialog-check">
       <input type="checkbox" name="email_delivery_notifications" value="true" {{ 'checked' if current_user.email_delivery_notifications }}>
       Receber por e-mail novas tarefas e alterações importantes
     </label>
-    <p class="texto-secundario">As notificações dentro do MeetMind permanecem ativas.</p>
+    <p class="texto-secundario">{{ delivery_email.message }} As notificações dentro do MeetMind permanecem ativas.</p>
     <div><button class="botao-primario" type="submit">Salvar preferência</button></div>
   </form>
+  {% if delivery_email.configured %}
+  <form action="{{ url_for('painel.perfil_notificacoes_testar') }}" method="post" class="perfil-email-test">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="botao-terciario" type="submit" {{ 'disabled' if not current_user.email_delivery_notifications }}>Enviar e-mail de teste</button>
+  </form>
+  {% endif %}
 </section>
 
 <section class="widget" id="calendario">
@@ -86,6 +95,11 @@
         </div>
         {% if connection %}
         <p>{{ connection.account_email }}{% if connection.last_synced_at %} · Última atualização {{ connection.last_synced_at.strftime('%d/%m/%Y %H:%M') }}{% endif %}{% if provider.reconnect_required %} · Reconecte para incluir tarefas{% elif not provider.write_enabled %} · Reconecte para permitir agendamentos autorizados{% endif %}</p>
+        <ol class="calendar-readiness" aria-label="Etapas da integração">
+          <li class="is-ready">Conta conectada</li>
+          <li class="{{ 'is-ready' if provider.tasks_enabled else 'is-pending' }}">Permissão para tarefas</li>
+          <li class="{{ 'is-ready' if connection.allow_team_deliveries else 'is-pending' }}">Tarefas da equipe autorizadas</li>
+        </ol>
         {% elif provider.configured %}
         <p>Use seus compromissos no Resumo do Dia e agende acompanhamentos somente quando você autorizar.</p>
         {% else %}

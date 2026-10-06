@@ -65,6 +65,7 @@ if (page) {
   };
 
   deliveryForm?.elements.assignee_id?.addEventListener("change", syncDeliveryProviders);
+  syncDeliveryProviders();
   deliveryForm?.addEventListener("submit", async (event) => {
     event.preventDefault();
     const button = deliveryForm.querySelector('button[type="submit"]');

@@ -4,7 +4,7 @@
 {% block conteudo %}
 {% set labels = {'proposed': 'Aguardando revisão', 'accepted': 'Pendentes', 'in_progress': 'Em andamento', 'completed': 'Concluídas', 'dismissed': 'Descartadas'} %}
 <section class="pagina" data-actions-page data-current-user-id="{{ current_user.id }}" data-can-decide="{{ 'true' if current_user.role.value in ['admin', 'manager', 'analyst'] else 'false' }}">
-  <section class="team-delivery-panel" data-delivery-panel>
+  <section class="team-delivery-panel" id="entregas-equipe" data-delivery-panel>
     <header class="team-delivery-header">
       <div>
         <span class="eyebrow">{{ 'Coordenação da equipe' if can_assign_deliveries else 'Meu trabalho' }}</span>
@@ -19,7 +19,7 @@
           <option value="">Selecione</option>
           {% for user in delivery_assignees %}
           {% set options = delivery_calendar_options.get(user.id, []) %}
-          <option value="{{ user.id }}" data-providers="{{ options|tojson|forceescape }}">{{ user.name }}</option>
+          <option value="{{ user.id }}" data-providers="{{ options|tojson|forceescape }}" {{ 'selected' if selected_delivery_assignee == user.id }}>{{ user.name }}</option>
           {% endfor %}
         </select>
       </label>
@@ -33,8 +33,13 @@
     </form>
     {% endif %}
     <p class="diagnostic-feedback" data-delivery-feedback role="status" aria-live="polite"></p>
-    <div class="team-delivery-list">
-      {% for delivery in deliveries %}
+    <div class="team-delivery-board">
+      {% for section_status, section_label in [('pending', 'A fazer'), ('in_progress', 'Em andamento'), ('completed', 'Concluídas'), ('cancelled', 'Canceladas')] %}
+      {% set section_items = deliveries|selectattr('status', 'equalto', section_status)|list %}
+      <section class="team-delivery-group delivery-group-{{ section_status }}">
+        <header><h3>{{ section_label }}</h3><span>{{ section_items|length }}</span></header>
+        <div class="team-delivery-list">
+      {% for delivery in section_items %}
       <article class="team-delivery-card {{ 'is-overdue' if delivery.overdue }}" data-delivery-card data-delivery-id="{{ delivery.id }}" data-version="{{ delivery.version }}">
         <div class="team-delivery-card-top">
           <span class="status delivery-status-{{ delivery.status }}">{{ delivery_status_labels.get(delivery.status, delivery.status) }}</span>
@@ -62,7 +67,10 @@
           {% if delivery.status in ['pending','in_progress'] and (current_user.role.value == 'admin' or delivery.assigned_by_id == current_user.id) %}<button type="button" class="botao-terciario" data-delivery-status="cancelled">Cancelar</button>{% endif %}
         </div>
       </article>
-      {% else %}<div class="team-delivery-empty">Nenhuma entrega atribuída.</div>{% endfor %}
+      {% else %}<div class="team-delivery-empty">Nenhuma tarefa.</div>{% endfor %}
+        </div>
+      </section>
+      {% endfor %}
     </div>
   </section>
 

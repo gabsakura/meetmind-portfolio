@@ -315,6 +315,11 @@ def acoes():
         for user in active_users
         if user.id != current_user.id and user.role == Role.ANALYST
     ]
+    requested_assignee = request.args.get("assignee", "").strip()
+    selected_delivery_assignee = next(
+        (user.id for user in delivery_assignees if user.id == requested_assignee),
+        "",
+    )
     calendar_options_by_user = {
         user.id: [
             {
@@ -367,6 +372,7 @@ def acoes():
         ],
         can_assign_deliveries=can_assign_deliveries,
         delivery_assignees=delivery_assignees,
+        selected_delivery_assignee=selected_delivery_assignee,
         delivery_calendar_options=calendar_options_by_user,
         deliveries=[delivery_json(item) for item in delivery_rows],
         delivery_status_labels={
@@ -1041,6 +1047,21 @@ def _calendar_redirect_uri(provider: str) -> str:
     return f"{str(current_app.config['PUBLIC_BASE_URL']).rstrip('/')}{path}"
 
 
+def _calendar_oauth_error_message(provider: str, code: str) -> str:
+    label = "Google" if provider == "google" else "Microsoft"
+    if code == "access_denied":
+        return (
+            f"O {label} não autorizou a conexão. Confirme a conta permitida "
+            "e tente novamente."
+        )
+    if code == "calendar_token_rejected":
+        return (
+            f"O {label} recusou o retorno do login. Confira as credenciais e "
+            "a URI de redirecionamento configurada."
+        )
+    return "Não foi possível concluir a conexão com o calendário."
+
+
 @painel_bp.get("/perfil/calendario/conectar/<provider>")
 @login_required
 @limiter.limit("20 per hour")
@@ -1066,8 +1087,9 @@ def perfil_calendario_callback(provider: str):
     pending = session.pop(f"calendar_oauth_{provider}", None) or {}
     state = str(request.args.get("state") or "")
     expected = str(pending.get("state") or "")
-    if request.args.get("error"):
-        flash("A conexão com o calendário foi cancelada.", "error")
+    provider_error = str(request.args.get("error") or "")
+    if provider_error:
+        flash(_calendar_oauth_error_message(provider, provider_error), "error")
         return redirect(url_for("painel.perfil", _anchor="calendario"))
     if not state or not expected or not hmac.compare_digest(state, expected):
         flash("Não foi possível validar a conexão com o calendário.", "error")
@@ -1083,9 +1105,10 @@ def perfil_calendario_callback(provider: str):
         db.session.flush()
         audit("CALENDAR_CONNECTED", "calendar_connection", connection.id, provider=provider)
         db.session.commit()
-    except (CalendarOAuthError, KeyError):
+    except (CalendarOAuthError, KeyError) as error:
         db.session.rollback()
-        flash("Não foi possível concluir a conexão com o calendário.", "error")
+        code = str(error) if isinstance(error, CalendarOAuthError) else "invalid_oauth_session"
+        flash(_calendar_oauth_error_message(provider, code), "error")
         return redirect(url_for("painel.perfil", _anchor="calendario"))
     flash("Calendário conectado ao Resumo do Dia.", "success")
     return redirect(url_for("painel.perfil", _anchor="calendario"))

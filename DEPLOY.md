@@ -38,8 +38,9 @@ https://<seu-servico>.onrender.com/perfil/calendario/callback/google
 https://<seu-servico>.onrender.com/perfil/calendario/callback/microsoft
 ```
 
-No Google Cloud, habilite a Calendar API e adicione a conta usada como test user quando
-a tela de consentimento estiver em Testing. No Microsoft Entra, selecione contas de
+No Google Cloud, habilite as APIs **Google Calendar** e **Google Tasks** e adicione o
+Gmail usado em **Público → Usuários de teste** quando a tela de consentimento estiver em
+Testing. No Microsoft Entra, selecione contas de
 qualquer organização e contas pessoais caso queira aceitar Outlook/Hotmail, e mantenha o
 tenant `common`.
 

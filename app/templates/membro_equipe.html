@@ -6,7 +6,7 @@
   <section class="widget">
     <div class="secao-cabecalho">
       <div><span class="eyebrow">{{ team.name if team else 'Sem equipe' }}</span><h2>{{ member.name }}</h2><p class="texto-secundario">{{ member.email }}</p></div>
-      <a class="botao-primario link-botao" href="{{ url_for('painel.acoes', owner=member.id) }}">Ver e atribuir entregas</a>
+      <a class="botao-primario link-botao" href="{{ url_for('painel.acoes', owner=member.id, assignee=member.id, _anchor='entregas-equipe') }}">Atribuir tarefa</a>
     </div>
     <div class="member-summary">
       <article><span>Clientes</span><strong>{{ stats.clients }}</strong></article>

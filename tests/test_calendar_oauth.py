@@ -58,6 +58,20 @@ def test_callback_rejects_invalid_state(client, app):
         assert CalendarConnection.query.count() == 0
 
 
+def test_google_callback_explains_denied_access(client, app):
+    _configure(app)
+    login(client)
+
+    response = client.get(
+        "/perfil/calendario/callback/google?error=access_denied",
+        follow_redirects=True,
+    )
+
+    text = response.get_data(as_text=True)
+    assert "Google não autorizou" in text
+    assert "conta permitida" in text
+
+
 def test_callback_encrypts_token_and_disconnects(client, app, monkeypatch):
     _configure(app)
     login(client)

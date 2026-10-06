@@ -71,9 +71,19 @@ def test_manager_assigns_delivery_and_sees_employee_profile(app, monkeypatch):
     assert response.json["calendar_status"] == "synced"
     assert captured["user_id"] == analyst_id
     assert manager_client.get("/equipe").status_code == 200
+    team_page = manager_client.get("/equipe").get_data(as_text=True)
+    assert f"assignee={analyst_id}" in team_page
+    assert "Atribuir tarefa" in team_page
     profile = manager_client.get(f"/equipe/{analyst_id}")
     assert profile.status_code == 200
     assert "Preparar retorno do cliente" in profile.get_data(as_text=True)
+    assert f"assignee={analyst_id}" in profile.get_data(as_text=True)
+    workspace = manager_client.get(f"/acoes?assignee={analyst_id}")
+    workspace_text = workspace.get_data(as_text=True)
+    assert f'value="{analyst_id}"' in workspace_text
+    assert "A fazer" in workspace_text
+    assert "Em andamento" in workspace_text
+    assert "Concluídas" in workspace_text
 
     analyst_client = app.test_client()
     login(analyst_client, "analyst@example.test")

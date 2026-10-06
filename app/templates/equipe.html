@@ -50,6 +50,7 @@
           <div><strong>{{ user.name }}</strong><small>{{ user.email }}</small></div>
           <span class="status">{{ {'manager':'Coordenação','analyst':'Analista','viewer':'Somente leitura'}.get(user.role.value, user.role.value) }}</span>
           {% if user.id != current_user.id %}<a class="botao-secundario link-botao" href="{{ url_for('painel.membro_equipe', user_id=user.id) }}">Ver rotina</a>{% endif %}
+          {% if user.role.value == 'analyst' and user.id != current_user.id %}<a class="botao-primario link-botao" href="{{ url_for('painel.acoes', assignee=user.id, _anchor='entregas-equipe') }}">Atribuir tarefa</a>{% endif %}
         </article>
         {% endif %}
         {% endfor %}

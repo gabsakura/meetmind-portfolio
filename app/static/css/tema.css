@@ -1092,7 +1092,7 @@ input, select { min-height: 46px; padding: 10px 12px; color: var(--text); backgr
 .team-list article, .team-member-readonly { padding: 13px 14px; background: #f7f9fb; border: 1px solid #dce3ea; border-radius: 12px; }
 .team-list article span, .team-users small { display: block; margin-top: 3px; color: var(--muted); font-size: .74rem; }
 .team-users form { grid-template-columns: minmax(180px, 1fr) minmax(130px, .55fr) minmax(130px, .55fr) auto auto; }
-.team-member-readonly { grid-template-columns: minmax(0, 1fr) auto auto; }
+.team-member-readonly { grid-template-columns: minmax(0, 1fr) auto auto auto; }
 .team-member-readonly .link-botao { align-self: center; }
 .team-active { display: flex; align-items: center; gap: 7px; font-size: .78rem; font-weight: 750; }
 .team-active input { width: 17px; height: 17px; min-height: 17px; margin: 0; }
@@ -1105,7 +1105,15 @@ input, select { min-height: 46px; padding: 10px 12px; color: var(--text); backgr
 .team-delivery-form :is(input,select,textarea) { width: 100%; min-width: 0; }
 .team-delivery-description { grid-column: 1 / -2; }
 .team-delivery-description textarea { min-height: 66px; resize: vertical; }
-.team-delivery-list { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,310px),1fr)); gap: 12px; }
+.team-delivery-board { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 12px; align-items: start; }
+.team-delivery-group { min-width: 0; padding: 12px; background: #f5f7fa; border: 1px solid #dce3ea; border-radius: 14px; }
+.team-delivery-group > header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.team-delivery-group > header h3 { margin: 0; font-size: .85rem; }
+.team-delivery-group > header span { min-width: 24px; padding: 3px 7px; color: #fff; background: #526273; border-radius: 999px; font-size: .7rem; font-weight: 800; text-align: center; }
+.delivery-group-pending > header span { background: #d88b15; }
+.delivery-group-in_progress > header span { background: #6d28d9; }
+.delivery-group-completed > header span { background: #087f5b; }
+.team-delivery-list { display: grid; gap: 10px; }
 .team-delivery-card { position: relative; display: grid; gap: 12px; min-width: 0; padding: 17px; overflow: hidden; background: white; border: 1px solid #d9e1e9; border-radius: 14px; }
 .team-delivery-card::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 4px; background: #7652b7; }
 .team-delivery-card.is-overdue { border-color: #e5a49e; }
@@ -2532,7 +2540,7 @@ input[type="checkbox"] {
 .legal-back { display: inline-block; margin-bottom: 24px; font-weight: 700; text-decoration: none; }
 
 @media (max-width: 1100px) {
-  .team-grid, .member-profile-grid { grid-template-columns: minmax(0,1fr); }
+  .team-grid, .member-profile-grid, .team-delivery-board { grid-template-columns: minmax(0,1fr); }
   .team-delivery-form { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .team-delivery-description { grid-column: 1 / -1; }
 }

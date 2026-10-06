@@ -3,10 +3,11 @@
 O `render.yaml` cria o serviço web e o PostgreSQL. O processo de entrada aplica as
 migrações e garante o seed sintético a cada inicialização.
 
-## OAuth privado de calendário
+## Operação privada e calendários
 
-As contas públicas da demonstração nunca podem conectar calendários. Para testar Google
-Calendar ou Microsoft 365 no Render, configure os seguintes segredos no serviço:
+As contas públicas da demonstração continuam somente leitura. Para usar uploads, ações,
+equipe, comunicações, Google Calendar ou Microsoft 365 no Render, configure as contas
+privadas e os seguintes segredos no serviço:
 
 ```text
 PORTFOLIO_CALENDAR_OAUTH_ENABLED=true
@@ -47,5 +48,9 @@ exibir suas contas na tela de login. Entre como analista com
 `PORTFOLIO_CALENDAR_TEST_EMAIL`, abra **Perfil → Agenda e trabalho** e conecte o
 provedor. Depois entre com `PORTFOLIO_MANAGER_TEST_EMAIL`, abra **Equipe**, consulte a
 rotina do analista e use **Ações → Entregas da equipe** para atribuir e agendar.
+
+Notificações por e-mail são opcionais. Para habilitá-las, preencha `SMTP_HOST`,
+`SMTP_USERNAME`, `SMTP_PASSWORD` e `SMTP_FROM`; sem isso, as notificações continuam
+disponíveis dentro do MeetMind.
 
 Nunca coloque client secrets, senha privada, chave Fernet ou tokens no Git.

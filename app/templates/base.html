@@ -63,7 +63,7 @@
       <a href="{{ url_for('painel.historico') }}" class="nav-item {{ 'ativo' if aba == 'historico' }}">
         <svg class="nav-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M5 6h14M5 12h14M5 18h14"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg><span class="nav-label">Reuniões analisadas</span>
       </a>
-      {% if current_user.role.value != 'viewer' and not is_demo_environment %}
+      {% if current_user.role.value != 'viewer' and (not is_demo_environment or portfolio_operations_available) %}
       <a href="{{ url_for('painel.verificacao') }}" class="nav-item {{ 'ativo' if aba == 'verificacao' }}">
         <svg class="nav-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 16V4M7.5 8.5 12 4l4.5 4.5"/><path d="M5 14v6h14v-6"/></svg><span class="nav-label">Reuniões</span>
 

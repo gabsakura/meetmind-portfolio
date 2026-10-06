@@ -178,7 +178,7 @@ def test_demo_blocks_upload_calendar_and_profile_changes(app):
     assert client.post("/perfil/foto").status_code == 403
 
 
-def test_private_demo_account_can_start_calendar_oauth_without_unlocking_public_users(app):
+def test_private_demo_account_can_use_operations_without_unlocking_public_users(app):
     private_email = "calendar.owner@example.test"
     private_password = "private-calendar-password"
     manager_email = "calendar.manager@example.test"
@@ -223,7 +223,9 @@ def test_private_demo_account_can_start_calendar_oauth_without_unlocking_public_
     connect = private_client.get("/perfil/calendario/conectar/google")
     assert connect.status_code == 302
     assert connect.headers["Location"].startswith("https://accounts.google.com/")
-    assert private_client.post("/perfil/foto").status_code == 403
+    assert private_client.post("/perfil/foto").status_code != 403
+    assert private_client.post("/api/v1/submissions").status_code == 415
+    assert "Reuniões" in profile.get_data(as_text=True)
 
     manager_client = app.test_client()
     manager_login = manager_client.post(
@@ -239,6 +241,7 @@ def test_private_demo_account_can_start_calendar_oauth_without_unlocking_public_
     public_client = app.test_client()
     assert _login(public_client, "ana@meetmind.example").status_code == 302
     assert public_client.get("/perfil/calendario/conectar/google").status_code == 403
+    assert public_client.post("/api/v1/submissions").status_code == 403
 
 
 def test_privacy_and_terms_are_public(client):

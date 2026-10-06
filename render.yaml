@@ -18,7 +18,7 @@ services:
       - key: PORTFOLIO_CHAT_ENABLED
         value: "true"
       - key: PORTFOLIO_CALENDAR_OAUTH_ENABLED
-        sync: false
+        value: "true"
       - key: PORTFOLIO_CALENDAR_TEST_EMAIL
         sync: false
       - key: PORTFOLIO_CALENDAR_TEST_PASSWORD
@@ -48,7 +48,19 @@ services:
       - key: PRIVACY_CONTACT_EMAIL
         sync: false
       - key: PUBLIC_BASE_URL
+        value: https://meetmind-portfolio.onrender.com
+      - key: SMTP_HOST
         sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USERNAME
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+      - key: SMTP_USE_TLS
+        value: "true"
       - key: DATABASE_URL
         fromDatabase:
           name: meetmind-portfolio-db

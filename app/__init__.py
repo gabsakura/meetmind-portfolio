@@ -96,7 +96,6 @@ def create_app(config_object="config.Config", config_overrides=None):
         if (
             app.config.get("PORTFOLIO_CALENDAR_OAUTH_ENABLED")
             and str(current_user.email).casefold() in private_operation_accounts
-            and request.path.startswith("/api/v1/team-deliveries")
         ):
             return None
         blocked = (

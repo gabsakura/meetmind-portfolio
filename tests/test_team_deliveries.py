@@ -59,18 +59,17 @@ def test_manager_assigns_delivery_and_sees_employee_profile(app, monkeypatch):
     manager_id, analyst_id, _ = _team_users(app)
     captured = {}
 
-    def fake_create_event(user, provider, **kwargs):
+    def fake_create_task(user, provider, **kwargs):
         captured.update(user_id=user.id, provider=provider, **kwargs)
         return {"id": "calendar-event-1", "url": "https://calendar.test/event/1"}
 
-    monkeypatch.setattr("app.services.team_deliveries.create_event", fake_create_event)
+    monkeypatch.setattr("app.services.team_deliveries.create_task", fake_create_task)
     manager_client = app.test_client()
     login(manager_client, "delivery-manager@example.test")
     response = manager_client.post("/api/v1/team-deliveries", json=_payload(analyst_id))
     assert response.status_code == 201
     assert response.json["calendar_status"] == "synced"
     assert captured["user_id"] == analyst_id
-    assert captured["online_meeting"] is False
     assert manager_client.get("/equipe").status_code == 200
     profile = manager_client.get(f"/equipe/{analyst_id}")
     assert profile.status_code == 200
@@ -80,6 +79,11 @@ def test_manager_assigns_delivery_and_sees_employee_profile(app, monkeypatch):
     login(analyst_client, "analyst@example.test")
     listed = analyst_client.get("/api/v1/team-deliveries")
     assert [item["id"] for item in listed.json["items"]] == [response.json["id"]]
+    seen = analyst_client.post(
+        f"/api/v1/team-deliveries/{response.json['id']}/seen", json={}
+    )
+    assert seen.status_code == 200
+    assert seen.json["seen_at"] is not None
     started = analyst_client.patch(
         f"/api/v1/team-deliveries/{response.json['id']}",
         json={"status": "in_progress", "expected_version": response.json["version"]},
@@ -97,7 +101,7 @@ def test_manager_assigns_delivery_and_sees_employee_profile(app, monkeypatch):
 def test_manager_cannot_assign_or_view_outside_team(app, monkeypatch):
     _, analyst_id, outsider_id = _team_users(app)
     monkeypatch.setattr(
-        "app.services.team_deliveries.create_event",
+        "app.services.team_deliveries.create_task",
         lambda *_args, **_kwargs: {"id": "not-created"},
     )
     client = app.test_client()
@@ -114,7 +118,7 @@ def test_calendar_failure_keeps_delivery_and_retry_syncs(app, monkeypatch):
     def fail_calendar(*_args, **_kwargs):
         raise CalendarOAuthError("calendar_connection_missing")
 
-    monkeypatch.setattr("app.services.team_deliveries.create_event", fail_calendar)
+    monkeypatch.setattr("app.services.team_deliveries.create_task", fail_calendar)
     client = app.test_client()
     login(client, "delivery-manager@example.test")
     created = client.post(
@@ -134,7 +138,7 @@ def test_calendar_failure_keeps_delivery_and_retry_syncs(app, monkeypatch):
         for item in daily.json["items"]
     )
     monkeypatch.setattr(
-        "app.services.team_deliveries.create_event",
+        "app.services.team_deliveries.create_task",
         lambda *_args, **_kwargs: {"id": "microsoft-event-1", "url": None},
     )
     retried = client.post(
@@ -147,7 +151,7 @@ def test_calendar_failure_keeps_delivery_and_retry_syncs(app, monkeypatch):
 def test_analyst_cannot_assign_and_manager_can_cancel(app, monkeypatch):
     _, analyst_id, _ = _team_users(app)
     monkeypatch.setattr(
-        "app.services.team_deliveries.create_event",
+        "app.services.team_deliveries.create_task",
         lambda *_args, **_kwargs: {"id": "calendar-event-2", "url": None},
     )
     analyst_client = app.test_client()
@@ -168,3 +172,23 @@ def test_analyst_cannot_assign_and_manager_can_cancel(app, monkeypatch):
     )
     assert cancelled.status_code == 200
     assert cancelled.json["status"] == DeliveryStatus.CANCELLED.value
+
+
+
+def test_assignment_does_not_require_calendar_and_creates_notification(app):
+    _, analyst_id, _ = _team_users(app)
+    payload = _payload(analyst_id)
+    payload["calendar_provider"] = ""
+    client = app.test_client()
+    login(client, "delivery-manager@example.test")
+    response = client.post("/api/v1/team-deliveries", json=payload)
+    assert response.status_code == 201
+    assert response.json["calendar_status"] == "not_requested"
+    with app.app_context():
+        from app.models import UserNotification
+
+        notification = UserNotification.query.filter_by(
+            user_id=analyst_id,
+            target_id=response.json["id"],
+        ).one()
+        assert notification.kind == "delivery_assigned"

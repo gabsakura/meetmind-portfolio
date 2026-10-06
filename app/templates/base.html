@@ -92,6 +92,17 @@
     </header>
     <main class="conteudo" id="conteudo" tabindex="-1">
       <div id="aviso-global" class="aviso" role="status" aria-live="polite" hidden></div>
+      {% if personal_notifications %}
+      <aside class="personal-notifications" aria-label="Novas notificações">
+        {% for notification in personal_notifications %}
+        <a href="{{ url_for('painel.acoes') }}" class="personal-notification">
+          <strong>{{ notification.title }}</strong>
+          {% if notification.body %}<span>{{ notification.body }}</span>{% endif %}
+        </a>
+        {% endfor %}
+      </aside>
+      {% endif %}
+
       {% block conteudo %}{% endblock %}
     </main>
     <footer class="legal-footer">

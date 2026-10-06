@@ -101,6 +101,7 @@ class User(TenantScopedMixin, UserMixin, db.Model):
     is_break_glass: Mapped[bool] = mapped_column(Boolean, default=False)
     is_active_record: Mapped[bool] = mapped_column(Boolean, default=True)
     session_version: Mapped[int] = mapped_column(Integer, default=1)
+    email_delivery_notifications: Mapped[bool] = mapped_column(Boolean, default=False)
     last_briefing_seen_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
@@ -613,6 +614,9 @@ class TeamDelivery(TenantScopedMixin, db.Model):
     assigned_by_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
     assignee_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
     due_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    change_request: Mapped[str | None] = mapped_column(Text)
+    change_requested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     calendar_provider: Mapped[str] = mapped_column(String(20), index=True)
     calendar_status: Mapped[str] = mapped_column(
@@ -843,6 +847,7 @@ class CalendarConnection(TenantScopedMixin, db.Model):
     provider: Mapped[str] = mapped_column(String(20), index=True)
     account_email: Mapped[str | None] = mapped_column(String(254))
     token_ciphertext: Mapped[bytes] = mapped_column(LargeBinary)
+    allow_team_deliveries: Mapped[bool] = mapped_column(Boolean, default=False)
     scopes: Mapped[str] = mapped_column(Text)
     status: Mapped[str] = mapped_column(String(20), default="connected", index=True)
     last_error: Mapped[str | None] = mapped_column(String(100))
@@ -851,6 +856,20 @@ class CalendarConnection(TenantScopedMixin, db.Model):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, onupdate=utcnow
     )
+
+
+class UserNotification(TenantScopedMixin, db.Model):
+    __tablename__ = "user_notifications"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    kind: Mapped[str] = mapped_column(String(50), index=True)
+    title: Mapped[str] = mapped_column(String(300))
+    body: Mapped[str | None] = mapped_column(Text)
+    target_type: Mapped[str | None] = mapped_column(String(50))
+    target_id: Mapped[str | None] = mapped_column(String(100), index=True)
+    read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 
 class TeamsTranscriptReceipt(TenantScopedMixin, db.Model):

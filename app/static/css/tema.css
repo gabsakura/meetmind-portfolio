@@ -2541,3 +2541,25 @@ input[type="checkbox"] {
   .team-member-readonly, .team-users form, .team-create-form { grid-template-columns: minmax(0,1fr); }
   .team-delivery-panel { padding: 17px; }
 }
+.personal-notifications {
+  display: grid;
+  gap: 0.45rem;
+  margin-bottom: 0.9rem;
+}
+
+.personal-notification {
+  display: flex;
+  align-items: baseline;
+  gap: 0.65rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid #d9cffb;
+  border-left: 4px solid var(--roxo, #6d28d9);
+  border-radius: 0.7rem;
+  background: #f8f6ff;
+  color: var(--azul-marinho, #0b1f33);
+  text-decoration: none;
+}
+
+.personal-notification span {
+  color: #536273;
+}

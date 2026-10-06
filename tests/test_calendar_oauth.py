@@ -34,10 +34,11 @@ def test_oauth_urls_use_pkce_and_calendar_write_scopes(client, app):
     google_query = parse_qs(urlparse(google.headers["Location"]).query)
     assert microsoft_query["code_challenge_method"] == ["S256"]
     assert "Calendars.ReadWrite" in microsoft_query["scope"][0]
-    assert "Tasks.Read" in microsoft_query["scope"][0]
+    assert "Tasks.ReadWrite" in microsoft_query["scope"][0]
     assert "User.Read" in microsoft_query["scope"][0]
     assert google_query["code_challenge_method"] == ["S256"]
     assert "calendar.events" in google_query["scope"][0]
+    assert "https://www.googleapis.com/auth/tasks" in google_query["scope"][0]
     assert "calendar.events.readonly" not in google_query["scope"][0]
     assert google_query["access_type"] == ["offline"]
 

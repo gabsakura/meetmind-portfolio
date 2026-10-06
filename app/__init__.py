@@ -76,6 +76,8 @@ def create_app(config_object="config.Config", config_overrides=None):
             "painel.perfil_calendario_conectar",
             "painel.perfil_calendario_callback",
             "painel.perfil_calendario_sincronizar",
+            "painel.perfil_calendario_entregas",
+            "painel.perfil_notificacoes",
             "painel.perfil_calendario_desconectar",
         }
         calendar_oauth_available = bool(
@@ -106,6 +108,8 @@ def create_app(config_object="config.Config", config_overrides=None):
             "painel.perfil_calendario_conectar",
             "painel.perfil_calendario_callback",
             "painel.perfil_calendario_sincronizar",
+            "painel.perfil_calendario_entregas",
+            "painel.perfil_notificacoes",
             "painel.perfil_calendario_desconectar",
             "painel.perfil_foto_upload",
             "painel.perfil_foto_remover",
@@ -136,6 +140,23 @@ def create_app(config_object="config.Config", config_overrides=None):
     app.register_blueprint(communications_api_bp)
     app.register_blueprint(chat_api_bp)
     app.register_blueprint(submission_api_bp)
+    @app.context_processor
+    def _personal_notifications():
+        if not current_user.is_authenticated:
+            return {"personal_notifications": []}
+        from app.models import UserNotification
+
+        items = (
+            UserNotification.query.filter_by(
+                user_id=current_user.id,
+                read_at=None,
+            )
+            .order_by(UserNotification.created_at.desc())
+            .limit(5)
+            .all()
+        )
+        return {"personal_notifications": items}
+
 
     from app.security import configure_security, record_rate_limit
     configure_security(app)

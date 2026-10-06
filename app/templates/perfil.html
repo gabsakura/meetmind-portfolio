@@ -46,6 +46,19 @@
     </div>
   </div>
 </section>
+<section class="widget" id="notificacoes">
+  <div class="secao-cabecalho"><h2>Notificações de tarefas</h2></div>
+  <form action="{{ url_for('painel.perfil_notificacoes') }}" method="post" class="form-stack">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label class="action-dialog-check">
+      <input type="checkbox" name="email_delivery_notifications" value="true" {{ 'checked' if current_user.email_delivery_notifications }}>
+      Receber por e-mail novas tarefas e alterações importantes
+    </label>
+    <p class="texto-secundario">As notificações dentro do MeetMind permanecem ativas.</p>
+    <div><button class="botao-primario" type="submit">Salvar preferência</button></div>
+  </form>
+</section>
+
 <section class="widget" id="calendario">
   <div class="secao-cabecalho">
     <h2>Agenda e trabalho</h2>
@@ -85,6 +98,15 @@
       <div class="calendar-provider-actions">
         {% if connection %}
         {% if provider.reconnect_required or not provider.write_enabled %}<a class="botao-primario" href="{{ url_for('painel.perfil_calendario_conectar', provider=provider.id) }}">Reconectar</a>{% endif %}
+        {% if provider.tasks_enabled %}
+        <form action="{{ url_for('painel.perfil_calendario_entregas', provider=provider.id) }}" method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="enabled" value="{{ 'false' if connection.allow_team_deliveries else 'true' }}">
+          <button class="{{ 'botao-terciario' if connection.allow_team_deliveries else 'botao-primario' }}" type="submit">
+            {{ 'Desativar tarefas da equipe' if connection.allow_team_deliveries else 'Permitir tarefas da equipe' }}
+          </button>
+        </form>
+        {% endif %}
         <form action="{{ url_for('painel.perfil_calendario_sincronizar', provider=provider.id) }}" method="post">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <button class="botao-terciario" type="submit">Atualizar</button>

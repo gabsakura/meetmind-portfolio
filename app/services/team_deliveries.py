@@ -4,8 +4,9 @@ from datetime import UTC
 from typing import Any
 
 from app.extensions import db
-from app.models import DeliveryStatus, TeamDelivery, User, utcnow
-from app.services.calendar_oauth import CalendarOAuthError, create_event
+from app.models import DeliveryStatus, TeamDelivery, User, UserNotification, utcnow
+from app.services.calendar_oauth import CalendarOAuthError, create_task
+from app.services.notifications import send_delivery_email
 
 
 def delivery_json(item: TeamDelivery) -> dict[str, Any]:
@@ -26,11 +27,15 @@ def delivery_json(item: TeamDelivery) -> dict[str, Any]:
         "assignee": assignee.name if assignee else "Usuário indisponível",
         "due_at": due_at.isoformat(),
         "overdue": (
-            item.status
-            not in {DeliveryStatus.COMPLETED.value, DeliveryStatus.CANCELLED.value}
+            item.status not in {DeliveryStatus.COMPLETED.value, DeliveryStatus.CANCELLED.value}
             and due_at < utcnow()
         ),
         "calendar_provider": item.calendar_provider,
+        "seen_at": item.seen_at.isoformat() if item.seen_at else None,
+        "change_request": item.change_request,
+        "change_requested_at": item.change_requested_at.isoformat()
+        if item.change_requested_at
+        else None,
         "calendar_status": item.calendar_status,
         "calendar_event_id": item.calendar_event_id,
         "calendar_event_url": item.calendar_event_url,
@@ -45,7 +50,28 @@ def delivery_json(item: TeamDelivery) -> dict[str, Any]:
     }
 
 
+def notify_delivery(item: TeamDelivery, kind: str, title: str, body: str | None = None) -> None:
+    db.session.add(
+        UserNotification(
+            organization_id=item.organization_id,
+            user_id=item.assignee_id,
+            kind=kind,
+            title=title[:300],
+            body=body,
+            target_type="team_delivery",
+            target_id=item.id,
+        )
+    )
+    user = db.session.get(User, item.assignee_id)
+    if user is not None:
+        send_delivery_email(user, title, body or item.title)
+
+
 def sync_delivery_calendar(item: TeamDelivery) -> dict[str, Any]:
+    if item.calendar_provider not in {"google", "microsoft"}:
+        item.calendar_status = "not_requested"
+        item.calendar_error = None
+        return delivery_json(item)
     if item.calendar_status == "synced" and item.calendar_event_id:
         return delivery_json(item)
     assignee = db.session.get(User, item.assignee_id)
@@ -64,15 +90,12 @@ def sync_delivery_calendar(item: TeamDelivery) -> dict[str, Any]:
         if part
     )
     try:
-        event = create_event(
+        event = create_task(
             assignee,
             item.calendar_provider,
             title=f"[MeetMind] {item.title}",
-            starts_at=item.due_at,
-            duration_minutes=15,
+            due_at=item.due_at,
             description=description,
-            idempotency_key=f"team-delivery-{item.id}",
-            online_meeting=False,
         )
     except CalendarOAuthError as error:
         item.calendar_status = "failed"

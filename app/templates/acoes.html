@@ -19,16 +19,16 @@
           <option value="">Selecione</option>
           {% for user in delivery_assignees %}
           {% set options = delivery_calendar_options.get(user.id, []) %}
-          <option value="{{ user.id }}" data-providers="{{ options|tojson|forceescape }}" {{ 'disabled' if not options }}>{{ user.name }}{{ '' if options else ' — calendário indisponível' }}</option>
+          <option value="{{ user.id }}" data-providers="{{ options|tojson|forceescape }}">{{ user.name }}</option>
           {% endfor %}
         </select>
       </label>
       <label>Entrega<input name="title" maxlength="500" required placeholder="Ex.: enviar plano de recuperação"></label>
       <label>Prazo<input name="due_at" type="datetime-local" required></label>
       <label>Prioridade<select name="priority"><option value="high">Alta</option><option value="medium" selected>Média</option><option value="low">Baixa</option></select></label>
-      <label>Calendário<select name="calendar_provider" required disabled><option value="">Selecione a pessoa</option></select></label>
+      <label>Lembrete externo<select name="calendar_provider" disabled><option value="">Somente no MeetMind</option></select></label>
       <label class="team-delivery-description">Orientação<textarea name="description" maxlength="4000" rows="2" placeholder="Contexto suficiente para executar sem outra reunião"></textarea></label>
-      <button class="botao-primario" type="submit">Atribuir e agendar</button>
+      <button class="botao-primario" type="submit">Atribuir tarefa</button>
       {% if not delivery_assignees %}<p class="team-delivery-hint">Nenhum analista disponível na sua equipe.</p>{% endif %}
     </form>
     {% endif %}
@@ -49,11 +49,14 @@
         </dl>
         <div class="team-delivery-calendar delivery-calendar-{{ delivery.calendar_status }}">
           {% if delivery.calendar_status == 'synced' %}
-          <span>✓ Sincronizada com {{ 'Google' if delivery.calendar_provider == 'google' else 'Microsoft 365' }}</span>
-          {% if delivery.calendar_event_url %}<a href="{{ delivery.calendar_event_url }}" target="_blank" rel="noopener noreferrer">Abrir evento</a>{% endif %}
-          {% else %}<span>Calendário pendente</span><button type="button" class="botao-terciario" data-delivery-retry>Tentar novamente</button>{% endif %}
+          <span>✓ Tarefa criada no {{ 'Google Tasks' if delivery.calendar_provider == 'google' else 'Microsoft To Do' }}</span>
+          {% if delivery.calendar_event_url %}<a href="{{ delivery.calendar_event_url }}" target="_blank" rel="noopener noreferrer">Abrir tarefa</a>{% endif %}
+          {% elif delivery.calendar_status == 'not_requested' %}<span>Somente no MeetMind</span>
+          {% else %}<span>Sincronização pendente</span><button type="button" class="botao-terciario" data-delivery-retry>Tentar novamente</button>
+          {% endif %}
         </div>
         <div class="team-delivery-actions">
+          {% if delivery.assignee_id == current_user.id and not delivery.seen_at %}<button type="button" class="botao-terciario" data-delivery-seen>Marcar como visualizada</button>{% endif %}
           {% if delivery.assignee_id == current_user.id and delivery.status == 'pending' %}<button type="button" class="botao-secundario" data-delivery-status="in_progress">Iniciar</button><button type="button" class="botao-primario" data-delivery-status="completed">Concluir</button>
           {% elif delivery.assignee_id == current_user.id and delivery.status == 'in_progress' %}<button type="button" class="botao-primario" data-delivery-status="completed">Concluir</button>{% endif %}
           {% if delivery.status in ['pending','in_progress'] and (current_user.role.value == 'admin' or delivery.assigned_by_id == current_user.id) %}<button type="button" class="botao-terciario" data-delivery-status="cancelled">Cancelar</button>{% endif %}

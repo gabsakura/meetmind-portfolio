@@ -58,7 +58,7 @@ if (page) {
     const providerSelect = deliveryForm.elements.calendar_provider;
     let providers = [];
     try { providers = JSON.parse(assignee?.dataset.providers || "[]"); } catch (_) { providers = []; }
-    providerSelect.replaceChildren(new Option(providers.length ? "Selecione" : "Sem calendário conectado", ""));
+    providerSelect.replaceChildren(new Option("Somente no MeetMind", ""));
     providers.forEach((provider) => providerSelect.add(new Option(provider.label, provider.id)));
     if (providers.length === 1) providerSelect.value = providers[0].id;
     providerSelect.disabled = providers.length === 0;
@@ -86,7 +86,9 @@ if (page) {
       });
       sessionStorage.setItem("meetmind-delivery-feedback", result.calendar_status === "synced"
         ? `Entrega atribuída e adicionada ao calendário de ${result.assignee}.`
-        : `Entrega atribuída a ${result.assignee}. A sincronização com o calendário ficou pendente.`);
+        : result.calendar_status === "not_requested"
+          ? `Entrega atribuída a ${result.assignee} no MeetMind.`
+          : `Entrega atribuída a ${result.assignee}. A sincronização externa ficou pendente.`);
       window.location.reload();
     } catch (error) {
       setDeliveryFeedback(error.message, "error");
@@ -102,13 +104,16 @@ if (page) {
   deliveryPanel?.addEventListener("click", async (event) => {
     const retry = event.target.closest("[data-delivery-retry]");
     const statusButton = event.target.closest("[data-delivery-status]");
-    const trigger = retry || statusButton;
+    const seen = event.target.closest("[data-delivery-seen]");
+    const trigger = retry || statusButton || seen;
     if (!trigger) return;
     const card = trigger.closest("[data-delivery-card]");
     setDeliveryPending(trigger, true, retry ? "Sincronizando…" : "Salvando…");
     setDeliveryFeedback("");
     try {
-      const result = retry
+      const result = seen
+        ? await api(`/api/v1/team-deliveries/${card.dataset.deliveryId}/seen`, { method: "POST", body: "{}" })
+        : retry
         ? await api(`/api/v1/team-deliveries/${card.dataset.deliveryId}/calendar/retry`, { method: "POST", body: "{}" })
         : await api(`/api/v1/team-deliveries/${card.dataset.deliveryId}`, {
           method: "PATCH",

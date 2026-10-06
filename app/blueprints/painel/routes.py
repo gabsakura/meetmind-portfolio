@@ -24,6 +24,7 @@ from app.models import (
     ActionStatus,
     Analysis,
     AnalysisStatus,
+    CalendarConnection,
     Client,
     ClientContact,
     CommunicationDraft,
@@ -318,14 +319,14 @@ def acoes():
         user.id: [
             {
                 "id": item["id"],
-                "label": (
-                    item["label"]
-                    if item["connection"] is not None and item["write_enabled"]
-                    else f"{item['label']} — conexão pendente"
-                ),
+                "label": item["label"],
             }
             for item in provider_statuses(user)
-            if item["configured"]
+            if (
+                item["connection"] is not None
+                and item["tasks_enabled"]
+                and item["connection"].allow_team_deliveries
+            )
         ]
         for user in delivery_assignees
     }
@@ -1090,6 +1091,39 @@ def perfil_calendario_callback(provider: str):
     return redirect(url_for("painel.perfil", _anchor="calendario"))
 
 
+@painel_bp.post("/perfil/calendario/<provider>/entregas")
+@login_required
+def perfil_calendario_entregas(provider: str):
+    connection = CalendarConnection.query.filter_by(
+        organization_id=current_user.organization_id,
+        user_id=current_user.id,
+        provider=provider,
+        status="connected",
+    ).first()
+    if connection is None:
+        abort(404)
+    enabled = request.form.get("enabled") == "true"
+    statuses = {item["id"]: item for item in provider_statuses(current_user)}
+    if enabled and not statuses.get(provider, {}).get("tasks_enabled"):
+        flash("Reconecte o provedor para autorizar tarefas antes de ativar.", "error")
+        return redirect(url_for("painel.perfil", _anchor="calendario"))
+    connection.allow_team_deliveries = enabled
+    audit(
+        "TEAM_DELIVERY_CALENDAR_CONSENT_CHANGED",
+        "calendar_connection",
+        connection.id,
+        provider=provider,
+        enabled=enabled,
+    )
+    db.session.commit()
+    flash(
+        "Tarefas da equipe serão sincronizadas." if enabled
+        else "Novas tarefas não serão mais sincronizadas.",
+        "success",
+    )
+    return redirect(url_for("painel.perfil", _anchor="calendario"))
+
+
 @painel_bp.post("/perfil/calendario/<provider>/sincronizar")
 @login_required
 @limiter.limit("30 per hour")
@@ -1123,6 +1157,23 @@ def perfil_calendario_desconectar(provider: str):
         db.session.commit()
     flash("Calendário desconectado.", "success")
     return redirect(url_for("painel.perfil", _anchor="calendario"))
+
+
+@painel_bp.post("/perfil/notificacoes")
+@login_required
+def perfil_notificacoes():
+    current_user.email_delivery_notifications = (
+        request.form.get("email_delivery_notifications") == "true"
+    )
+    audit(
+        "DELIVERY_EMAIL_PREFERENCE_CHANGED",
+        "user",
+        current_user.id,
+        enabled=current_user.email_delivery_notifications,
+    )
+    db.session.commit()
+    flash("Preferências de notificação atualizadas.", "success")
+    return redirect(url_for("painel.perfil", _anchor="notificacoes"))
 
 
 @painel_bp.post("/perfil/foto")

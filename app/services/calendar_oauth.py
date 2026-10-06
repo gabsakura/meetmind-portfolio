@@ -28,7 +28,7 @@ PROVIDERS = {
             "openid profile email offline_access "
             "https://graph.microsoft.com/User.Read "
             "https://graph.microsoft.com/Calendars.ReadWrite "
-            "https://graph.microsoft.com/Tasks.Read"
+            "https://graph.microsoft.com/Tasks.ReadWrite"
         ),
     },
     "google": {
@@ -37,7 +37,8 @@ PROVIDERS = {
         "token": "https://oauth2.googleapis.com/token",
         "scope": (
             "openid email profile "
-            "https://www.googleapis.com/auth/calendar.events"
+            "https://www.googleapis.com/auth/calendar.events "
+            "https://www.googleapis.com/auth/tasks"
         ),
     },
 }
@@ -76,8 +77,9 @@ def provider_statuses(user: User) -> list[dict]:
         connection = rows.get(provider)
         scopes = set(connection.scopes.split()) if connection else set()
         tasks_enabled = (
-            provider == "microsoft"
-            and "https://graph.microsoft.com/Tasks.Read" in scopes
+            "https://graph.microsoft.com/Tasks.ReadWrite" in scopes
+            if provider == "microsoft"
+            else "https://www.googleapis.com/auth/tasks" in scopes
         )
         statuses.append({
             "id": provider,
@@ -95,12 +97,12 @@ def provider_statuses(user: User) -> list[dict]:
             ),
             "tasks_enabled": tasks_enabled,
             "reconnect_required": bool(
-                connection and provider == "microsoft" and not tasks_enabled
+                connection and not tasks_enabled
             ),
             "features": (
                 ["Reuniões do Teams", "To Do e Planner", "Convites"]
                 if provider == "microsoft"
-                else ["Agenda", "Convites"]
+                else ["Agenda", "Google Tasks", "Convites"]
             ),
         })
     return statuses
@@ -605,6 +607,87 @@ def create_event(
         raise CalendarOAuthError("calendar_event_rejected")
     return {"provider": provider, **event}
 
+def create_task(
+    user: User,
+    provider: str,
+    *,
+    title: str,
+    due_at: datetime,
+    description: str = "",
+) -> dict:
+    _provider(provider)
+    connection = CalendarConnection.query.filter_by(
+        organization_id=user.organization_id,
+        user_id=user.id,
+        provider=provider,
+        status="connected",
+    ).first()
+    if connection is None:
+        raise CalendarOAuthError("calendar_connection_missing")
+    if not connection.allow_team_deliveries:
+        raise CalendarOAuthError("team_delivery_consent_required")
+    scopes = set(connection.scopes.split())
+    required_scope = (
+        "https://www.googleapis.com/auth/tasks"
+        if provider == "google"
+        else "https://graph.microsoft.com/Tasks.ReadWrite"
+    )
+    if required_scope not in scopes:
+        raise CalendarOAuthError("calendar_reconnect_required")
+    if due_at.tzinfo is None:
+        due_at = due_at.replace(tzinfo=UTC)
+    token = _access_token(connection)
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+    if provider == "google":
+        response = _event_post(
+            "https://tasks.googleapis.com/tasks/v1/lists/@default/tasks",
+            headers=headers,
+            json={
+                "title": title[:1024],
+                "notes": description[:8192],
+                "due": due_at.isoformat(),
+            },
+            timeout=20,
+        )
+        payload = response.json() if response.status_code < 400 else {}
+        task = {"id": payload.get("id"), "url": payload.get("webViewLink")}
+    else:
+        lists = httpx.get(
+            "https://graph.microsoft.com/v1.0/me/todo/lists",
+            headers=headers,
+            params={"$select": "id,displayName,wellknownListName", "$top": "50"},
+            timeout=20,
+        )
+        if lists.status_code >= 400:
+            raise CalendarOAuthError("calendar_task_rejected")
+        choices = lists.json().get("value", [])
+        selected = next(
+            (item for item in choices if item.get("wellknownListName") == "defaultList"),
+            choices[0] if choices else None,
+        )
+        if not selected or not selected.get("id"):
+            raise CalendarOAuthError("calendar_task_list_missing")
+        list_id = quote(str(selected["id"]), safe="")
+        response = _event_post(
+            f"https://graph.microsoft.com/v1.0/me/todo/lists/{list_id}/tasks",
+            headers=headers,
+            json={
+                "title": title[:255],
+                "body": {"contentType": "text", "content": description[:8000]},
+                "dueDateTime": {
+                    "dateTime": due_at.astimezone(UTC).replace(tzinfo=None).isoformat(),
+                    "timeZone": "UTC",
+                },
+            },
+            timeout=20,
+        )
+        payload = response.json() if response.status_code < 400 else {}
+        task = {"id": payload.get("id"), "url": None}
+    if response.status_code >= 400 or not task["id"]:
+        raise CalendarOAuthError("calendar_task_rejected")
+    return {"provider": provider, **task}
+
+
 def events_for_user(user: User, provider: str | None = None) -> list[dict]:
     start = utcnow()
     end = start + timedelta(days=int(current_app.config["CALENDAR_SYNC_DAYS"]))
@@ -623,7 +706,7 @@ def events_for_user(user: User, provider: str | None = None) -> list[dict]:
             token = _access_token(connection)
             if connection.provider == "microsoft":
                 fetched = _microsoft_events(token, start, end)
-                if "https://graph.microsoft.com/Tasks.Read" in connection.scopes.split():
+                if "https://graph.microsoft.com/Tasks.ReadWrite" in connection.scopes.split():
                     try:
                         fetched.extend(_microsoft_tasks(token, start, end))
                     except (CalendarOAuthError, httpx.HTTPError):

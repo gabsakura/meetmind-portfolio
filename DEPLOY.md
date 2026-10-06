@@ -3,18 +3,14 @@
 O `render.yaml` cria o serviço web e o PostgreSQL. O processo de entrada aplica as
 migrações e garante o seed sintético a cada inicialização.
 
-## Operação privada e calendários
+## Login individual e calendários
 
-As contas públicas da demonstração continuam somente leitura. Para usar uploads, ações,
-equipe, comunicações, Google Calendar ou Microsoft 365 no Render, configure as contas
-privadas e os seguintes segredos no serviço:
+As contas públicas sintéticas continuam somente leitura. Cada visitante que quiser usar
+as funções pessoais entra com a própria conta Google ou Microsoft; o MeetMind cria um
+perfil individual e armazena somente os tokens criptografados desse usuário.
 
 ```text
 PORTFOLIO_CALENDAR_OAUTH_ENABLED=true
-PORTFOLIO_CALENDAR_TEST_EMAIL=<seu e-mail privado de acesso ao MeetMind>
-PORTFOLIO_CALENDAR_TEST_PASSWORD=<senha exclusiva com 12+ caracteres>
-PORTFOLIO_MANAGER_TEST_EMAIL=<outro e-mail privado para o gestor>
-PORTFOLIO_MANAGER_TEST_PASSWORD=<outra senha exclusiva com 12+ caracteres>
 CALENDAR_TOKEN_ENCRYPTION_KEY=<chave Fernet>
 PUBLIC_BASE_URL=https://<seu-servico>.onrender.com
 ```
@@ -30,11 +26,19 @@ MICROSOFT_CALENDAR_CLIENT_SECRET
 MICROSOFT_CALENDAR_TENANT=common
 ```
 
-Cadastre exatamente estas URIs como plataforma **Web**, substituindo o domínio pelo URL
-real exibido pelo Render:
+No cliente Google, cadastre estas duas URIs autorizadas:
 
 ```text
+https://<seu-servico>.onrender.com/auth/oauth/callback/google
 https://<seu-servico>.onrender.com/perfil/calendario/callback/google
+```
+
+No serviço atual, substitua `<seu-servico>` por `meetmind-portfolio`.
+
+No cliente Microsoft, cadastre estas duas URIs de redirecionamento Web:
+
+```text
+https://<seu-servico>.onrender.com/auth/oauth/callback/microsoft
 https://<seu-servico>.onrender.com/perfil/calendario/callback/microsoft
 ```
 
@@ -44,11 +48,10 @@ Testing. No Microsoft Entra, selecione contas de
 qualquer organização e contas pessoais caso queira aceitar Outlook/Hotmail, e mantenha o
 tenant `common`.
 
-Depois de salvar os segredos, faça um novo deploy. O seed criará uma equipe privada sem
-exibir suas contas na tela de login. Entre como analista com
-`PORTFOLIO_CALENDAR_TEST_EMAIL`, abra **Perfil → Agenda e trabalho** e conecte o
-provedor. Depois entre com `PORTFOLIO_MANAGER_TEST_EMAIL`, abra **Equipe**, consulte a
-rotina do analista e use **Ações → Entregas da equipe** para atribuir e agendar.
+Depois de salvar os segredos e as URIs, faça um novo deploy. A tela de login exibirá
+**Entrar com Google Calendar** e/ou **Entrar com Microsoft 365**. O primeiro consentimento
+já autentica a pessoa e conecta sua agenda. Um administrador pode promover uma conta
+individual a manager e vinculá-la a uma equipe; o próximo login preservará esse cargo.
 
 Notificações por e-mail são opcionais. Para habilitá-las, preencha `SMTP_HOST`,
 `SMTP_USERNAME`, `SMTP_PASSWORD` e `SMTP_FROM`; sem isso, as notificações continuam

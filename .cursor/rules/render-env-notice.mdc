@@ -1,0 +1,12 @@
+---
+description: Avisar previamente toda mudança necessária nas variáveis do Render
+alwaysApply: true
+---
+
+# Alterações de ambiente do Render
+
+- Antes de fazer push de uma mudança que crie, remova ou altere uma variável de ambiente, informe ao usuário as chaves afetadas e a ação necessária no Render.
+- Diferencie valores obrigatórios, opcionais e secretos.
+- Nunca escreva valores secretos no código, documentação, logs ou conversa.
+- Quando uma integração opcional estiver incompleta, preserve a disponibilidade do site e desative apenas a integração.
+- Inclua no handoff uma lista curta das variáveis que ainda exigem configuração manual.

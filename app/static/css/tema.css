@@ -288,6 +288,16 @@ input, select { min-height: 46px; padding: 10px 12px; color: var(--text); backgr
 .login-demo { display: grid; gap: 3px; margin-top: 18px; padding: 11px 13px; border: 1px solid #d9d0f8; border-radius: 10px; background: #f7f4ff; color: var(--ink); font-size: .8rem; }
 .login-demo span, .login-demo small { color: var(--muted); }
 .login-demo code { color: var(--violet); font-family: inherit; font-weight: 700; }
+.login-provider-section { display: grid; gap: 12px; margin-top: 22px; }
+.login-provider-section h2 { margin: 0; font-size: 1rem; }
+.login-provider-section > p { margin: -4px 0 2px; color: var(--muted); font-size: .78rem; line-height: 1.45; }
+.login-provider-actions { display: grid; gap: 9px; }
+.login-provider { min-height: 46px; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 10px 14px; color: var(--ink); background: #fff; border: 1px solid var(--border); border-radius: 10px; font-size: .86rem; font-weight: 760; text-decoration: none; }
+.login-provider:hover { color: var(--ink); border-color: #baa8e8; background: #faf8ff; }
+.login-provider-mark { width: 24px; height: 24px; display: grid; place-items: center; color: #fff; background: #4285f4; border-radius: 7px; font-size: .75rem; font-weight: 850; }
+.login-provider-microsoft .login-provider-mark { background: #2563a9; }
+.login-divider { display: flex; align-items: center; gap: 10px; margin: 19px 0 2px; color: var(--muted); font-size: .68rem; text-align: center; }
+.login-divider::before, .login-divider::after { height: 1px; flex: 1; content: ""; background: var(--border); }
 
 .secao-cabecalho { margin-bottom: 16px; }
 
@@ -2023,29 +2033,29 @@ input[type="checkbox"] {
 .client-health-insufficient_evidence { color: #526475; background: #edf1f5; }
 .client-hero { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 24px; border-radius: 18px; color: #fff; background: var(--shell); }
 .client-hero h2, .client-hero p { margin: 4px 0; }
-.client-people { display: grid; gap: 18px; padding: 22px 24px; overflow: hidden; }
-.client-people-heading { margin: 0; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+.client-people { display: grid; gap: 22px; padding: 28px 30px; overflow: hidden; }
+.client-people-heading { margin: 0; padding-bottom: 17px; border-bottom: 1px solid var(--border); }
 .client-people-heading h3 { margin: 3px 0 0; }
-.client-people-grid { display: grid; grid-template-columns: minmax(260px, .72fr) minmax(0, 1.6fr); gap: 18px; align-items: start; }
-.client-owner-card { display: grid; gap: 18px; padding: 18px; background: linear-gradient(145deg, #f6f3fc, #fff); border: 1px solid #ded4ef; border-left: 4px solid var(--violet); border-radius: 14px; }
+.client-people-grid { display: grid; grid-template-columns: minmax(300px, .85fr) minmax(0, 1.6fr); gap: 22px; align-items: start; }
+.client-owner-card { display: grid; gap: 22px; padding: 22px; background: linear-gradient(145deg, #f6f3fc, #fff); border: 1px solid #ded4ef; border-left: 4px solid var(--violet); border-radius: 16px; }
 .client-owner-card > header, .client-contact-card > header { min-width: 0; display: flex; align-items: center; gap: 11px; }
 .client-owner-card > header > div, .client-contact-card > header > div { min-width: 0; display: grid; gap: 3px; }
 .client-owner-card > header span:not(.client-person-avatar), .client-contacts-title .eyebrow { color: var(--muted); font-size: .68rem; font-weight: 800; letter-spacing: .045em; text-transform: uppercase; }
-.client-owner-card > header strong { font-size: .98rem; }
-.client-owner-card > header small, .client-contact-card small { overflow: hidden; color: var(--muted); font-size: .75rem; text-overflow: ellipsis; white-space: nowrap; }
-.client-person-avatar { width: 42px; height: 42px; display: grid; flex: 0 0 42px; place-items: center; color: #fff; background: var(--violet); border-radius: 12px; font-size: .9rem; font-weight: 850; }
+.client-owner-card > header strong { font-size: 1.05rem; }
+.client-owner-card > header small, .client-contact-card small { overflow: hidden; color: var(--muted); font-size: .79rem; text-overflow: ellipsis; white-space: nowrap; }
+.client-person-avatar { width: 48px; height: 48px; display: grid; flex: 0 0 48px; place-items: center; color: #fff; background: var(--violet); border-radius: 14px; font-size: 1rem; font-weight: 850; }
 .client-owner-form { display: grid; gap: 7px; padding-top: 14px; border-top: 1px solid #e2dcef; }
 .client-owner-form label, .client-contact-form label { color: var(--text-2); font-size: .74rem; font-weight: 780; }
 .client-owner-form > div { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
 .client-owner-form :is(select, button) { min-height: 42px; }
 .client-contacts-area { min-width: 0; display: grid; gap: 12px; }
 .client-contacts-title h4 { margin: 3px 0 0; font-size: .95rem; }
-.client-contact-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 10px; }
-.client-contact-card { min-width: 0; display: grid; gap: 13px; padding: 15px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 13px; }
+.client-contact-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 12px; }
+.client-contact-card { min-width: 0; display: grid; gap: 15px; padding: 18px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 14px; }
 .client-contact-card > header .status { margin-left: auto; }
 .client-contact-avatar { color: var(--shell); background: #dfe8f0; }
 .client-contact-details { min-width: 0; display: grid; gap: 5px; }
-.client-contact-details a { overflow: hidden; font-size: .78rem; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+.client-contact-details a { overflow: hidden; font-size: .82rem; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
 .client-contact-deactivate { width: fit-content; min-height: 36px; padding: 6px 10px; font-size: .72rem; }
 .client-contact-create { padding: 0; border: 1px solid #d8cbed; border-radius: 12px; }
 .client-contact-create > summary { width: fit-content; min-height: 40px; display: flex; align-items: center; padding: 9px 14px; color: var(--violet); font-size: .78rem; font-weight: 820; cursor: pointer; list-style: none; }

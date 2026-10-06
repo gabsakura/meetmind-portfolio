@@ -19,6 +19,21 @@
         <div class="aviso aviso-erro" role="alert">{{ message }}</div>
       {% endfor %}
     {% endwith %}
+    {% if portfolio_oauth_providers %}
+      <section class="login-provider-section" aria-labelledby="login-provider-title">
+        <h2 id="login-provider-title">Entre com sua agenda</h2>
+        <p>Use sua própria conta. Seus compromissos e tarefas ficam vinculados somente ao seu perfil.</p>
+        <div class="login-provider-actions">
+          {% for provider in portfolio_oauth_providers %}
+            <a class="login-provider login-provider-{{ provider.id }}" href="{{ url_for('auth.portfolio_oauth_start', provider=provider.id, next=next_url) }}">
+              <span class="login-provider-mark" aria-hidden="true">{{ 'G' if provider.id == 'google' else 'M' }}</span>
+              Entrar com {{ provider.label }}
+            </a>
+          {% endfor %}
+        </div>
+      </section>
+      {% if local_enabled %}<div class="login-divider"><span>ou explore os perfis de demonstração</span></div>{% endif %}
+    {% endif %}
     {% if oidc_enabled %}
       <a class="botao-primario" href="{{ url_for('auth.oidc_start') }}">Entrar com conta corporativa</a>
     {% endif %}
@@ -28,7 +43,7 @@
       <div class="login-demo" role="note">
         <strong>Conta recomendada</strong>
         <span>{{ demo_accounts[1].name }} · <code>{{ demo_accounts[1].email }}</code></span>
-        <small>Use a senha definida no Render.</small>
+        <small>Conta sintética para explorar os cargos e dados de exemplo.</small>
       </div>
     {% endif %}
     <form method="post" class="form-stack">

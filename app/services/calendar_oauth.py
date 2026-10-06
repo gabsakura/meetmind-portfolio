@@ -166,11 +166,11 @@ def exchange_code(
     return _clean_token(response.json())
 
 
-def authorized_account_email(provider: str, token: dict, fallback: str) -> str:
+def authorized_account_profile(provider: str, token: dict, fallback: str = "") -> dict[str, str]:
     url = (
         "https://openidconnect.googleapis.com/v1/userinfo"
         if provider == "google"
-        else "https://graph.microsoft.com/v1.0/me?$select=mail,userPrincipalName"
+        else "https://graph.microsoft.com/v1.0/me?$select=id,displayName,mail,userPrincipalName"
     )
     try:
         response = httpx.get(
@@ -191,7 +191,18 @@ def authorized_account_email(provider: str, token: dict, fallback: str) -> str:
     ).strip().lower()
     if not email:
         raise CalendarOAuthError("calendar_identity_missing")
-    return email
+    subject = str(payload.get("sub") or payload.get("id") or "").strip()
+    if not subject:
+        raise CalendarOAuthError("calendar_identity_missing")
+    return {
+        "email": email,
+        "name": str(payload.get("name") or payload.get("displayName") or email).strip()[:200],
+        "subject": subject[:200],
+    }
+
+
+def authorized_account_email(provider: str, token: dict, fallback: str) -> str:
+    return authorized_account_profile(provider, token, fallback)["email"]
 
 
 def _clean_token(payload: dict, previous: dict | None = None) -> dict:

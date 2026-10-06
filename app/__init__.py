@@ -80,22 +80,15 @@ def create_app(config_object="config.Config", config_overrides=None):
             "painel.perfil_notificacoes",
             "painel.perfil_calendario_desconectar",
         }
+        personal_oauth_user = current_user.auth_source in {"google", "microsoft"}
         calendar_oauth_available = bool(
-            app.config.get("PORTFOLIO_CALENDAR_OAUTH_ENABLED")
-            and str(current_user.email).casefold() in {
-                str(app.config.get("PORTFOLIO_CALENDAR_TEST_EMAIL", "")).casefold(),
-                str(app.config.get("PORTFOLIO_MANAGER_TEST_EMAIL", "")).casefold(),
-            }
+            app.config.get("PORTFOLIO_CALENDAR_OAUTH_ENABLED") and personal_oauth_user
         )
         if endpoint in calendar_endpoints and calendar_oauth_available:
             return None
-        private_operation_accounts = {
-            str(app.config.get("PORTFOLIO_CALENDAR_TEST_EMAIL", "")).casefold(),
-            str(app.config.get("PORTFOLIO_MANAGER_TEST_EMAIL", "")).casefold(),
-        }
         if (
             app.config.get("PORTFOLIO_CALENDAR_OAUTH_ENABLED")
-            and str(current_user.email).casefold() in private_operation_accounts
+            and personal_oauth_user
         ):
             return None
         blocked = (
@@ -227,27 +220,17 @@ def create_app(config_object="config.Config", config_overrides=None):
 
         organization = db.session.get(Organization, current_user.organization_id)
         is_demo = bool(organization and organization.slug == "meetmind-demo")
+        personal_oauth_user = current_user.auth_source in {"google", "microsoft"}
+        personal_operations = bool(
+            app.config.get("PORTFOLIO_CALENDAR_OAUTH_ENABLED") and personal_oauth_user
+        )
         return {
             "is_demo_environment": is_demo,
             "calendar_oauth_available": bool(
-                not is_demo
-                or (
-                    app.config.get("PORTFOLIO_CALENDAR_OAUTH_ENABLED")
-                    and str(current_user.email).casefold() in {
-                        str(app.config.get("PORTFOLIO_CALENDAR_TEST_EMAIL", "")).casefold(),
-                        str(app.config.get("PORTFOLIO_MANAGER_TEST_EMAIL", "")).casefold(),
-                    }
-                )
+                not is_demo or personal_operations
             ),
             "portfolio_operations_available": bool(
-                not is_demo
-                or (
-                    app.config.get("PORTFOLIO_CALENDAR_OAUTH_ENABLED")
-                    and str(current_user.email).casefold() in {
-                        str(app.config.get("PORTFOLIO_CALENDAR_TEST_EMAIL", "")).casefold(),
-                        str(app.config.get("PORTFOLIO_MANAGER_TEST_EMAIL", "")).casefold(),
-                    }
-                )
+                not is_demo or personal_operations
             ),
         }
     return app

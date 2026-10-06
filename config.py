@@ -101,18 +101,6 @@ class Config:
     PORTFOLIO_CALENDAR_OAUTH_ENABLED = (
         os.environ.get("PORTFOLIO_CALENDAR_OAUTH_ENABLED", "false").lower() == "true"
     )
-    PORTFOLIO_CALENDAR_TEST_EMAIL = os.environ.get(
-        "PORTFOLIO_CALENDAR_TEST_EMAIL", ""
-    ).strip().lower()
-    PORTFOLIO_CALENDAR_TEST_PASSWORD = os.environ.get(
-        "PORTFOLIO_CALENDAR_TEST_PASSWORD", ""
-    )
-    PORTFOLIO_MANAGER_TEST_EMAIL = os.environ.get(
-        "PORTFOLIO_MANAGER_TEST_EMAIL", ""
-    ).strip().lower()
-    PORTFOLIO_MANAGER_TEST_PASSWORD = os.environ.get(
-        "PORTFOLIO_MANAGER_TEST_PASSWORD", ""
-    )
     SMTP_HOST = os.environ.get("SMTP_HOST", "")
     SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
     SMTP_USERNAME = os.environ.get("SMTP_USERNAME", "")

@@ -21,30 +21,9 @@ def validate_runtime_config(app) -> None:
         if portfolio_demo and len(str(app.config.get("DEMO_PORTFOLIO_PASSWORD", ""))) < 9:
             errors.append("DEMO_PORTFOLIO_PASSWORD com 9+ caracteres")
         if portfolio_demo and app.config.get("PORTFOLIO_CALENDAR_OAUTH_ENABLED"):
-            if not app.config.get("PORTFOLIO_CALENDAR_TEST_EMAIL"):
-                errors.append("PORTFOLIO_CALENDAR_TEST_EMAIL")
-            elif str(app.config.get("PORTFOLIO_CALENDAR_TEST_EMAIL")).casefold().endswith(
-                "@meetmind.example"
-            ):
-                errors.append("conta privada de calendário fora das contas públicas")
-            if len(str(app.config.get("PORTFOLIO_CALENDAR_TEST_PASSWORD", ""))) < 12:
-                errors.append("PORTFOLIO_CALENDAR_TEST_PASSWORD com 12+ caracteres")
-            manager_email = str(app.config.get("PORTFOLIO_MANAGER_TEST_EMAIL", ""))
-            manager_password = str(app.config.get("PORTFOLIO_MANAGER_TEST_PASSWORD", ""))
-            if bool(manager_email) != bool(manager_password):
-                errors.append("credenciais completas do gestor privado")
-            if manager_email.casefold().endswith(
-                "@meetmind.example"
-            ):
-                errors.append("gestor privado fora das contas públicas")
-            elif manager_email and manager_email.casefold() == str(
-                app.config.get("PORTFOLIO_CALENDAR_TEST_EMAIL", "")
-            ).casefold():
-                errors.append("contas privadas distintas para gestor e analista")
-            if manager_password and len(manager_password) < 12:
-                errors.append("PORTFOLIO_MANAGER_TEST_PASSWORD com 12+ caracteres")
+            calendar_errors = []
             if not app.config.get("CALENDAR_TOKEN_ENCRYPTION_KEY"):
-                errors.append("CALENDAR_TOKEN_ENCRYPTION_KEY")
+                calendar_errors.append("CALENDAR_TOKEN_ENCRYPTION_KEY")
             google = (
                 bool(app.config.get("GOOGLE_CALENDAR_CLIENT_ID")),
                 bool(app.config.get("GOOGLE_CALENDAR_CLIENT_SECRET")),
@@ -54,11 +33,17 @@ def validate_runtime_config(app) -> None:
                 bool(app.config.get("MICROSOFT_CALENDAR_CLIENT_SECRET")),
             )
             if google[0] != google[1]:
-                errors.append("credenciais completas do Google Calendar")
+                calendar_errors.append("credenciais completas do Google Calendar")
             if microsoft[0] != microsoft[1]:
-                errors.append("credenciais completas do Microsoft Calendar")
+                calendar_errors.append("credenciais completas do Microsoft Calendar")
             if not all(google) and not all(microsoft):
-                errors.append("ao menos um provedor de calendário configurado")
+                calendar_errors.append("ao menos um provedor de calendário configurado")
+            if calendar_errors:
+                app.logger.error(
+                    "Calendar OAuth disabled: %s",
+                    ", ".join(calendar_errors),
+                )
+                app.config["PORTFOLIO_CALENDAR_OAUTH_ENABLED"] = False
         if not app.config.get("SESSION_COOKIE_SECURE"):
             errors.append("COOKIE_SECURE=true")
         if not app.config.get("PRIVACY_CONTACT_EMAIL"):

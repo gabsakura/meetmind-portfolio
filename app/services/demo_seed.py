@@ -94,79 +94,6 @@ def _ensure_demo_teams(organization: Organization, users: dict[str, User]) -> li
     return teams
 
 
-def _ensure_private_calendar_user(organization: Organization) -> User | None:
-    if not current_app.config.get("PORTFOLIO_CALENDAR_OAUTH_ENABLED"):
-        return None
-    email = str(current_app.config.get("PORTFOLIO_CALENDAR_TEST_EMAIL", "")).strip().lower()
-    password = str(current_app.config.get("PORTFOLIO_CALENDAR_TEST_PASSWORD", ""))
-    manager_email = str(
-        current_app.config.get("PORTFOLIO_MANAGER_TEST_EMAIL", "")
-    ).strip().lower()
-    manager_password = str(
-        current_app.config.get("PORTFOLIO_MANAGER_TEST_PASSWORD", "")
-    )
-    if (
-        not email
-        or len(password) < 12
-        or email in {item[0] for item in DEMO_USERS}
-    ):
-        return None
-    manager_ready = bool(
-        manager_email
-        and len(manager_password) >= 12
-        and email != manager_email
-        and manager_email not in {item[0] for item in DEMO_USERS}
-    )
-    team = None
-    if manager_ready:
-        manager = User.query.filter_by(
-            organization_id=organization.id, email=manager_email
-        ).first()
-        if manager is None:
-            manager = User(
-                organization_id=organization.id,
-                email=manager_email,
-                name="Gestor privado de teste",
-                role=Role.MANAGER,
-                auth_source="local",
-            )
-            db.session.add(manager)
-        manager.name = "Gestor privado de teste"
-        manager.role = Role.MANAGER
-        manager.is_active_record = True
-        manager.set_password(manager_password)
-        db.session.flush()
-        team = Team.query.filter_by(
-            organization_id=organization.id,
-            name="Equipe privada de validação",
-        ).first()
-        if team is None:
-            team = Team(
-                organization_id=organization.id,
-                name="Equipe privada de validação",
-            )
-            db.session.add(team)
-            db.session.flush()
-        team.manager_id = manager.id
-        manager.team_id = team.id
-
-    user = User.query.filter_by(organization_id=organization.id, email=email).first()
-    if user is None:
-        user = User(
-            organization_id=organization.id,
-            email=email,
-            name="Analista privado de teste",
-            role=Role.ANALYST,
-            auth_source="local",
-        )
-        db.session.add(user)
-    user.name = "Analista privado de teste"
-    user.role = Role.ANALYST
-    user.is_active_record = True
-    user.team_id = team.id if team is not None else None
-    user.set_password(password)
-    return user
-
 MEETINGS = (
     {
         "key": "atlas-risco",
@@ -561,7 +488,6 @@ def seed_demo(*, password: str | None = None, commit: bool = True) -> dict[str, 
         users[email] = user
     db.session.flush()
     teams = _ensure_demo_teams(organization, users)
-    private_calendar_user = _ensure_private_calendar_user(organization)
 
     now = utcnow()
     created_meetings = 0
@@ -571,22 +497,6 @@ def seed_demo(*, password: str | None = None, commit: bool = True) -> dict[str, 
             organization_id=organization.id, external_id=external_id
         ).first()
         if existing_meeting:
-            if (
-                private_calendar_user is not None
-                and spec["key"] == "atlas-risco"
-                and MeetingParticipant.query.filter_by(
-                    meeting_id=existing_meeting.id,
-                    user_id=private_calendar_user.id,
-                ).first() is None
-            ):
-                db.session.add(
-                    MeetingParticipant(
-                        organization_id=organization.id,
-                        meeting_id=existing_meeting.id,
-                        user_id=private_calendar_user.id,
-                        participation_role="cs_participant",
-                    )
-                )
             continue
         owner = users[spec["owner"]]
         client = Client(
@@ -640,15 +550,6 @@ def seed_demo(*, password: str | None = None, commit: bool = True) -> dict[str, 
                 participation_role="cs_owner",
             )
         )
-        if private_calendar_user is not None and spec["key"] == "atlas-risco":
-            db.session.add(
-                MeetingParticipant(
-                    organization_id=organization.id,
-                    meeting_id=meeting.id,
-                    user_id=private_calendar_user.id,
-                    participation_role="cs_participant",
-                )
-            )
         if spec["key"] == "aurora-renovacao":
             db.session.add(
                 MeetingParticipant(
@@ -810,7 +711,6 @@ def seed_demo(*, password: str | None = None, commit: bool = True) -> dict[str, 
         "organization": organization.slug,
         "users": len(DEMO_USERS),
         "teams": len(teams),
-        "private_calendar_user": private_calendar_user is not None,
         "meetings_created": created_meetings,
     }
 

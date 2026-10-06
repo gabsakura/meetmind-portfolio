@@ -80,6 +80,25 @@ def test_production_accepts_hardened_portfolio_demo_configuration():
     assert app.config["PORTFOLIO_DEMO_ENABLED"] is True
 
 
+def test_incomplete_optional_calendar_config_does_not_stop_portfolio():
+    app = create_app(
+        "config.TestConfig",
+        {
+            "APP_ENV": "production",
+            "SERVICE_ROLE": "web",
+            "PORTFOLIO_DEMO_ENABLED": True,
+            "PORTFOLIO_CALENDAR_OAUTH_ENABLED": True,
+            "DEMO_PORTFOLIO_PASSWORD": "demo12345",
+            "PRIVACY_CONTACT_EMAIL": "privacy@example.test",
+            "SECRET_KEY": "production-portfolio-secret-key-32-chars",
+            "SESSION_COOKIE_SECURE": True,
+            "JSON_LOGS": True,
+        },
+    )
+
+    assert app.config["PORTFOLIO_CALENDAR_OAUTH_ENABLED"] is False
+
+
 def test_production_migration_does_not_require_application_only_services():
     app = create_app(
         "config.TestConfig",

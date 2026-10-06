@@ -340,8 +340,7 @@ def acoes():
         can_assign_deliveries = bool(
             can_assign_deliveries
             and current_app.config.get("PORTFOLIO_CALENDAR_OAUTH_ENABLED")
-            and str(current_user.email).casefold()
-            == str(current_app.config.get("PORTFOLIO_MANAGER_TEST_EMAIL", "")).casefold()
+            and current_user.auth_source in {"google", "microsoft"}
         )
     return render_template(
         "acoes.html",

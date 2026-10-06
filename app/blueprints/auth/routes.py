@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-import secrets
 
 from flask import (
     Blueprint,
@@ -19,15 +18,6 @@ from flask_login import current_user, login_user, logout_user
 from app.extensions import db, limiter
 from app.models import DEFAULT_ORGANIZATION_ID, Organization, Role, SecurityEvent, User
 from app.security import hash_value, mask_ip
-from app.services.calendar_oauth import (
-    PROVIDERS,
-    CalendarOAuthError,
-    authorization_request,
-    authorized_account_profile,
-    configured,
-    exchange_code,
-    save_connection,
-)
 from app.tenancy import tenant_scope
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
@@ -154,19 +144,6 @@ def login():
             {"email": email, "name": name.split(" — ", 1)[0]}
             for email, name, _role in DEMO_USERS
         ]
-    portfolio_oauth_providers = []
-    if (
-        current_app.config.get("PORTFOLIO_DEMO_ENABLED")
-        and current_app.config.get("PORTFOLIO_CALENDAR_OAUTH_ENABLED")
-    ):
-        portfolio_oauth_providers = [
-            {
-                "id": provider,
-                "label": "Microsoft" if provider == "microsoft" else "Google",
-            }
-            for provider in PROVIDERS
-            if configured(provider)
-        ]
     return render_template(
         "login.html",
         next_url=next_url,
@@ -174,110 +151,7 @@ def login():
         local_enabled=local_enabled,
         emergency=emergency,
         demo_accounts=demo_accounts,
-        portfolio_oauth_providers=portfolio_oauth_providers,
     )
-
-
-def _portfolio_oauth_redirect_uri(provider: str) -> str:
-    base = str(current_app.config.get("PUBLIC_BASE_URL") or request.url_root).rstrip("/")
-    return f"{base}{url_for('auth.portfolio_oauth_callback', provider=provider)}"
-
-
-@auth_bp.get("/oauth/start/<provider>")
-@limiter.limit("20 per hour")
-def portfolio_oauth_start(provider: str):
-    if current_user.is_authenticated:
-        return redirect(url_for("painel.dashboard"))
-    if not (
-        current_app.config.get("PORTFOLIO_DEMO_ENABLED")
-        and current_app.config.get("PORTFOLIO_CALENDAR_OAUTH_ENABLED")
-        and provider in PROVIDERS
-        and configured(provider)
-    ):
-        flash("Este provedor não está disponível.", "error")
-        return redirect(url_for("auth.login"))
-    redirect_uri = _portfolio_oauth_redirect_uri(provider)
-    try:
-        authorization_url, state, verifier = authorization_request(provider, redirect_uri)
-    except CalendarOAuthError:
-        flash("Não foi possível iniciar a conexão.", "error")
-        return redirect(url_for("auth.login"))
-    session[f"portfolio_oauth_{provider}"] = {
-        "state": state,
-        "verifier": verifier,
-        "next": safe_next_url(request.args.get("next")),
-    }
-    return redirect(authorization_url)
-
-
-@auth_bp.get("/oauth/callback/<provider>")
-@limiter.limit("30 per hour")
-def portfolio_oauth_callback(provider: str):
-    pending = session.pop(f"portfolio_oauth_{provider}", None)
-    expected_state = str((pending or {}).get("state") or "")
-    if (
-        provider not in PROVIDERS
-        or not expected_state
-        or not secrets.compare_digest(expected_state, str(request.args.get("state") or ""))
-        or request.args.get("error")
-        or not request.args.get("code")
-    ):
-        flash("Não foi possível validar a autorização.", "error")
-        return redirect(url_for("auth.login"))
-    try:
-        token = exchange_code(
-            provider,
-            str(request.args["code"]),
-            _portfolio_oauth_redirect_uri(provider),
-            str(pending["verifier"]),
-        )
-        identity = authorized_account_profile(provider, token)
-    except (CalendarOAuthError, KeyError):
-        current_app.logger.exception("portfolio_oauth_callback_failed provider=%s", provider)
-        flash("Não foi possível concluir o login com este provedor.", "error")
-        return redirect(url_for("auth.login"))
-
-    organization = Organization.query.filter_by(slug="meetmind-demo", is_active=True).first()
-    if organization is None:
-        flash("O ambiente de portfólio ainda não foi preparado.", "error")
-        return redirect(url_for("auth.login"))
-    with tenant_scope(organization.id):
-        user = User.query.filter_by(
-            organization_id=organization.id,
-            auth_source=provider,
-            auth_subject=identity["subject"],
-        ).first()
-        if user is None:
-            user = User.query.filter_by(
-                organization_id=organization.id,
-                email=identity["email"],
-            ).first()
-        if user is None:
-            user = User(
-                organization_id=organization.id,
-                email=identity["email"],
-                name=identity["name"],
-                role=Role.ANALYST,
-                auth_source=provider,
-                auth_subject=identity["subject"],
-            )
-            user.set_password(os.urandom(32).hex())
-            db.session.add(user)
-            db.session.flush()
-        if not user.is_active:
-            flash("Esta conta está desativada no MeetMind.", "error")
-            return redirect(url_for("auth.login"))
-        user.name = identity["name"]
-        user.auth_source = provider
-        user.auth_subject = identity["subject"]
-        save_connection(user, provider, token, identity["email"])
-        db.session.commit()
-
-    login_user(user)
-    session["organization_id"] = organization.id
-    session["session_version"] = user.session_version
-    flash(f"Conta {PROVIDERS[provider]['label']} conectada.", "success")
-    return redirect(str(pending.get("next") or url_for("painel.dashboard")))
 
 
 @auth_bp.get("/oidc/start")

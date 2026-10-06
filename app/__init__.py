@@ -63,7 +63,7 @@ def create_app(config_object="config.Config", config_overrides=None):
 
     @app.before_request
     def _protect_portfolio_demo():
-        """Mantém a vitrine sintética sem upload, OAuth ou alterações de perfil."""
+        """Mantém a vitrine bloqueada quando a operação autenticada está desativada."""
         if not current_user.is_authenticated:
             return None
         from app.models import Organization
@@ -80,16 +80,12 @@ def create_app(config_object="config.Config", config_overrides=None):
             "painel.perfil_notificacoes",
             "painel.perfil_calendario_desconectar",
         }
-        personal_oauth_user = current_user.auth_source in {"google", "microsoft"}
         calendar_oauth_available = bool(
-            app.config.get("PORTFOLIO_CALENDAR_OAUTH_ENABLED") and personal_oauth_user
+            app.config.get("PORTFOLIO_CALENDAR_OAUTH_ENABLED")
         )
         if endpoint in calendar_endpoints and calendar_oauth_available:
             return None
-        if (
-            app.config.get("PORTFOLIO_CALENDAR_OAUTH_ENABLED")
-            and personal_oauth_user
-        ):
+        if app.config.get("PORTFOLIO_CALENDAR_OAUTH_ENABLED"):
             return None
         blocked = (
             request.method not in {"GET", "HEAD", "OPTIONS"}
@@ -220,9 +216,8 @@ def create_app(config_object="config.Config", config_overrides=None):
 
         organization = db.session.get(Organization, current_user.organization_id)
         is_demo = bool(organization and organization.slug == "meetmind-demo")
-        personal_oauth_user = current_user.auth_source in {"google", "microsoft"}
         personal_operations = bool(
-            app.config.get("PORTFOLIO_CALENDAR_OAUTH_ENABLED") and personal_oauth_user
+            app.config.get("PORTFOLIO_CALENDAR_OAUTH_ENABLED")
         )
         return {
             "is_demo_environment": is_demo,

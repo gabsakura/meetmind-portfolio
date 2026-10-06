@@ -178,6 +178,25 @@ def test_demo_blocks_upload_calendar_and_profile_changes(app):
     assert client.post("/perfil/foto").status_code == 403
 
 
+def test_precreated_demo_account_can_connect_its_calendar(app):
+    app.config.update(
+        PORTFOLIO_CALENDAR_OAUTH_ENABLED=True,
+        GOOGLE_CALENDAR_CLIENT_ID="google-client",
+        GOOGLE_CALENDAR_CLIENT_SECRET="google-secret",
+        PUBLIC_BASE_URL="https://meetmind.example",
+    )
+    with app.app_context():
+        seed_demo(password=PASSWORD)
+
+    client = app.test_client()
+    assert _login(client, "ana@meetmind.example").status_code == 302
+    response = client.get("/perfil/calendario/conectar/google")
+
+    assert response.status_code == 302
+    assert response.headers["Location"].startswith("https://accounts.google.com/")
+    assert "/auth/oauth/" not in client.get("/auth/login").get_data(as_text=True)
+
+
 def test_privacy_and_terms_are_public(client):
     privacy = client.get("/auth/privacidade")
     terms = client.get("/auth/termos")

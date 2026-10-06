@@ -3,11 +3,12 @@
 O `render.yaml` cria o serviço web e o PostgreSQL. O processo de entrada aplica as
 migrações e garante o seed sintético a cada inicialização.
 
-## Login individual e calendários
+## Contas controladas e calendários
 
-As contas públicas sintéticas continuam somente leitura. Cada visitante que quiser usar
-as funções pessoais entra com a própria conta Google ou Microsoft; o MeetMind cria um
-perfil individual e armazena somente os tokens criptografados desse usuário.
+O acesso ao MeetMind sempre começa por uma conta previamente cadastrada no banco. Google
+e Microsoft não criam usuários e não substituem o login do produto. Depois de entrar, o
+usuário conecta sua própria agenda em **Perfil → Agenda e trabalho**; os tokens ficam
+criptografados e vinculados àquela conta interna.
 
 ```text
 PORTFOLIO_CALENDAR_OAUTH_ENABLED=true
@@ -29,7 +30,6 @@ MICROSOFT_CALENDAR_TENANT=common
 No cliente Google, cadastre estas duas URIs autorizadas:
 
 ```text
-https://<seu-servico>.onrender.com/auth/oauth/callback/google
 https://<seu-servico>.onrender.com/perfil/calendario/callback/google
 ```
 
@@ -38,7 +38,6 @@ No serviço atual, substitua `<seu-servico>` por `meetmind-portfolio`.
 No cliente Microsoft, cadastre estas duas URIs de redirecionamento Web:
 
 ```text
-https://<seu-servico>.onrender.com/auth/oauth/callback/microsoft
 https://<seu-servico>.onrender.com/perfil/calendario/callback/microsoft
 ```
 
@@ -48,10 +47,9 @@ Testing. No Microsoft Entra, selecione contas de
 qualquer organização e contas pessoais caso queira aceitar Outlook/Hotmail, e mantenha o
 tenant `common`.
 
-Depois de salvar os segredos e as URIs, faça um novo deploy. A tela de login exibirá
-**Entrar com Google Calendar** e/ou **Entrar com Microsoft 365**. O primeiro consentimento
-já autentica a pessoa e conecta sua agenda. Um administrador pode promover uma conta
-individual a manager e vinculá-la a uma equipe; o próximo login preservará esse cargo.
+Depois de salvar os segredos e as URIs, faça um novo deploy. Entre com uma conta interna
+do MeetMind e conecte o provedor pelo Perfil. Nunca compartilhe a senha de uma conta
+enquanto ela estiver vinculada a uma agenda pessoal real.
 
 Notificações por e-mail são opcionais. Para habilitá-las, preencha `SMTP_HOST`,
 `SMTP_USERNAME`, `SMTP_PASSWORD` e `SMTP_FROM`; sem isso, as notificações continuam

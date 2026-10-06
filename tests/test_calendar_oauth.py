@@ -127,13 +127,6 @@ def test_microsoft_identity_meetings_and_tasks_are_normalized(app, monkeypatch):
                 "mail": "CS.Real@Example.com",
                 "userPrincipalName": "cs.real@example.com",
             })
-        if "/me?$select=id,displayName,mail,userPrincipalName" in url:
-            return _Response({
-                "id": "microsoft-user-id",
-                "displayName": "CS Real",
-                "mail": "CS.Real@Example.com",
-                "userPrincipalName": "cs.real@example.com",
-            })
         if url.endswith("/me/calendarView"):
             return _Response({"value": [{
                 "id": "teams-meeting",
@@ -206,11 +199,7 @@ def test_google_identity_and_events_are_normalized(app, monkeypatch):
 
     def fake_get(url, **kwargs):
         if url.endswith("/userinfo"):
-            return _Response({
-                "sub": "google-user-id",
-                "name": "Conta Real",
-                "email": "Conta.Real@Gmail.com",
-            })
+            return _Response({"email": "Conta.Real@Gmail.com"})
         captured.update(kwargs.get("params") or {})
         return _Response({
             "items": [
